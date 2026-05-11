@@ -286,10 +286,6 @@ Requires [Rust](https://rustup.rs/) and platform-specific prerequisites ([Tauri 
 bun run tauri build
 ```
 
-## Acknowledgments
-
-Thanks to [@sld0Ant](https://github.com/sld0Ant) (Anton Soldatov) for creating and maintaining the [documentation site](https://nexdesign.dev).
-
 ## License
 
 MIT
