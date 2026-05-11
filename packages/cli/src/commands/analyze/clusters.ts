@@ -1,7 +1,7 @@
 import { defineCommand } from 'citty'
 
-import type { AnalyzeClustersResult } from '@open-pencil/core/rpc'
-import { calcClusterConfidence } from '@open-pencil/core/tools'
+import type { AnalyzeClustersResult } from '@nex-design/core/rpc'
+import { calcClusterConfidence } from '@nex-design/core/tools'
 
 import { bold, fmtList, fmtSummary } from '#cli/format'
 import { loadRpcData } from '#cli/rpc-data'

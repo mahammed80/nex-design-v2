@@ -9,9 +9,9 @@ Das CLI ermöglicht es, `.fig`-Dateien zu erkunden, ohne den Editor zu öffnen. 
 
 ::: tip Installation
 ```sh
-bun add -g @open-pencil/cli
+bun add -g @nex-design/cli
 # oder
-brew install open-pencil/tap/open-pencil
+brew install nex-design/tap/nex-design
 ```
 :::
 
@@ -20,7 +20,7 @@ brew install open-pencil/tap/open-pencil
 Erhalte einen schnellen Überblick — Seitenanzahl, Gesamtknoten, verwendete Schriften, Dateigröße:
 
 ```sh
-open-pencil info design.fig
+nex-design info design.fig
 ```
 
 ## Knotenbaum
@@ -28,7 +28,7 @@ open-pencil info design.fig
 Gibt die vollständige Knotenhierarchie aus:
 
 ```sh
-open-pencil tree design.fig
+nex-design tree design.fig
 ```
 
 ```
@@ -45,13 +45,13 @@ open-pencil tree design.fig
 Nach Typ suchen:
 
 ```sh
-open-pencil find design.fig --type TEXT
+nex-design find design.fig --type TEXT
 ```
 
 Nach Name suchen:
 
 ```sh
-open-pencil find design.fig --name "Button"
+nex-design find design.fig --name "Button"
 ```
 
 Beide Flags können kombiniert werden, um Ergebnisse weiter einzugrenzen.
@@ -61,7 +61,7 @@ Beide Flags können kombiniert werden, um Ergebnisse weiter einzugrenzen.
 Alle Eigenschaften eines bestimmten Knotens anhand seiner ID inspizieren:
 
 ```sh
-open-pencil node design.fig --id 1:23
+nex-design node design.fig --id 1:23
 ```
 
 ## Seiten
@@ -69,7 +69,7 @@ open-pencil node design.fig --id 1:23
 Alle Seiten im Dokument auflisten:
 
 ```sh
-open-pencil pages design.fig
+nex-design pages design.fig
 ```
 
 ## Variablen
@@ -77,7 +77,7 @@ open-pencil pages design.fig
 Designvariablen und ihre Sammlungen auflisten:
 
 ```sh
-open-pencil variables design.fig
+nex-design variables design.fig
 ```
 
 ## Live-App-Modus
@@ -85,8 +85,8 @@ open-pencil variables design.fig
 Wenn die Desktop-App läuft, lass das Dateiargument weg — das CLI verbindet sich über RPC und arbeitet auf der Live-Zeichenfläche:
 
 ```sh
-open-pencil tree              # das Live-Dokument inspizieren
-open-pencil eval -c "..."     # den Editor abfragen
+nex-design tree              # das Live-Dokument inspizieren
+nex-design eval -c "..."     # den Editor abfragen
 ```
 
 ## JSON-Ausgabe
@@ -94,5 +94,5 @@ open-pencil eval -c "..."     # den Editor abfragen
 Alle Befehle unterstützen `--json` für maschinenlesbare Ausgabe — weiterleiten an `jq`, in CI-Skripte einspeisen oder mit anderen Werkzeugen verarbeiten:
 
 ```sh
-open-pencil tree design.fig --json | jq '.[] | .name'
+nex-design tree design.fig --json | jq '.[] | .name'
 ```

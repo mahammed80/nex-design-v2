@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'bun:test'
 
-import type { Vector } from '@open-pencil/core'
-import type { VectorNetwork } from '@open-pencil/core/scene-graph'
-import { fitCircleArc, isClosedThinCrescent } from '@open-pencil/core/vector'
+import type { Vector } from '@nex-design/core'
+import type { VectorNetwork } from '@nex-design/core/scene-graph'
+import { fitCircleArc, isClosedThinCrescent } from '@nex-design/core/vector'
 
 import { expectDefined } from '#tests/helpers/assert'
 

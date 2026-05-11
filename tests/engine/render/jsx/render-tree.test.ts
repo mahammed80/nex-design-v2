@@ -12,7 +12,7 @@ import {
   Star,
   Group,
   Section
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 import { expectDefined, getNodeOrThrow, childIdAt } from '#tests/helpers/assert'
 import { makeSceneGraph } from '#tests/helpers/scene'

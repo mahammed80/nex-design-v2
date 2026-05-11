@@ -1,5 +1,5 @@
-import type { SceneNode } from '@open-pencil/core/scene-graph'
-import type { useOkHCL } from '@open-pencil/vue'
+import type { SceneNode } from '@nex-design/core/scene-graph'
+import type { useOkHCL } from '@nex-design/vue'
 
 type OkhclControls = ReturnType<typeof useOkHCL>
 type FillFieldFormat = Parameters<OkhclControls['setFillFieldFormat']>[2]

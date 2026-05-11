@@ -1,7 +1,7 @@
 import { tryOnScopeDispose } from '@vueuse/core'
 
-import { useEditorCommands, useI18n } from '@open-pencil/vue'
-import type { EditorCommandId } from '@open-pencil/vue'
+import { useEditorCommands, useI18n } from '@nex-design/vue'
+import type { EditorCommandId } from '@nex-design/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { importFileDialog, openFileDialog } from '@/app/shell/menu/files'

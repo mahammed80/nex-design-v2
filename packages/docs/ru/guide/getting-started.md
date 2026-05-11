@@ -2,11 +2,11 @@
 
 ## Попробовать онлайн
 
-OpenPencil работает в браузере — установка не требуется. Откройте [app.openpencil.dev](https://app.openpencil.dev), чтобы начать проектирование.
+NexDesign работает в браузере — установка не требуется. Откройте [app.nexdesign.dev](https://app.nexdesign.dev), чтобы начать проектирование.
 
 ## Скачать десктоп-приложение
 
-Собранные бинарные файлы для macOS, Windows и Linux доступны на [странице релизов](https://github.com/open-pencil/open-pencil/releases/latest).
+Собранные бинарные файлы для macOS, Windows и Linux доступны на [странице релизов](https://github.com/nex-design/nex-design/releases/latest).
 
 | Платформа | Загрузка |
 |----------|----------|
@@ -20,7 +20,7 @@ OpenPencil работает в браузере — установка не тр
 ## macOS через Homebrew
 
 ```sh
-brew install open-pencil/tap/open-pencil
+brew install nex-design/tap/nex-design
 ```
 
 Устанавливает последний подписанный релиз для macOS (Apple Silicon и Intel). Tap автоматически обновляется с каждым релизом.
@@ -35,8 +35,8 @@ brew install open-pencil/tap/open-pencil
 ## Установка
 
 ```sh
-git clone https://github.com/open-pencil/open-pencil.git
-cd open-pencil
+git clone https://github.com/nex-design/nex-design.git
+cd nex-design
 bun install
 ```
 

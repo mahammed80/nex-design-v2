@@ -1,11 +1,11 @@
 ---
 title: useEditor
-description: Доступ к текущему инжектированному экземпляру редактора OpenPencil.
+description: Доступ к текущему инжектированному экземпляру редактора NexDesign.
 ---
 
 # useEditor
 
-`useEditor()` возвращает текущий инжектированный редактор OpenPencil.
+`useEditor()` возвращает текущий инжектированный редактор NexDesign.
 
 Это главная точка входа для SDK-компосаблов и headless-примитивов, которым нужен доступ к редактору.
 
@@ -14,7 +14,7 @@ description: Доступ к текущему инжектированному �
 `useEditor()` должен вызываться внутри поддерева, где уже был вызван `provideEditor(editor)`.
 
 ```ts
-import { useEditor } from '@open-pencil/vue'
+import { useEditor } from '@nex-design/vue'
 
 const editor = useEditor()
 ```
@@ -25,7 +25,7 @@ const editor = useEditor()
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useEditor } from '@open-pencil/vue'
+import { useEditor } from '@nex-design/vue'
 
 const editor = useEditor()
 const pageId = computed(() => editor.state.currentPageId)

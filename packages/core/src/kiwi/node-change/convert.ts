@@ -13,7 +13,7 @@ import {
   extractBoundVariables,
   extractPluginData,
   extractPluginRelaunchData,
-  getOpenPencilPluginValue,
+  getNexDesignPluginValue,
   LAYOUT_DIRECTION_PLUGIN_KEY,
   TEXT_DIRECTION_PLUGIN_KEY
 } from './plugin-data'
@@ -291,7 +291,7 @@ function convertTextProps(
     styleRuns: importStyleRuns(nc),
     textTruncation: (nc.textTruncation as string) === 'ENDING' ? 'ENDING' : 'DISABLED',
     textDirection:
-      (getOpenPencilPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as
+      (getNexDesignPluginValue(nc, TEXT_DIRECTION_PLUGIN_KEY) as
         | SceneNode['textDirection']
         | null) || 'AUTO'
   }
@@ -350,7 +350,7 @@ function convertLayoutProps(
     itemReverseZIndex: (nc.stackReverseZIndex ?? false) as boolean,
     strokesIncludedInLayout: (nc.strokesIncludedInLayout ?? false) as boolean,
     layoutDirection:
-      (getOpenPencilPluginValue(nc, LAYOUT_DIRECTION_PLUGIN_KEY) as
+      (getNexDesignPluginValue(nc, LAYOUT_DIRECTION_PLUGIN_KEY) as
         | SceneNode['layoutDirection']
         | null) || 'AUTO'
   }

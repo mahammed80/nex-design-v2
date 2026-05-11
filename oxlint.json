@@ -29,18 +29,18 @@
         "paths": [
           {
             "name": "@/types",
-            "message": "Import types directly from @open-pencil/core."
+            "message": "Import types directly from @nex-design/core."
           }
         ],
         "patterns": [
           {
             "group": ["@/engine/*"],
-            "message": "Import from @open-pencil/core unless the module adds platform-specific logic.",
+            "message": "Import from @nex-design/core unless the module adds platform-specific logic.",
             "allowImportNames": ["loadFont", "listFamilies", "listFonts", "preloadFonts"]
           },
           {
             "group": ["../../packages/*", "../../../packages/*"],
-            "message": "Use the workspace package name (e.g. @open-pencil/core) instead of relative paths to packages/."
+            "message": "Use the workspace package name (e.g. @nex-design/core) instead of relative paths to packages/."
           }
         ]
       }
@@ -97,7 +97,7 @@
     "vue/define-emits-declaration": "error",
     "vue/define-props-destructuring": "error",
     "vue/require-typed-ref": "error",
-    "open-pencil/no-inline-named-types": [
+    "nex-design/no-inline-named-types": [
       "error",
       {
         "Vector": "x:number,y:number",
@@ -107,61 +107,61 @@
         "Matrix": "m00:number,m01:number,m02:number,m10:number,m11:number,m12:number"
       }
     ],
-    "open-pencil/no-structuredclone-scene-arrays": "error",
-    "open-pencil/no-math-random": "error",
-    "open-pencil/no-hand-rolled-color": "error",
-    "open-pencil/no-raw-console-format": "off",
-    "open-pencil/no-silent-catch": "error",
-    "open-pencil/no-typeof-window-check": "error",
-    "open-pencil/no-vue-self-package-imports": "error",
-    "open-pencil/no-cross-package-source-imports": "error",
-    "open-pencil/no-app-imports-in-packages": "error",
-    "open-pencil/no-core-framework-imports": "error",
-    "open-pencil/no-direct-storage-access": "error",
-    "open-pencil/no-deep-parent-relative-imports": "error",
-    "open-pencil/no-broad-double-cast": "error",
-    "open-pencil/no-unknown-record-double-cast": "error",
-    "open-pencil/no-ts-suppression-comments": "error",
-    "open-pencil/no-function-type": "error",
-    "open-pencil/no-reflect-delete-global-this-outside-tests": "error",
-    "open-pencil/no-core-browser-globals": "error",
-    "open-pencil/no-direct-open-pencil-window-internals": "error",
-    "open-pencil/no-direct-open-pencil-browser-store": "error",
-    "open-pencil/no-function-alias-imports": "error",
-    "open-pencil/max-composition-root-lines": [
+    "nex-design/no-structuredclone-scene-arrays": "error",
+    "nex-design/no-math-random": "error",
+    "nex-design/no-hand-rolled-color": "error",
+    "nex-design/no-raw-console-format": "off",
+    "nex-design/no-silent-catch": "error",
+    "nex-design/no-typeof-window-check": "error",
+    "nex-design/no-vue-self-package-imports": "error",
+    "nex-design/no-cross-package-source-imports": "error",
+    "nex-design/no-app-imports-in-packages": "error",
+    "nex-design/no-core-framework-imports": "error",
+    "nex-design/no-direct-storage-access": "error",
+    "nex-design/no-deep-parent-relative-imports": "error",
+    "nex-design/no-broad-double-cast": "error",
+    "nex-design/no-unknown-record-double-cast": "error",
+    "nex-design/no-ts-suppression-comments": "error",
+    "nex-design/no-function-type": "error",
+    "nex-design/no-reflect-delete-global-this-outside-tests": "error",
+    "nex-design/no-core-browser-globals": "error",
+    "nex-design/no-direct-nex-design-window-internals": "error",
+    "nex-design/no-direct-nex-design-browser-store": "error",
+    "nex-design/no-function-alias-imports": "error",
+    "nex-design/max-composition-root-lines": [
       "error",
       {
         "max": 260
       }
     ],
-    "open-pencil/no-core-parent-relative-imports": "error",
-    "open-pencil/no-mcp-parent-relative-imports": "error",
-    "open-pencil/no-vue-parent-relative-imports": "error",
-    "open-pencil/no-cli-parent-relative-imports": "error",
-    "open-pencil/no-mcp-core-barrel-imports": "error",
-    "open-pencil/no-cli-core-barrel-imports": "error",
-    "open-pencil/no-script-core-barrel-imports": "error",
-    "open-pencil/no-core-self-package-imports": "error",
-    "open-pencil/no-inline-prompt-constants": "error",
-    "open-pencil/no-app-vue-core-barrel-imports": "error",
-    "open-pencil/no-direct-graph-emitter-subscriptions": "error",
-    "open-pencil/no-on-unmounted-in-composition-roots": "error",
-    "open-pencil/no-composable-state-wrappers": "error",
-    "open-pencil/prefer-vueuse-intervals": "error",
-    "open-pencil/prefer-vueuse-timeouts": "error",
-    "open-pencil/vue-component-file-pascal-case": "error",
-    "open-pencil/component-namespace-pascal-case": "error",
-    "open-pencil/non-component-source-directories-kebab-case": "error",
-    "open-pencil/no-component-root-sibling-folder": "error",
-    "open-pencil/no-flat-kiwi-modules": "error",
-    "open-pencil/no-top-level-prefixed-test-files": "error",
-    "open-pencil/no-sibling-domain-prefixed-files": "error"
+    "nex-design/no-core-parent-relative-imports": "error",
+    "nex-design/no-mcp-parent-relative-imports": "error",
+    "nex-design/no-vue-parent-relative-imports": "error",
+    "nex-design/no-cli-parent-relative-imports": "error",
+    "nex-design/no-mcp-core-barrel-imports": "error",
+    "nex-design/no-cli-core-barrel-imports": "error",
+    "nex-design/no-script-core-barrel-imports": "error",
+    "nex-design/no-core-self-package-imports": "error",
+    "nex-design/no-inline-prompt-constants": "error",
+    "nex-design/no-app-vue-core-barrel-imports": "error",
+    "nex-design/no-direct-graph-emitter-subscriptions": "error",
+    "nex-design/no-on-unmounted-in-composition-roots": "error",
+    "nex-design/no-composable-state-wrappers": "error",
+    "nex-design/prefer-vueuse-intervals": "error",
+    "nex-design/prefer-vueuse-timeouts": "error",
+    "nex-design/vue-component-file-pascal-case": "error",
+    "nex-design/component-namespace-pascal-case": "error",
+    "nex-design/non-component-source-directories-kebab-case": "error",
+    "nex-design/no-component-root-sibling-folder": "error",
+    "nex-design/no-flat-kiwi-modules": "error",
+    "nex-design/no-top-level-prefixed-test-files": "error",
+    "nex-design/no-sibling-domain-prefixed-files": "error"
   },
   "overrides": [
     {
       "files": ["src/**/*.ts"],
       "rules": {
-        "open-pencil/no-useless-pass-through-wrappers": "error"
+        "nex-design/no-useless-pass-through-wrappers": "error"
       }
     },
     {
@@ -190,7 +190,7 @@
     {
       "files": ["packages/cli/src/commands/**"],
       "rules": {
-        "open-pencil/no-raw-console-format": "error"
+        "nex-design/no-raw-console-format": "error"
       }
     },
     {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from '@open-pencil/core'
+import { geometryBlobToSVGPath, vectorNetworkToSVGPaths } from '@nex-design/core'
 
 // --- geometryBlobToSVGPath tests ---
 

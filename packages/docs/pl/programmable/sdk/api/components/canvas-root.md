@@ -1,11 +1,11 @@
 ---
 title: CanvasRoot
-description: Bezstanowy prymityw kanvasu dla powierzchni renderowania OpenPencil.
+description: Bezstanowy prymityw kanvasu dla powierzchni renderowania NexDesign.
 ---
 
 # CanvasRoot
 
-`CanvasRoot` to strukturalny prymityw kanvasu w `@open-pencil/vue`.
+`CanvasRoot` to strukturalny prymityw kanvasu w `@nex-design/vue`.
 
 Użyj go, gdy chcesz strukturę kanvasu i kontekst dostarczane przez SDK, ale layout i stylowanie należące do aplikacji.
 

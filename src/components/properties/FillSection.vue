@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PropertyListRoot, useFillControls, useOkHCL, useI18n } from '@open-pencil/vue'
+import { PropertyListRoot, useFillControls, useOkHCL, useI18n } from '@nex-design/vue'
 
 import FillPicker from '@/components/FillPicker.vue'
 import ColorStyleRow from '@/components/properties/ColorStyleRow.vue'
@@ -12,7 +12,7 @@ import { createFillOkhclAdapter } from '@/components/properties/fill-okhcl'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
 
-import type { Fill, SceneNode } from '@open-pencil/core/scene-graph'
+import type { Fill, SceneNode } from '@nex-design/core/scene-graph'
 
 const fillCtx = useFillControls()
 const okhcl = useOkHCL()

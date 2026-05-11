@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useAttrs } from 'vue'
 
-import { ColorInputRoot, inputValue } from '@open-pencil/vue'
+import { ColorInputRoot, inputValue } from '@nex-design/vue'
 
 import ColorPicker from '@/components/ColorPicker/ColorPicker.vue'
 
-import type { Color } from '@open-pencil/core/types'
-import type { OkHCLControls } from '@open-pencil/vue'
+import type { Color } from '@nex-design/core/types'
+import type { OkHCLControls } from '@nex-design/vue'
 
 defineOptions({ inheritAttrs: false })
 

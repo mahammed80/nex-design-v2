@@ -1,18 +1,18 @@
 [package]
-name = "open_pencil"
+name = "nex_design"
 version = "0.11.8"
-description = "OpenPencil desktop app"
+description = "NexDesign desktop app"
 authors = ["Danila Poyarkov"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "OpenPencil"
+name = "NexDesign"
 path = "src/main.rs"
 
 [lib]
-name = "open_pencil_lib"
+name = "nex_design_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

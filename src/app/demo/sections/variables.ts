@@ -1,4 +1,4 @@
-import type { Color } from '@open-pencil/core/scene-graph'
+import type { Color } from '@nex-design/core/scene-graph'
 
 import {
   BLACK,

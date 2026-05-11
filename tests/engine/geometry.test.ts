@@ -16,7 +16,7 @@ import {
   rotatedCorners,
   rotatedBBox,
   type Vector
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 import { computeVisualBounds } from '#core/geometry'
 

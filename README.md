@@ -1,24 +1,24 @@
-# OpenPencil
+# NexDesign
 
 Open-source design editor. Opens `.fig` and `.pen` design files, includes built-in AI, and ships as a programmable toolkit with a headless Vue SDK for building custom editors.
 
 > **Status:** Active development. Not ready for production use.
 >
-> **Note:** There is another open-source project with the same name — [OpenPencil by ZSeven-W](https://github.com/ZSeven-W/openpencil), focused on AI-native design-to-code workflows. This project focuses on Figma-compatible visual design with real-time collaboration.
+> **Note:** There is another open-source project with the same name — [NexDesign by ZSeven-W](https://github.com/ZSeven-W/nexdesign), focused on AI-native design-to-code workflows. This project focuses on Figma-compatible visual design with real-time collaboration.
 
-**[Try it online →](https://app.openpencil.dev/demo)** · [Download](https://github.com/open-pencil/open-pencil/releases/latest) · [Documentation](https://openpencil.dev)
+**[Try it online →](https://app.nexdesign.dev/demo)** · [Download](https://github.com/nex-design/nex-design/releases/latest) · [Documentation](https://nexdesign.dev)
 
-![OpenPencil](packages/docs/public/screenshot.png)
+![NexDesign](packages/docs/public/screenshot.png)
 
 ## Installation
 
 **macOS (Homebrew):**
 
 ```sh
-brew install open-pencil/tap/open-pencil
+brew install nex-design/tap/nex-design
 ```
 
-Or download from the [releases page](https://github.com/open-pencil/open-pencil/releases/latest), or [use the web app](https://app.openpencil.dev) — no install needed.
+Or download from the [releases page](https://github.com/nex-design/nex-design/releases/latest), or [use the web app](https://app.nexdesign.dev) — no install needed.
 
 ## What it does
 
@@ -27,7 +27,7 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 - **Fully programmable** — headless CLI, XPath queries, Figma Plugin API via `eval`, MCP server for AI agents, and desktop agent integrations for Claude Code, Codex, and Gemini CLI
 - **Lint, convert, and extract tokens** — inspect documents, lint naming/layout/accessibility, convert between supported formats, analyze colors/typography/spacing/clusters, and extract design tokens
 - **Design-to-code export** — export selections as JSX/Tailwind, generate token outputs, and map designs into component-oriented code workflows
-- **Vue SDK for custom editors** — headless components and composables for embedding OpenPencil into other apps or building workflow-specific editing surfaces. [Read the SDK docs →](https://openpencil.dev/programmable/sdk/)
+- **Vue SDK for custom editors** — headless components and composables for embedding NexDesign into other apps or building workflow-specific editing surfaces. [Read the SDK docs →](https://nexdesign.dev/programmable/sdk/)
 - **Real-time collaboration** — P2P via WebRTC, no server, no account. Cursors, presence, follow mode
 - **Auto layout & CSS Grid** — flex and grid layout via Yoga WASM, with gap, padding, alignment, track sizing
 - **~7 MB desktop app** — Tauri v2 for macOS, Windows, Linux. Also runs in the browser as a PWA
@@ -35,7 +35,7 @@ Or download from the [releases page](https://github.com/open-pencil/open-pencil/
 ## CLI
 
 ```sh
-bun add -g @open-pencil/cli
+bun add -g @nex-design/cli
 ```
 
 ### Inspect design files
@@ -43,10 +43,10 @@ bun add -g @open-pencil/cli
 Browse node trees, search by name or type, dig into properties — all without opening the editor:
 
 ```sh
-open-pencil tree design.fig
-open-pencil find design.pen --type TEXT
-open-pencil node design.fig --id 1:23
-open-pencil info design.fig
+nex-design tree design.fig
+nex-design find design.pen --type TEXT
+nex-design node design.fig --id 1:23
+nex-design info design.fig
 ```
 
 ```
@@ -63,11 +63,11 @@ open-pencil info design.fig
 Use XPath selectors to find nodes by type, attributes, and structure:
 
 ```sh
-open-pencil query design.fig "//FRAME"                              # All frames
-open-pencil query design.fig "//FRAME[@width < 300]"                # Frames under 300px
-open-pencil query design.fig "//TEXT[contains(@name, 'Button')]"     # Text with 'Button' in name
-open-pencil query design.fig "//*[@cornerRadius > 0]"               # Rounded corners
-open-pencil query design.fig "//SECTION//TEXT"                       # Text inside sections
+nex-design query design.fig "//FRAME"                              # All frames
+nex-design query design.fig "//FRAME[@width < 300]"                # Frames under 300px
+nex-design query design.fig "//TEXT[contains(@name, 'Button')]"     # Text with 'Button' in name
+nex-design query design.fig "//*[@cornerRadius > 0]"               # Rounded corners
+nex-design query design.fig "//SECTION//TEXT"                       # Text inside sections
 ```
 
 ### Export
@@ -75,11 +75,11 @@ open-pencil query design.fig "//SECTION//TEXT"                       # Text insi
 Render to PNG, JPG, WEBP, SVG, `.fig`, or JSX — or export selections/pages as `.fig` and convert whole documents between supported formats:
 
 ```sh
-open-pencil export design.fig                           # PNG
-open-pencil export design.fig -f jpg -s 2 -q 90        # JPG at 2x, quality 90
-open-pencil export design.fig -f fig --page "Page 1"   # Export a page as .fig
-open-pencil export design.fig -f jsx --style tailwind   # Tailwind JSX
-open-pencil convert design.pen output.fig               # Convert between document formats
+nex-design export design.fig                           # PNG
+nex-design export design.fig -f jpg -s 2 -q 90        # JPG at 2x, quality 90
+nex-design export design.fig -f fig --page "Page 1"   # Export a page as .fig
+nex-design export design.fig -f jsx --style tailwind   # Tailwind JSX
+nex-design convert design.pen output.fig               # Convert between document formats
 ```
 
 ```html
@@ -94,10 +94,10 @@ open-pencil convert design.pen output.fig               # Convert between docume
 Catch naming, layout, structure, and accessibility issues from the terminal:
 
 ```sh
-open-pencil lint design.fig
-open-pencil lint design.pen --preset strict
-open-pencil lint design.fig --rule color-contrast
-open-pencil lint design.fig --list-rules
+nex-design lint design.fig
+nex-design lint design.pen --preset strict
+nex-design lint design.fig --rule color-contrast
+nex-design lint design.fig --list-rules
 ```
 
 ### Analyze and extract design tokens
@@ -105,11 +105,11 @@ open-pencil lint design.fig --list-rules
 Audit an entire design system from the terminal — find inconsistencies, extract the real palette, and spot components waiting to be extracted:
 
 ```sh
-open-pencil analyze colors design.fig
-open-pencil analyze typography design.fig
-open-pencil analyze spacing design.fig
-open-pencil analyze clusters design.fig
-open-pencil variables design.fig
+nex-design analyze colors design.fig
+nex-design analyze typography design.fig
+nex-design analyze spacing design.fig
+nex-design analyze clusters design.fig
+nex-design variables design.fig
 ```
 
 ```
@@ -130,8 +130,8 @@ open-pencil variables design.fig
 `eval` gives you the full Figma Plugin API. Modify the file, write it back:
 
 ```sh
-open-pencil eval design.fig -c "figma.currentPage.children.length"
-open-pencil eval design.fig -c "figma.currentPage.selection.forEach(n => n.opacity = 0.5)" -w
+nex-design eval design.fig -c "figma.currentPage.children.length"
+nex-design eval design.fig -c "figma.currentPage.selection.forEach(n => n.opacity = 0.5)" -w
 ```
 
 ### Control the running app
@@ -139,9 +139,9 @@ open-pencil eval design.fig -c "figma.currentPage.selection.forEach(n => n.opaci
 When the desktop app is running, omit the file argument — the CLI connects via RPC and operates on the live canvas. Useful for automation scripts, CI pipelines, or AI agents that need to interact with the editor:
 
 ```sh
-open-pencil tree                               # Inspect the live document
-open-pencil export -f png                      # Screenshot the current canvas
-open-pencil eval -c "figma.currentPage.name"   # Query the editor
+nex-design tree                               # Inspect the live document
+nex-design export -f png                      # Screenshot the current canvas
+nex-design eval -c "figma.currentPage.name"   # Query the editor
 ```
 
 All commands support `--json` for machine-readable output.
@@ -163,7 +163,7 @@ Use Claude Code, Codex, or Gemini CLI directly in the chat panel. The agent conn
    ```json
    {
      "permissions": {
-       "allow": ["mcp__open-pencil"]
+       "allow": ["mcp__nex-design"]
      }
    }
    ```
@@ -171,19 +171,19 @@ Use Claude Code, Codex, or Gemini CLI directly in the chat panel. The agent conn
 
 ### MCP server
 
-Connect Claude Code, Cursor, Windsurf, or any MCP client to inspect, modify, and export design documents headlessly. 100+ tools. [Full docs →](https://openpencil.dev/reference/mcp-tools)
+Connect Claude Code, Cursor, Windsurf, or any MCP client to inspect, modify, and export design documents headlessly. 100+ tools. [Full docs →](https://nexdesign.dev/reference/mcp-tools)
 
 **Stdio** (Claude Code, Cursor, Windsurf):
 
 ```sh
-bun add -g @open-pencil/mcp
+bun add -g @nex-design/mcp
 ```
 
 ```json
 {
   "mcpServers": {
-    "open-pencil": {
-      "command": "openpencil-mcp"
+    "nex-design": {
+      "command": "nexdesign-mcp"
     }
   }
 }
@@ -192,17 +192,17 @@ bun add -g @open-pencil/mcp
 **HTTP** (scripts, CI):
 
 ```sh
-openpencil-mcp-http   # http://localhost:3100/mcp
+nexdesign-mcp-http   # http://localhost:3100/mcp
 ```
 
-**File access:** Set `OPENPENCIL_MCP_ROOT` to scope file operations (`open_file`, `new_document`, export `path` param) to a directory. Defaults to the current working directory.
+**File access:** Set `NEXDESIGN_MCP_ROOT` to scope file operations (`open_file`, `new_document`, export `path` param) to a directory. Defaults to the current working directory.
 
 ### AI agent skill
 
-Teach your AI coding agent to use OpenPencil — inspect designs, export assets, analyze tokens, modify .fig files:
+Teach your AI coding agent to use NexDesign — inspect designs, export assets, analyze tokens, modify .fig files:
 
 ```sh
-npx skills add open-pencil/skills@open-pencil
+npx skills add nex-design/skills@nex-design
 ```
 
 Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh).
@@ -212,7 +212,7 @@ Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [sk
 Share a link to co-edit in real time. No server, no account — peers connect directly via WebRTC.
 
 1. Click the share button in the top-right panel
-2. Share the generated link (`app.openpencil.dev/share/<room-id>`)
+2. Share the generated link (`app.nexdesign.dev/share/<room-id>`)
 3. Collaborators see your cursor, selection, and edits in real time
 4. Click a peer's avatar to follow their viewport
 
@@ -220,7 +220,7 @@ Share a link to co-edit in real time. No server, no account — peers connect di
 
 Figma is a closed platform that actively fights programmatic access. Their MCP server is read-only. [figma-use](https://github.com/dannote/figma-use) added full read/write automation via CDP — then [Figma 126 killed CDP](https://forum.figma.com/report-a-problem-6/remote-debugging-port-not-working-in-figma-desktop-126-1-2-50858). Your design files are in a proprietary binary format that only their software can fully read. Your workflows break when they decide to ship a point release.
 
-OpenPencil is the alternative: open source (MIT), reads .fig files natively, every operation is scriptable, and your data never leaves your machine.
+NexDesign is the alternative: open source (MIT), reads .fig files natively, every operation is scriptable, and your data never leaves your machine.
 
 ## Roadmap
 
@@ -256,11 +256,11 @@ bun run tauri dev  # Desktop app (requires Rust)
 
 ```
 packages/
-  core/           @open-pencil/core — engine (scene graph, renderer, layout, file formats, tools)
-  vue/            @open-pencil/vue — headless Vue SDK
-  cli/            @open-pencil/cli — headless CLI
-  mcp/            @open-pencil/mcp — MCP server (stdio + HTTP)
-  docs/           Documentation site (openpencil.dev)
+  core/           @nex-design/core — engine (scene graph, renderer, layout, file formats, tools)
+  vue/            @nex-design/vue — headless Vue SDK
+  cli/            @nex-design/cli — headless CLI
+  mcp/            @nex-design/mcp — MCP server (stdio + HTTP)
+  docs/           Documentation site (nexdesign.dev)
 src/              Vue app (components, composables, stores)
 desktop/          Tauri v2 (Rust + config)
 tests/            E2E (188 tests) + unit (764 tests)
@@ -271,7 +271,7 @@ tests/            E2E (188 tests) + unit (764 tests)
 | Layer | Tech |
 |-------|------|
 | Rendering | Skia (CanvasKit WASM) |
-| Layout | Yoga WASM (flex + grid via [fork](https://github.com/open-pencil/yoga/tree/grid)) |
+| Layout | Yoga WASM (flex + grid via [fork](https://github.com/nex-design/yoga/tree/grid)) |
 | UI | Vue 3, Reka UI, Tailwind CSS 4 |
 | File format | Kiwi binary + Zstd + ZIP |
 | Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT) |
@@ -288,7 +288,7 @@ bun run tauri build
 
 ## Acknowledgments
 
-Thanks to [@sld0Ant](https://github.com/sld0Ant) (Anton Soldatov) for creating and maintaining the [documentation site](https://openpencil.dev).
+Thanks to [@sld0Ant](https://github.com/sld0Ant) (Anton Soldatov) for creating and maintaining the [documentation site](https://nexdesign.dev).
 
 ## License
 

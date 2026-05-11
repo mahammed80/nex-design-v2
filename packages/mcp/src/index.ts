@@ -10,15 +10,15 @@ const host = process.env.HOST ?? '127.0.0.1'
 const { app, httpPort } = startServer({
   httpPort: port,
   wsPort,
-  enableEval: process.env.OPENPENCIL_MCP_EVAL === '1',
-  mcpRoot: process.env.OPENPENCIL_MCP_ROOT?.trim() || process.cwd(),
-  authToken: process.env.OPENPENCIL_MCP_AUTH_TOKEN?.trim() || null,
-  corsOrigin: process.env.OPENPENCIL_MCP_CORS_ORIGIN?.trim() || null
+  enableEval: process.env.NEXDESIGN_MCP_EVAL === '1',
+  mcpRoot: process.env.NEXDESIGN_MCP_ROOT?.trim() || process.cwd(),
+  authToken: process.env.NEXDESIGN_MCP_AUTH_TOKEN?.trim() || null,
+  corsOrigin: process.env.NEXDESIGN_MCP_CORS_ORIGIN?.trim() || null
 })
 
 serve({ fetch: app.fetch, port: httpPort, hostname: host })
 
-process.stderr.write(`OpenPencil MCP server\n`)
+process.stderr.write(`NexDesign MCP server\n`)
 process.stderr.write(`  HTTP:  http://${host}:${httpPort}\n`)
 process.stderr.write(`  WS:    ws://${host}:${wsPort}\n`)
 process.stderr.write(`  MCP:   http://${host}:${httpPort}/mcp\n`)

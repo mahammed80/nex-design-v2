@@ -10,10 +10,10 @@ Exporta diseños desde la terminal — imágenes rasterizadas, vectores o códig
 ## Exportar Imágenes
 
 ```sh
-open-pencil export design.fig                          # PNG (predeterminado)
-open-pencil export design.fig -f jpg -s 2 -q 90       # JPG a 2×, calidad 90
-open-pencil export design.fig -f webp -s 3             # WEBP a 3×
-open-pencil export design.fig -f svg                   # SVG vectorial
+nex-design export design.fig                          # PNG (predeterminado)
+nex-design export design.fig -f jpg -s 2 -q 90       # JPG a 2×, calidad 90
+nex-design export design.fig -f webp -s 3             # WEBP a 3×
+nex-design export design.fig -f svg                   # SVG vectorial
 ```
 
 Opciones:
@@ -30,7 +30,7 @@ Opciones:
 Exporta como JSX con clases de utilidad Tailwind:
 
 ```sh
-open-pencil export design.fig -f jsx --style tailwind
+nex-design export design.fig -f jsx --style tailwind
 ```
 
 Salida:
@@ -42,12 +42,12 @@ Salida:
 </div>
 ```
 
-También soporta `--style openpencil` para el formato JSX nativo (ver [Renderizador JSX](../jsx-renderer)).
+También soporta `--style nexdesign` para el formato JSX nativo (ver [Renderizador JSX](../jsx-renderer)).
 
 ## Miniaturas
 
 ```sh
-open-pencil export design.fig --thumbnail --width 1920 --height 1080
+nex-design export design.fig --thumbnail --width 1920 --height 1080
 ```
 
 ## Modo Aplicación en Vivo
@@ -55,5 +55,5 @@ open-pencil export design.fig --thumbnail --width 1920 --height 1080
 Omite el archivo para exportar desde la aplicación en ejecución:
 
 ```sh
-open-pencil export -f png    # captura de pantalla del lienzo actual
+nex-design export -f png    # captura de pantalla del lienzo actual
 ```

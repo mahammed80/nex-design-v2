@@ -4,11 +4,11 @@ import ColorInput from '@/components/ColorPicker/ColorInput.vue'
 import ScrubInput from '@/components/ScrubInput.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
-import { PropertyListRoot, useEffectsControls, useI18n } from '@open-pencil/vue'
+import { PropertyListRoot, useEffectsControls, useI18n } from '@nex-design/vue'
 
-import { colorToCSS } from '@open-pencil/core/color'
+import { colorToCSS } from '@nex-design/core/color'
 
-import type { Effect } from '@open-pencil/core/scene-graph'
+import type { Effect } from '@nex-design/core/scene-graph'
 
 const effectsCtx = useEffectsControls()
 const { panels } = useI18n()

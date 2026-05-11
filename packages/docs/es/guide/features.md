@@ -4,7 +4,7 @@
 
 Abre y guarda archivos nativos de Figma directamente. El pipeline de importación/exportación usa el mismo códec binario Kiwi que Figma — 194 definiciones de esquema, ~390 campos por nodo. Guardar con <kbd>⌘</kbd><kbd>S</kbd>, Guardar como con <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>.
 
-**Copiar y pegar con Figma** — selecciona nodos en Figma, <kbd>⌘</kbd><kbd>C</kbd>, cambia a OpenPencil, <kbd>⌘</kbd><kbd>V</kbd>. Rellenos, trazos, auto-layout, texto, efectos, radios de esquina y redes vectoriales se preservan. Funciona en ambas direcciones.
+**Copiar y pegar con Figma** — selecciona nodos en Figma, <kbd>⌘</kbd><kbd>C</kbd>, cambia a NexDesign, <kbd>⌘</kbd><kbd>V</kbd>. Rellenos, trazos, auto-layout, texto, efectos, radios de esquina y redes vectoriales se preservan. Funciona en ambas direcciones.
 
 ## Dibujo y edición
 
@@ -61,7 +61,7 @@ Abre múltiples documentos en pestañas. <kbd>⌘</kbd><kbd>T</kbd> nueva pesta�
 - **Tailwind JSX** — HTML con clases de utilidad Tailwind v4, listo para React o Vue
 - **Copiar como** — texto, SVG, PNG (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd>), o JSX vía menú contextual
 
-CLI: `open-pencil export design.fig -f jsx --style tailwind`
+CLI: `nex-design export design.fig -f jsx --style tailwind`
 
 ## Chat IA
 
@@ -76,14 +76,14 @@ Ver [Chat IA](/programmable/ai-chat) para configuración y detalles de proveedor
 Conecta Claude Code, Cursor, Windsurf, o cualquier cliente MCP para leer y escribir archivos `.fig` de forma headless. 90+ herramientas. Dos transportes: stdio y HTTP.
 
 ```sh
-bun add -g @open-pencil/mcp
+bun add -g @nex-design/mcp
 ```
 
 ```json
 {
   "mcpServers": {
-    "open-pencil": {
-      "command": "openpencil-mcp"
+    "nex-design": {
+      "command": "nexdesign-mcp"
     }
   }
 }
@@ -96,22 +96,22 @@ Consulta la [referencia de herramientas MCP](/programmable/mcp-server) para la l
 Inspecciona, exporta y analiza archivos `.fig` desde el terminal:
 
 ```sh
-open-pencil tree design.fig          # Árbol de nodos
-open-pencil find design.fig --type TEXT  # Buscar
-open-pencil export design.fig -f png     # Renderizar
-open-pencil analyze colors design.fig    # Auditoría de colores
-open-pencil analyze clusters design.fig  # Patrones repetidos
-open-pencil eval design.fig -c "..."     # Figma Plugin API
+nex-design tree design.fig          # Árbol de nodos
+nex-design find design.fig --type TEXT  # Buscar
+nex-design export design.fig -f png     # Renderizar
+nex-design analyze colors design.fig    # Auditoría de colores
+nex-design analyze clusters design.fig  # Patrones repetidos
+nex-design eval design.fig -c "..."     # Figma Plugin API
 ```
 
 Cuando la app de escritorio está en ejecución, omite el archivo para controlar el editor en vivo vía RPC:
 
 ```sh
-open-pencil tree                     # Documento en vivo
-open-pencil export -f png            # Captura del canvas
+nex-design tree                     # Documento en vivo
+nex-design export -f png            # Captura del canvas
 ```
 
-Todos los comandos soportan `--json`. Instalar: `bun add -g @open-pencil/cli`
+Todos los comandos soportan `--json`. Instalar: `bun add -g @nex-design/cli`
 
 ## Colaboración en tiempo real
 
@@ -127,14 +127,14 @@ P2P vía WebRTC — sin servidor requerido. Comparte un enlace y edita junto.
 
 **Escritorio** — Tauri v2, ~7 MB. macOS (firmado y notarizado), Windows, Linux. Menús nativos, offline, autoguardado.
 
-**Web** — funciona en [app.openpencil.dev](https://app.openpencil.dev), instalable como PWA en móvil con interfaz optimizada para táctil.
+**Web** — funciona en [app.nexdesign.dev](https://app.nexdesign.dev), instalable como PWA en móvil con interfaz optimizada para táctil.
 
 **Homebrew:**
 
 ```sh
-brew install open-pencil/tap/open-pencil
+brew install nex-design/tap/nex-design
 ```
 
 ## Fallback de Google Fonts
 
-Cuando una fuente no está disponible localmente, OpenPencil la carga automáticamente desde Google Fonts. No requiere instalación manual al abrir archivos .fig con fuentes desconocidas.
+Cuando una fuente no está disponible localmente, NexDesign la carga automáticamente desde Google Fonts. No requiere instalación manual al abrir archivos .fig con fuentes desconocidas.

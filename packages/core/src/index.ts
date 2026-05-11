@@ -333,12 +333,12 @@ export {
   parseFigmaClipboard,
   importClipboardNodes,
   figmaNodesBounds,
-  parseOpenPencilClipboard,
+  parseNexDesignClipboard,
   buildFigmaClipboardHTML,
-  buildOpenPencilClipboardHTML,
+  buildNexDesignClipboardHTML,
   prefetchFigmaSchema,
   type TextPictureBuilder,
-  type OpenPencilClipboardData
+  type NexDesignClipboardData
 } from './clipboard'
 export { probeGlyphOutlineCommands, type GlyphOutlineProbe } from './text/opentype'
 

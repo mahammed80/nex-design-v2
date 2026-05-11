@@ -1,5 +1,5 @@
-import type { Editor } from '@open-pencil/core/editor'
-import { cloneVectorNetwork } from '@open-pencil/core/scene-graph'
+import type { Editor } from '@nex-design/core/editor'
+import { cloneVectorNetwork } from '@nex-design/core/scene-graph'
 
 import { getHitHandleByMatrix } from '#vue/shared/input/geometry'
 import type { DragResize } from '#vue/shared/input/types'

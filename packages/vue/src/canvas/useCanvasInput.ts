@@ -1,8 +1,8 @@
 import { useEventListener } from '@vueuse/core'
 import { ref, type Ref } from 'vue'
 
-import type { Editor } from '@open-pencil/core/editor'
-import type { SceneNode } from '@open-pencil/core/scene-graph'
+import type { Editor } from '@nex-design/core/editor'
+import type { SceneNode } from '@nex-design/core/scene-graph'
 
 import {
   handleBendHandleMove,
@@ -25,7 +25,7 @@ import { useSpaceHeld } from '#vue/shared/input/space-key'
 import type { DragState } from '#vue/shared/input/types'
 
 /**
- * Wires pointer and mouse interaction to an OpenPencil canvas.
+ * Wires pointer and mouse interaction to an NexDesign canvas.
  *
  * This composable coordinates selection, dragging, resizing, rotation,
  * panning, drawing tools, scoped hit testing, and text-edit interaction.

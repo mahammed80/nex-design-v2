@@ -5,7 +5,7 @@ import { rootThemeConfig } from './root-theme'
 import { BASE, applyPageSeo, siteHead, withAlternateSitemapLinks } from './seo'
 
 export default defineConfig({
-  title: 'OpenPencil',
+  title: 'NexDesign',
   description:
     'Open-source, AI-native design editor. Figma alternative built from scratch with full .fig file compatibility.',
   cleanUrls: true,

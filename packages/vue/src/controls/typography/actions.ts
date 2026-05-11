@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import type { ComputedRef } from 'vue'
 
-import type { Editor } from '@open-pencil/core/editor'
-import type { SceneNode, TextDecoration } from '@open-pencil/core/scene-graph'
-import { FONT_WEIGHT_NAMES, weightToStyle } from '@open-pencil/core/text'
+import type { Editor } from '@nex-design/core/editor'
+import type { SceneNode, TextDecoration } from '@nex-design/core/scene-graph'
+import { FONT_WEIGHT_NAMES, weightToStyle } from '@nex-design/core/text'
 
 import type { UseTypographyOptions } from '#vue/controls/typography/use'
 import { useSceneComputed } from '#vue/internal/scene-computed/use'

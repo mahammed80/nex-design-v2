@@ -2,37 +2,37 @@ import type { ChatTransport, UIMessage } from 'ai'
 
 import type { EditorStore } from '@/app/editor/session/create'
 
-export interface OpenPencilTestHooks {
+export interface NexDesignTestHooks {
   writeCount?: () => number
   mockHandle?: FileSystemFileHandle
   savedOpen?: Window['open']
 }
 
-export interface OpenPencilWindowAPI {
+export interface NexDesignWindowAPI {
   getStore?: () => EditorStore
   setChatTransport?: (factory: () => ChatTransport<UIMessage>) => void
   openFile?: (path: string) => Promise<void>
-  test?: OpenPencilTestHooks
+  test?: NexDesignTestHooks
 }
 
 declare global {
   interface Window {
-    openPencil?: OpenPencilWindowAPI
+    nexDesign?: NexDesignWindowAPI
   }
 }
 
 let activeStore: EditorStore | null = null
 
-function windowApi(): OpenPencilWindowAPI {
-  window.openPencil ??= {}
-  window.openPencil.getStore ??= () => {
-    if (!activeStore) throw new Error('OpenPencil store not initialized')
+function windowApi(): NexDesignWindowAPI {
+  window.nexDesign ??= {}
+  window.nexDesign.getStore ??= () => {
+    if (!activeStore) throw new Error('NexDesign store not initialized')
     return activeStore
   }
-  return window.openPencil
+  return window.nexDesign
 }
 
-export function setOpenPencilStore(store: EditorStore) {
+export function setNexDesignStore(store: EditorStore) {
   activeStore = store
   windowApi()
 }
@@ -43,6 +43,6 @@ export function exposeChatTransportOverride(
   windowApi().setChatTransport = setChatTransport
 }
 
-export function setOpenPencilOpenFileHandler(openFile: (path: string) => Promise<void>) {
+export function setNexDesignOpenFileHandler(openFile: (path: string) => Promise<void>) {
   windowApi().openFile = openFile
 }

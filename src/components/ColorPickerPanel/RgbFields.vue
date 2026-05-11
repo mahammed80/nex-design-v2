@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inputNumberValue } from '@open-pencil/vue'
+import { inputNumberValue } from '@nex-design/vue'
 import { useColorPickerPanelContext } from '@/components/ColorPickerPanel/context'
 
 const ctx = useColorPickerPanelContext()

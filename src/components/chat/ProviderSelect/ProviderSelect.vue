@@ -8,7 +8,7 @@ import {
   AI_PROVIDERS,
   AUTOMATION_HTTP_PORT,
   IS_TAURI
-} from '@open-pencil/core/constants'
+} from '@nex-design/core/constants'
 import { useAIChat } from '@/app/ai/chat/use'
 
 const { providerID, providerDef } = useAIChat()

@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeAll } from 'bun:test'
 
-import { fetchIcon, fetchIcons, searchIcons, searchIconsBatch } from '@open-pencil/core'
+import { fetchIcon, fetchIcons, searchIcons, searchIconsBatch } from '@nex-design/core'
 
 import { expectDefined } from '#tests/helpers/assert'
 

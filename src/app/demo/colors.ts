@@ -1,4 +1,4 @@
-import type { Color, Fill, GradientStop, Stroke } from '@open-pencil/core/scene-graph'
+import type { Color, Fill, GradientStop, Stroke } from '@nex-design/core/scene-graph'
 
 export const WHITE: Color = { r: 1, g: 1, b: 1, a: 1 }
 export const BLACK: Color = { r: 0, g: 0, b: 0, a: 1 }

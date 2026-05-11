@@ -11,10 +11,10 @@ import IconChevronDown from '~icons/lucide/chevron-down'
 
 import { menu } from '@/components/ui/menu'
 import ToolButton from '@/components/Toolbar/ToolButton.vue'
-import { ToolbarItem } from '@open-pencil/vue'
+import { ToolbarItem } from '@nex-design/vue'
 
-import type { Tool } from '@open-pencil/vue'
-import type { EditorToolDef } from '@open-pencil/core/editor'
+import type { Tool } from '@nex-design/vue'
+import type { EditorToolDef } from '@nex-design/core/editor'
 import type { ToolbarUi, ToolIconMap, ToolLabels } from '@/components/Toolbar/types'
 
 const {

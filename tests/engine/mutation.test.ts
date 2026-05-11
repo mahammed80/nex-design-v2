@@ -12,7 +12,7 @@ import {
   UndoManager,
   type StyleRun,
   type VectorNetwork
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 import { getNodeOrThrow } from '#tests/helpers/assert'
 

@@ -18,7 +18,7 @@ Espone stato e azioni per:
 ## Utilizzo
 
 ```ts
-import { useLayout } from '@open-pencil/vue'
+import { useLayout } from '@nex-design/vue'
 
 const layout = useLayout()
 ```

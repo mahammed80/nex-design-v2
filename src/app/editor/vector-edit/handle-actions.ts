@@ -1,6 +1,6 @@
-import type { Editor } from '@open-pencil/core/editor'
-import type { Vector } from '@open-pencil/core/types'
-import { findAllHandles, findOppositeHandle, mirrorHandle } from '@open-pencil/core/vector'
+import type { Editor } from '@nex-design/core/editor'
+import type { Vector } from '@nex-design/core/types'
+import { findAllHandles, findOppositeHandle, mirrorHandle } from '@nex-design/core/vector'
 
 import { constrainContinuousTangent } from './handles'
 import { getLiveNetwork } from './network'

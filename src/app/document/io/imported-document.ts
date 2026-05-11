@@ -1,5 +1,5 @@
-import type { Editor } from '@open-pencil/core/editor'
-import type { SceneGraph, SceneNode } from '@open-pencil/core/scene-graph'
+import type { Editor } from '@nex-design/core/editor'
+import type { SceneGraph, SceneNode } from '@nex-design/core/scene-graph'
 
 export async function applyImportedDocument(editor: Editor, imported: SceneGraph) {
   editor.replaceGraph(imported)

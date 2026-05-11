@@ -1,8 +1,8 @@
 import { shallowReactive } from 'vue'
 
-import { createEditor } from '@open-pencil/core/editor'
-import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
-import { SceneGraph } from '@open-pencil/core/scene-graph'
+import { createEditor } from '@nex-design/core/editor'
+import { BUILTIN_IO_FORMATS, IORegistry } from '@nex-design/core/io'
+import { SceneGraph } from '@nex-design/core/scene-graph'
 
 import {
   getActiveEditorStore,
@@ -17,8 +17,8 @@ import {
 } from '@/app/editor/session/modules'
 import { createInitialAppEditorState, type AppEditorState } from '@/app/editor/session/types'
 
-export { EDITOR_TOOLS as TOOLS, TOOL_SHORTCUTS } from '@open-pencil/core/editor'
-export type { EditorToolDef as ToolDef, Tool } from '@open-pencil/core/editor'
+export { EDITOR_TOOLS as TOOLS, TOOL_SHORTCUTS } from '@nex-design/core/editor'
+export type { EditorToolDef as ToolDef, Tool } from '@nex-design/core/editor'
 
 export function createEditorStore(initialGraph?: SceneGraph) {
   const graph = initialGraph ?? new SceneGraph()

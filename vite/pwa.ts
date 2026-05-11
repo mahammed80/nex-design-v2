@@ -1,6 +1,6 @@
 import { VitePWA } from 'vite-plugin-pwa'
 
-export function openPencilPwaPlugin() {
+export function nexDesignPwaPlugin() {
   return VitePWA({
     registerType: 'autoUpdate',
     devOptions: { enabled: false },
@@ -10,8 +10,8 @@ export function openPencilPwaPlugin() {
       navigateFallback: '/index.html'
     },
     manifest: {
-      name: 'OpenPencil',
-      short_name: 'OpenPencil',
+      name: 'NexDesign',
+      short_name: 'NexDesign',
       description: 'Open-source design editor',
       display: 'standalone',
       orientation: 'any',

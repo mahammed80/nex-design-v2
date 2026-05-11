@@ -1,7 +1,7 @@
 import { promiseTimeout } from '@vueuse/core'
 
-import { AUTOMATION_HTTP_PORT } from '@open-pencil/core/constants'
-import { randomHex } from '@open-pencil/core/random'
+import { AUTOMATION_HTTP_PORT } from '@nex-design/core/constants'
+import { randomHex } from '@nex-design/core/random'
 
 import { decodeTauriStderr } from '@/app/shell/ui'
 import { isTauri } from '@/app/tauri/env'
@@ -17,7 +17,7 @@ export interface AutomationServerHandle {
   authToken: string | null
 }
 
-const DEV_AUTOMATION_AUTH_TOKEN = import.meta.env.DEV ? __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__ : null
+const DEV_AUTOMATION_AUTH_TOKEN = import.meta.env.DEV ? __NEXDESIGN_LOCAL_AUTOMATION_TOKEN__ : null
 const noop = () => undefined
 
 let runtimeAutomationAuthToken: string | null = DEV_AUTOMATION_AUTH_TOKEN
@@ -73,16 +73,16 @@ export async function spawnMCPIfNeeded(): Promise<AutomationServerHandle | null>
   const { Command } = await import('@tauri-apps/plugin-shell')
   const isWindows = navigator.platform.includes('Win')
   const command = isWindows
-    ? Command.create('cmd', ['/c', 'openpencil-mcp-http'], {
+    ? Command.create('cmd', ['/c', 'nexdesign-mcp-http'], {
         env: {
-          OPENPENCIL_MCP_AUTH_TOKEN: authToken,
-          OPENPENCIL_MCP_CORS_ORIGIN: window.location.origin
+          NEXDESIGN_MCP_AUTH_TOKEN: authToken,
+          NEXDESIGN_MCP_CORS_ORIGIN: window.location.origin
         }
       })
-    : Command.create('openpencil-mcp-http', [], {
+    : Command.create('nexdesign-mcp-http', [], {
         env: {
-          OPENPENCIL_MCP_AUTH_TOKEN: authToken,
-          OPENPENCIL_MCP_CORS_ORIGIN: window.location.origin
+          NEXDESIGN_MCP_AUTH_TOKEN: authToken,
+          NEXDESIGN_MCP_CORS_ORIGIN: window.location.origin
         }
       })
 
@@ -109,6 +109,6 @@ export async function spawnMCPIfNeeded(): Promise<AutomationServerHandle | null>
 
   await child.kill()
   throw new Error(
-    'Failed to start MCP server. Is openpencil-mcp-http installed? Run: npm i -g @open-pencil/mcp'
+    'Failed to start MCP server. Is nexdesign-mcp-http installed? Run: npm i -g @nex-design/mcp'
   )
 }

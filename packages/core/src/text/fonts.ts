@@ -180,7 +180,7 @@ export class FontManager {
     const { resolve, dirname } = await import(/* @vite-ignore */ 'node:path')
     const { createRequire } = await import(/* @vite-ignore */ 'node:module')
     const require = createRequire(import.meta.url)
-    const packageRoot = dirname(require.resolve('@open-pencil/core/package.json'))
+    const packageRoot = dirname(require.resolve('@nex-design/core/package.json'))
     const assetPath = resolve(packageRoot, `assets${url}`)
     const buf = await readFile(assetPath)
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)

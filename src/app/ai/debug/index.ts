@@ -1,7 +1,7 @@
 import type { UIMessage } from 'ai'
 
-import { buildDebugLog } from '@open-pencil/core/tools'
-import type { ToolDebugLog, ToolLogEntry } from '@open-pencil/core/tools'
+import { buildDebugLog } from '@nex-design/core/tools'
+import type { ToolDebugLog, ToolLogEntry } from '@nex-design/core/tools'
 
 import { getStepUsages, getToolLogEntries } from '@/app/ai/tools'
 

@@ -1,6 +1,6 @@
 ---
 title: Auto-Layout
-description: Flex- und Grid-Layout in OpenPencil — Richtung, Abstand, Polsterung, Ausrichtung, Kindgröße und CSS-Grid-Tracks.
+description: Flex- und Grid-Layout in NexDesign — Richtung, Abstand, Polsterung, Ausrichtung, Kindgröße und CSS-Grid-Tracks.
 ---
 
 # Auto-Layout

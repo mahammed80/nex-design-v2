@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 
-import type { Editor } from '@open-pencil/core/editor'
+import type { Editor } from '@nex-design/core/editor'
 
 import { useWheelGesture } from '#vue/shared/gesture/wheel'
 import { createRafScheduler } from '#vue/shared/input/raf-scheduler'

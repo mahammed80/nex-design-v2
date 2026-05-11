@@ -17,7 +17,7 @@ Proporciona:
 ## Uso
 
 ```ts
-import { useStrokeControls } from '@open-pencil/vue'
+import { useStrokeControls } from '@nex-design/vue'
 
 const strokes = useStrokeControls()
 ```

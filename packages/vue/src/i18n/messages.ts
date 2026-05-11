@@ -295,14 +295,14 @@ export const dialogMessages = i18n('dialogs', {
   search: 'Search…',
   noResults: 'No results',
   share: 'Share',
-  appUpToDate: 'OpenPencil is up to date',
-  updateAvailableTitle: 'Update OpenPencil',
-  updateAvailable: params('OpenPencil {version} is available.'),
+  appUpToDate: 'NexDesign is up to date',
+  updateAvailableTitle: 'Update NexDesign',
+  updateAvailable: params('NexDesign {version} is available.'),
   updateInstallPrompt:
     'Download and install it now? The app will restart after the update is installed.',
-  downloadingUpdate: params('Downloading OpenPencil {version}'),
+  downloadingUpdate: params('Downloading NexDesign {version}'),
   updateInstalledTitle: 'Update installed',
-  updateInstalled: params('OpenPencil {version} was installed{size}. Restarting now.'),
+  updateInstalled: params('NexDesign {version} was installed{size}. Restarting now.'),
   updateUnavailable:
     'Updates are not available yet. Publish a signed release with latest.json first.',
   updateCheckFailed: params('Could not check for updates: {error}')

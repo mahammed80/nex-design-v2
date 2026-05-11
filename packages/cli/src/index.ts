@@ -20,8 +20,8 @@ const { version } = await import('../package.json')
 
 const main = defineCommand({
   meta: {
-    name: 'open-pencil',
-    description: 'OpenPencil CLI — inspect, export, and lint OpenPencil design documents',
+    name: 'nex-design',
+    description: 'NexDesign CLI — inspect, export, and lint NexDesign design documents',
     version
   },
   subCommands: {

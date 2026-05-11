@@ -5,20 +5,20 @@ import { ScrollAreaRoot, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaViewpor
 import { useClipboard } from '@vueuse/core'
 import { computed, ref } from 'vue'
 
-import { JSX_REFERENCE, selectionToJSX } from '@open-pencil/core/design-jsx'
-import { useI18n, useSceneComputed } from '@open-pencil/vue'
+import { JSX_REFERENCE, selectionToJSX } from '@nex-design/core/design-jsx'
+import { useI18n, useSceneComputed } from '@nex-design/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 
-import type { JSXFormat } from '@open-pencil/core/design-jsx'
+import type { JSXFormat } from '@nex-design/core/design-jsx'
 
 const store = useEditorStore()
 const { copy, copied } = useClipboard({ copiedDuring: 2000 })
 const { dialogs } = useI18n()
-const jsxFormat = ref<JSXFormat>('openpencil')
+const jsxFormat = ref<JSXFormat>('nexdesign')
 
 function toggleFormat() {
-  jsxFormat.value = jsxFormat.value === 'openpencil' ? 'tailwind' : 'openpencil'
+  jsxFormat.value = jsxFormat.value === 'nexdesign' ? 'tailwind' : 'nexdesign'
 }
 
 const jsxCode = useSceneComputed(() => {
@@ -66,7 +66,7 @@ function copyReference() {
           class="rounded px-1.5 py-0.5 text-[11px] text-muted hover:bg-hover hover:text-surface"
           @click="toggleFormat"
         >
-          {{ jsxFormat === 'openpencil' ? 'OpenPencil' : 'Tailwind' }}
+          {{ jsxFormat === 'nexdesign' ? 'NexDesign' : 'Tailwind' }}
         </button>
       </div>
       <div class="flex items-center gap-1">

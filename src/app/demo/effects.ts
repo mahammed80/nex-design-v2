@@ -1,4 +1,4 @@
-import type { Color, Effect } from '@open-pencil/core/scene-graph'
+import type { Color, Effect } from '@nex-design/core/scene-graph'
 
 export function dropShadow(
   ox = 0,

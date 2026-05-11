@@ -10,10 +10,10 @@ Eksportuj projekty z terminala — obrazy rastrowe, wektory lub kod JSX.
 ## Eksport obrazów
 
 ```sh
-open-pencil export design.fig                          # PNG (domyślnie)
-open-pencil export design.fig -f jpg -s 2 -q 90       # JPG w 2×, jakość 90
-open-pencil export design.fig -f webp -s 3             # WEBP w 3×
-open-pencil export design.fig -f svg                   # SVG wektor
+nex-design export design.fig                          # PNG (domyślnie)
+nex-design export design.fig -f jpg -s 2 -q 90       # JPG w 2×, jakość 90
+nex-design export design.fig -f webp -s 3             # WEBP w 3×
+nex-design export design.fig -f svg                   # SVG wektor
 ```
 
 Opcje:
@@ -30,7 +30,7 @@ Opcje:
 Eksportuj jako JSX z klasami narzędziowymi Tailwind:
 
 ```sh
-open-pencil export design.fig -f jsx --style tailwind
+nex-design export design.fig -f jsx --style tailwind
 ```
 
 Wynik:
@@ -42,12 +42,12 @@ Wynik:
 </div>
 ```
 
-Obsługuje również `--style openpencil` dla natywnego formatu JSX (zobacz [Renderer JSX](../jsx-renderer)).
+Obsługuje również `--style nexdesign` dla natywnego formatu JSX (zobacz [Renderer JSX](../jsx-renderer)).
 
 ## Miniatury
 
 ```sh
-open-pencil export design.fig --thumbnail --width 1920 --height 1080
+nex-design export design.fig --thumbnail --width 1920 --height 1080
 ```
 
 ## Tryb żywej aplikacji
@@ -55,5 +55,5 @@ open-pencil export design.fig --thumbnail --width 1920 --height 1080
 Pomiń plik, aby eksportować z uruchomionej aplikacji:
 
 ```sh
-open-pencil export -f png    # zrzut ekranu bieżącego płótna
+nex-design export -f png    # zrzut ekranu bieżącego płótna
 ```

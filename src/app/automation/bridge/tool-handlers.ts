@@ -1,7 +1,7 @@
-import { renderTreeNode } from '@open-pencil/core/design-jsx'
-import type { FigmaAPI } from '@open-pencil/core/figma-api'
-import { computeAllLayouts } from '@open-pencil/core/layout'
-import { ALL_TOOLS } from '@open-pencil/core/tools'
+import { renderTreeNode } from '@nex-design/core/design-jsx'
+import type { FigmaAPI } from '@nex-design/core/figma-api'
+import { computeAllLayouts } from '@nex-design/core/layout'
+import { ALL_TOOLS } from '@nex-design/core/tools'
 
 import type { EditorStore } from '@/app/editor/active-store'
 

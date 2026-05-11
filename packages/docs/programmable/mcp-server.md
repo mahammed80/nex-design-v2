@@ -1,13 +1,13 @@
 # MCP Server
 
-OpenPencil includes an MCP (Model Context Protocol) server that lets AI coding tools — Claude Code, Cursor, Windsurf, etc. — read and modify designs through the running app.
+NexDesign includes an MCP (Model Context Protocol) server that lets AI coding tools — Claude Code, Cursor, Windsurf, etc. — read and modify designs through the running app.
 
 Two transports: **stdio** for MCP clients, **HTTP** for browser extensions and scripts.
 
 ## Install
 
 ```sh
-bun add -g @open-pencil/mcp
+bun add -g @nex-design/mcp
 ```
 
 ## Stdio (Claude Code, Cursor, etc.)
@@ -17,14 +17,14 @@ Add to your MCP config (e.g. `~/.claude/settings.json` or `.cursor/mcp.json`):
 ```json
 {
   "mcpServers": {
-    "open-pencil": {
-      "command": "openpencil-mcp"
+    "nex-design": {
+      "command": "nexdesign-mcp"
     }
   }
 }
 ```
 
-The stdio server connects to the running OpenPencil app via WebSocket (port 7601). Make sure the app is open with a document loaded.
+The stdio server connects to the running NexDesign app via WebSocket (port 7601). Make sure the app is open with a document loaded.
 
 Or run from source without installing:
 
@@ -32,9 +32,9 @@ Or run from source without installing:
 ```json [Bun]
 {
   "mcpServers": {
-    "open-pencil": {
+    "nex-design": {
       "command": "bun",
-      "args": ["/path/to/open-pencil/packages/mcp/src/stdio.ts"]
+      "args": ["/path/to/nex-design/packages/mcp/src/stdio.ts"]
     }
   }
 }
@@ -42,9 +42,9 @@ Or run from source without installing:
 ```json [Node.js]
 {
   "mcpServers": {
-    "open-pencil": {
+    "nex-design": {
       "command": "npx",
-      "args": ["tsx", "/path/to/open-pencil/packages/mcp/src/stdio.ts"]
+      "args": ["tsx", "/path/to/nex-design/packages/mcp/src/stdio.ts"]
     }
   }
 }
@@ -56,7 +56,7 @@ Or run from source without installing:
 For browser extensions, scripts, CI, or any HTTP client:
 
 ```sh
-openpencil-mcp-http
+nexdesign-mcp-http
 ```
 
 Or from source: `bun packages/mcp/src/index.ts` / `npx tsx packages/mcp/src/index.ts`
@@ -65,9 +65,9 @@ Security defaults (HTTP transport):
 
 - Binds to `127.0.0.1` by default (`HOST` to override)
 - `eval` tool is disabled
-- File operations are limited to `OPENPENCIL_MCP_ROOT` (defaults to current working directory)
-- CORS is disabled by default; set `OPENPENCIL_MCP_CORS_ORIGIN` to allow one origin
-- Optional auth token: `OPENPENCIL_MCP_AUTH_TOKEN` (client sends `Authorization: Bearer <token>` or `x-mcp-token`)
+- File operations are limited to `NEXDESIGN_MCP_ROOT` (defaults to current working directory)
+- CORS is disabled by default; set `NEXDESIGN_MCP_CORS_ORIGIN` to allow one origin
+- Optional auth token: `NEXDESIGN_MCP_AUTH_TOKEN` (client sends `Authorization: Bearer <token>` or `x-mcp-token`)
 
 Server starts on port 7600 (override with `PORT` env var). Endpoints:
 
@@ -85,10 +85,10 @@ Server starts on port 7600 (override with `PORT` env var). Endpoints:
 
 ## AI Agent Skill
 
-Teach your AI coding agent to use OpenPencil tools:
+Teach your AI coding agent to use NexDesign tools:
 
 ```sh
-npx skills add open-pencil/skills@open-pencil
+npx skills add nex-design/skills@nex-design
 ```
 
 Works with Claude Code, Cursor, Windsurf, Codex, and any agent that supports [skills](https://skills.sh). The skill covers the CLI, MCP tools, JSX rendering, eval, and the running app's automation bridge.

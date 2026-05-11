@@ -1,5 +1,5 @@
-import type { FigmaAPI } from '@open-pencil/core/figma-api'
-import { wrapEvalCode } from '@open-pencil/core/tools'
+import type { FigmaAPI } from '@nex-design/core/figma-api'
+import { wrapEvalCode } from '@nex-design/core/tools'
 
 import type { EditorStore } from '@/app/editor/active-store'
 

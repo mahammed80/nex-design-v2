@@ -2,15 +2,15 @@ import { deflateSync, inflateSync } from 'fflate'
 
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 
-// --- Internal copy/paste (OpenPencil ↔ OpenPencil) ---
+// --- Internal copy/paste (NexDesign ↔ NexDesign) ---
 
-export interface OpenPencilClipboardData {
+export interface NexDesignClipboardData {
   nodes: Array<SceneNode & { children?: SceneNode[] }>
   images: Map<string, Uint8Array>
 }
 
-export function parseOpenPencilClipboard(html: string): OpenPencilClipboardData | null {
-  const match = html.match(/<!--\(openpencil\)(.*?)\(\/openpencil\)-->/s)
+export function parseNexDesignClipboard(html: string): NexDesignClipboardData | null {
+  const match = html.match(/<!--\(nexdesign\)(.*?)\(\/nexdesign\)-->/s)
   if (!match) return null
 
   try {
@@ -22,7 +22,7 @@ export function parseOpenPencilClipboard(html: string): OpenPencilClipboardData 
       bytes = raw
     }
     const decoded = JSON.parse(new TextDecoder().decode(bytes))
-    if (decoded.format === 'openpencil/v1' && Array.isArray(decoded.nodes)) {
+    if (decoded.format === 'nexdesign/v1' && Array.isArray(decoded.nodes)) {
       restoreTextPictures(decoded.nodes)
       const images = new Map<string, Uint8Array>()
       if (decoded.images && typeof decoded.images === 'object') {
@@ -35,7 +35,7 @@ export function parseOpenPencilClipboard(html: string): OpenPencilClipboardData 
       return { nodes: decoded.nodes, images }
     }
   } catch (e) {
-    console.warn('Failed to parse OpenPencil clipboard data:', e)
+    console.warn('Failed to parse NexDesign clipboard data:', e)
   }
   return null
 }
@@ -67,7 +67,7 @@ function collectImageHashes(nodes: SceneNode[], graph: SceneGraph): Set<string> 
   return hashes
 }
 
-export function buildOpenPencilClipboardHTML(
+export function buildNexDesignClipboardHTML(
   nodes: SceneNode[],
   graph: SceneGraph,
   textPictureBuilder?: TextPictureBuilder
@@ -80,12 +80,12 @@ export function buildOpenPencilClipboardHTML(
     if (bytes) images[hash] = bytes.toBase64()
   }
   const data = {
-    format: 'openpencil/v1',
+    format: 'nexdesign/v1',
     nodes: nodeTree,
     images
   }
   const compressed = deflateSync(new TextEncoder().encode(JSON.stringify(data)))
-  return `<!--(openpencil)${compressed.toBase64()}(/openpencil)-->`
+  return `<!--(nexdesign)${compressed.toBase64()}(/nexdesign)-->`
 }
 
 function collectNodeTree(

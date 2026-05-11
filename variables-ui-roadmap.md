@@ -1,6 +1,6 @@
 # Variables UI Roadmap
 
-OpenPencil already has local variable data structures and a basic variables dialog. The next work should make variables usable from the inspector fields where users edit real design properties, then expand the management UI.
+NexDesign already has local variable data structures and a basic variables dialog. The next work should make variables usable from the inspector fields where users edit real design properties, then expand the management UI.
 
 ## Product model
 

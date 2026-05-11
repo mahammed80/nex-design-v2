@@ -1,6 +1,6 @@
-import type { Editor } from '@open-pencil/core/editor'
-import type { VectorNetwork } from '@open-pencil/core/scene-graph'
-import { nearestPointOnNetwork, removeVertex, splitSegmentAt } from '@open-pencil/core/vector'
+import type { Editor } from '@nex-design/core/editor'
+import type { VectorNetwork } from '@nex-design/core/scene-graph'
+import { nearestPointOnNetwork, removeVertex, splitSegmentAt } from '@nex-design/core/vector'
 
 import type { NodeEditState, VectorEditState } from './types'
 

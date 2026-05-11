@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useI18n, useSelectionState, useEditorCommands } from '@open-pencil/vue'
+import { useI18n, useSelectionState, useEditorCommands } from '@nex-design/vue'
 
 import VariablesDialog from './VariablesDialog.vue'
 import AppearanceSection from './properties/AppearanceSection.vue'

@@ -12,7 +12,7 @@ description: Чтение и изменение коллекций переме�
 ## Использование
 
 ```ts
-import { useVariables } from '@open-pencil/vue'
+import { useVariables } from '@nex-design/vue'
 
 const variables = useVariables()
 ```

@@ -1,4 +1,4 @@
-import { fontManager, styleToWeight, type LocalFontAccessState } from '@open-pencil/core/text'
+import { fontManager, styleToWeight, type LocalFontAccessState } from '@nex-design/core/text'
 
 import {
   clearDownloadedFontCache as clearTauriDownloadedFontCache,

@@ -1,4 +1,4 @@
-import type { Editor, EditorState } from '@open-pencil/core/editor'
+import type { Editor, EditorState } from '@nex-design/core/editor'
 
 type MobileClipboardState = EditorState & { clipboardHtml: string }
 

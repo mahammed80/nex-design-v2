@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { createEditor, type Tool } from '@open-pencil/core/editor'
+import { createEditor, type Tool } from '@nex-design/core/editor'
 import {
-  OpenPencilProvider,
+  NexDesignProvider,
   CanvasRoot,
   CanvasSurface,
   LayerTree,
   ToolbarRoot,
   ToolbarItem,
   NodeProperties
-} from '@open-pencil/vue'
+} from '@nex-design/vue'
 
 const editor = createEditor()
 const pages = () => editor.graph.getPages()
@@ -27,7 +27,7 @@ const TOOL_LIST: Tool[] = [
 </script>
 
 <template>
-  <OpenPencilProvider :editor="editor">
+  <NexDesignProvider :editor="editor">
     <div class="layout">
       <ToolbarRoot>
         <div class="toolbar">
@@ -97,7 +97,7 @@ const TOOL_LIST: Tool[] = [
         </div>
       </div>
     </div>
-  </OpenPencilProvider>
+  </NexDesignProvider>
 </template>
 
 <style>

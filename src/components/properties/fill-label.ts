@@ -1,5 +1,5 @@
-import { colorToHexRaw } from '@open-pencil/core/color'
-import type { Fill, Variable } from '@open-pencil/core/scene-graph'
+import { colorToHexRaw } from '@nex-design/core/color'
+import type { Fill, Variable } from '@nex-design/core/scene-graph'
 
 export function fillLabel(fill: Fill, boundVariable?: Variable): string {
   if (boundVariable) return boundVariable.name

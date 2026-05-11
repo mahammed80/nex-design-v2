@@ -19,7 +19,7 @@ description: Чтение и обновление семейства шрифт�
 ## Использование
 
 ```ts
-import { useTypography } from '@open-pencil/vue'
+import { useTypography } from '@nex-design/vue'
 
 const typography = useTypography()
 ```

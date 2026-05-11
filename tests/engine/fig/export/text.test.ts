@@ -1,6 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from 'bun:test'
 
-import { exportFigFile, initCodec, parseFigFile, SceneGraph } from '@open-pencil/core'
+import { exportFigFile, initCodec, parseFigFile, SceneGraph } from '@nex-design/core'
 
 import { expectDefined } from '#tests/helpers/assert'
 import { parseFixture } from '#tests/helpers/fig-fixtures'
@@ -62,7 +62,7 @@ describe('text node export', () => {
 
     const { unzipSync, inflateSync } = await import('fflate')
     const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/kiwi-schema')
-    const { parseFigKiwiChunks } = await import('@open-pencil/core')
+    const { parseFigKiwiChunks } = await import('@nex-design/core')
 
     const graph = new SceneGraph()
     const page = graph.getPages()[0]
@@ -121,7 +121,7 @@ describe('text node export', () => {
 
     const { unzipSync, inflateSync } = await import('fflate')
     const { decodeBinarySchema, compileSchema, ByteBuffer } = await import('#core/kiwi/kiwi-schema')
-    const { parseFigKiwiChunks } = await import('@open-pencil/core')
+    const { parseFigKiwiChunks } = await import('@nex-design/core')
 
     const graph = new SceneGraph()
     const page = graph.getPages()[0]

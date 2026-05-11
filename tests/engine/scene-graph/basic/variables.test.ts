@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 
-import { SceneGraph } from '@open-pencil/core'
+import { SceneGraph } from '@nex-design/core'
 
 describe('Variables', () => {
   function pageId(graph: SceneGraph): string {

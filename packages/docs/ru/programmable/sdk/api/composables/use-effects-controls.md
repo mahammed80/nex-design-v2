@@ -19,7 +19,7 @@ description: Хелперы панели эффектов для теней, р�
 ## Использование
 
 ```ts
-import { useEffectsControls } from '@open-pencil/vue'
+import { useEffectsControls } from '@nex-design/vue'
 
 const effects = useEffectsControls()
 ```

@@ -5,12 +5,12 @@ description: Выполняйте JavaScript с Figma Plugin API — запра�
 
 # Скрипты
 
-`open-pencil eval` предоставляет полный Figma Plugin API в терминале. Читайте узлы, изменяйте свойства, создавайте фигуры — и сохраняйте изменения обратно в файл.
+`nex-design eval` предоставляет полный Figma Plugin API в терминале. Читайте узлы, изменяйте свойства, создавайте фигуры — и сохраняйте изменения обратно в файл.
 
 ## Базовое использование
 
 ```sh
-open-pencil eval design.fig -c "figma.currentPage.children.length"
+nex-design eval design.fig -c "figma.currentPage.children.length"
 ```
 
 Флаг `-c` принимает JavaScript. Глобальный объект `figma` работает как Figma Plugin API.
@@ -18,7 +18,7 @@ open-pencil eval design.fig -c "figma.currentPage.children.length"
 ## Запрос узлов
 
 ```sh
-open-pencil eval design.fig -c "
+nex-design eval design.fig -c "
   figma.currentPage.findAll(n => n.type === 'FRAME' && n.name.includes('Button'))
     .map(b => ({ id: b.id, name: b.name, w: b.width, h: b.height }))
 "
@@ -27,7 +27,7 @@ open-pencil eval design.fig -c "
 ## Изменение и сохранение
 
 ```sh
-open-pencil eval design.fig -c "
+nex-design eval design.fig -c "
   figma.currentPage.children.forEach(n => n.opacity = 0.5)
 " -w
 ```
@@ -39,7 +39,7 @@ open-pencil eval design.fig -c "
 Для длинных скриптов:
 
 ```sh
-cat transform.js | open-pencil eval design.fig --stdin -w
+cat transform.js | nex-design eval design.fig --stdin -w
 ```
 
 ## Режим работы с приложением
@@ -47,7 +47,7 @@ cat transform.js | open-pencil eval design.fig --stdin -w
 Опустите файл для выполнения команд в запущенном настольном приложении:
 
 ```sh
-open-pencil eval -c "figma.currentPage.name"
+nex-design eval -c "figma.currentPage.name"
 ```
 
 ## Доступный API
@@ -66,5 +66,5 @@ open-pencil eval -c "figma.currentPage.name"
 ## JSON-вывод
 
 ```sh
-open-pencil eval design.fig -c "..." --json
+nex-design eval design.fig -c "..." --json
 ```

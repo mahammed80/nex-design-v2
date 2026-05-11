@@ -19,7 +19,7 @@ Espone:
 ## Utilizzo
 
 ```ts
-import { useTypography } from '@open-pencil/vue'
+import { useTypography } from '@nex-design/vue'
 
 const typography = useTypography()
 ```

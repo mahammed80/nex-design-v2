@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenPencil",
+  "productName": "NexDesign",
   "version": "0.11.8",
-  "identifier": "net.dannote.open-pencil",
+  "identifier": "net.dannote.nex-design",
   "build": {
     "beforeDevCommand": "bun run generate:tauri-menu && bun run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "OpenPencil",
+        "title": "NexDesign",
         "width": 1280,
         "height": 800
       }
@@ -39,7 +39,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI2NDdCODAwQkQxMkU0QzUKUldURjVCSzlBTGhISnJORk1HOVlXREVDbXJycWs5U2xxSVBYa1dLMzRoYTVGRVYrUEhmTS9tWWwK",
-      "endpoints": ["https://github.com/open-pencil/open-pencil/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/nex-design/nex-design/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "passive"
       }

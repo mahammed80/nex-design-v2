@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
-import { createEditor, type EditorState } from '@open-pencil/core/editor'
-import { SceneGraph } from '@open-pencil/core/scene-graph'
+import { createEditor, type EditorState } from '@nex-design/core/editor'
+import { SceneGraph } from '@nex-design/core/scene-graph'
 
 import { resolvePasteTarget } from '#core/editor/clipboard/paste-target'
 

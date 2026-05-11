@@ -8,7 +8,7 @@ import {
   compressFigDataSync,
   initCodec,
   SceneGraph
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 import { heavy } from '#tests/helpers/test-utils'
 

@@ -7,7 +7,7 @@ import {
   normalizeVectorNetwork,
   validateVectorNetwork,
   type VectorNetwork
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 import {
   lineNetwork,

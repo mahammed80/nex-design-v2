@@ -1,6 +1,6 @@
 import { defineCommand } from 'citty'
 
-import type { InfoResult } from '@open-pencil/core/rpc'
+import type { InfoResult } from '@nex-design/core/rpc'
 
 import { bold, fmtHistogram, fmtSummary, kv } from '#cli/format'
 import { loadRpcData } from '#cli/rpc-data'

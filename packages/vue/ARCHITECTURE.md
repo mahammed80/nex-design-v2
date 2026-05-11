@@ -1,4 +1,4 @@
-# @open-pencil/vue architecture
+# @nex-design/vue architecture
 
 ## Folder conventions
 

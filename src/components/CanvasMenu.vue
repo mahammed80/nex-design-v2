@@ -8,7 +8,7 @@ import {
   ContextMenuSubContent,
   ContextMenuPortal
 } from 'reka-ui'
-import { useEditorCommands, useI18n, useMenuModel, useSelectionState } from '@open-pencil/vue'
+import { useEditorCommands, useI18n, useMenuModel, useSelectionState } from '@nex-design/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { createCanvasMenuActions } from '@/app/editor/canvas/menu-actions'

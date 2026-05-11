@@ -1,19 +1,19 @@
-import type { Editor, EditorState } from '@open-pencil/core/editor'
+import type { Editor, EditorState } from '@nex-design/core/editor'
 import type {
   ExportRequest,
   IOFormatAdapter,
   IORegistry,
   RasterExportFormat
-} from '@open-pencil/core/io'
-import { renderNodesToImage } from '@open-pencil/core/io/formats/raster'
-import type { SceneGraph } from '@open-pencil/core/scene-graph'
+} from '@nex-design/core/io'
+import { renderNodesToImage } from '@nex-design/core/io/formats/raster'
+import type { SceneGraph } from '@nex-design/core/scene-graph'
 
 import { isTauri } from '@/app/tauri/env'
 
 type ExportOptions = {
   scale?: number
   quality?: number
-  jsxFormat?: 'openpencil' | 'tailwind'
+  jsxFormat?: 'nexdesign' | 'tailwind'
 }
 
 type ExportData = string | ArrayBuffer | Uint8Array
@@ -37,7 +37,7 @@ export function getExportOptions(formatId: string, options?: ExportOptions): unk
       quality: options?.quality
     }
   }
-  if (formatId === 'jsx') return { format: options?.jsxFormat ?? 'openpencil' }
+  if (formatId === 'jsx') return { format: options?.jsxFormat ?? 'nexdesign' }
   return undefined
 }
 

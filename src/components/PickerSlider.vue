@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inputNumberValue } from '@open-pencil/vue'
+import { inputNumberValue } from '@nex-design/vue'
 import { usePickerSliderUI } from './ui/picker-slider'
 
 const {

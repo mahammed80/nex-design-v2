@@ -7,7 +7,7 @@ import {
   GPUTimer,
   CaptureStack,
   toSpeedscopeJSON
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 describe('FrameStats', () => {
   it('records frames and computes rolling averages', () => {

@@ -2,10 +2,10 @@ import { describe, test, expect } from 'bun:test'
 
 import type { CanvasKit } from 'canvaskit-wasm'
 
-import { SceneGraph, TextEditor, UndoManager } from '@open-pencil/core'
-import type { StyleRun } from '@open-pencil/core'
-import { createTextActions } from '@open-pencil/core/editor'
-import type { EditorContext, EditorState } from '@open-pencil/core/editor'
+import { SceneGraph, TextEditor, UndoManager } from '@nex-design/core'
+import type { StyleRun } from '@nex-design/core'
+import { createTextActions } from '@nex-design/core/editor'
+import type { EditorContext, EditorState } from '@nex-design/core/editor'
 
 import { expectDefined, getNodeOrThrow } from '#tests/helpers/assert'
 

@@ -12,7 +12,7 @@ import {
 
 import { computed, nextTick, ref, watch } from 'vue'
 
-import type { Variable } from '@open-pencil/core/scene-graph'
+import type { Variable } from '@nex-design/core/scene-graph'
 
 const searchTerm = defineModel<string>('searchTerm', { default: '' })
 

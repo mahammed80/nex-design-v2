@@ -1,4 +1,4 @@
-import type { DownloadedFontCache } from '@open-pencil/core/text'
+import type { DownloadedFontCache } from '@nex-design/core/text'
 
 type FontCacheEntry = {
   family: string

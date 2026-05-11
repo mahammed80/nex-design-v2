@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
-import { colorToCSS } from '@open-pencil/core/color'
+import { colorToCSS } from '@nex-design/core/color'
 
-import type { Color } from '@open-pencil/core/types'
+import type { Color } from '@nex-design/core/types'
 
 export interface ColorPickerUi {
   content?: string

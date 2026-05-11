@@ -1,5 +1,5 @@
-import { getAbsoluteRotation } from '@open-pencil/core/canvas'
-import type { Editor } from '@open-pencil/core/editor'
+import { getAbsoluteRotation } from '@nex-design/core/canvas'
+import type { Editor } from '@nex-design/core/editor'
 
 import {
   buildResizeCursor,

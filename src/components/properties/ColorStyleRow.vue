@@ -4,17 +4,17 @@ import BoundVariableButton from '@/components/properties/BoundVariableButton.vue
 import VariablePickerPopover from '@/components/properties/VariablePickerPopover.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 
-import { useI18n } from '@open-pencil/vue'
+import { useI18n } from '@nex-design/vue'
 
 import {
   opacityFromPercent,
   opacityPercent,
   variableSwatchBackground
 } from '@/components/properties/color-style-row'
-import { colorToHexRaw } from '@open-pencil/core/color'
+import { colorToHexRaw } from '@nex-design/core/color'
 
 import type { ColorVariableBindingApi } from '@/components/properties/color-style-row'
-import type { Color } from '@open-pencil/core/types'
+import type { Color } from '@nex-design/core/types'
 
 const {
   item,

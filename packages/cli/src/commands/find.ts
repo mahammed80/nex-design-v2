@@ -1,6 +1,6 @@
 import { defineCommand } from 'citty'
 
-import type { FindNodeResult } from '@open-pencil/core/rpc'
+import type { FindNodeResult } from '@nex-design/core/rpc'
 
 import { printNodeResults } from '#cli/format'
 import { loadRpcData } from '#cli/rpc-data'

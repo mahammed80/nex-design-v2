@@ -1,8 +1,8 @@
 import { computed } from 'vue'
 import type { Ref } from 'vue'
 
-import type { Editor } from '@open-pencil/core/editor'
-import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
+import type { Editor } from '@nex-design/core/editor'
+import { BUILTIN_IO_FORMATS, IORegistry } from '@nex-design/core/io'
 
 import type { ExportFormatId, ExportPanelTarget, ExportSetting } from '#vue/document/export/use'
 

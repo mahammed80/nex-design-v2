@@ -2,8 +2,8 @@ import { basename, extname, resolve } from 'node:path'
 
 import { defineCommand } from 'citty'
 
-import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
-import type { RasterExportFormat } from '@open-pencil/core/io'
+import { BUILTIN_IO_FORMATS, IORegistry } from '@nex-design/core/io'
+import type { RasterExportFormat } from '@nex-design/core/io'
 
 import { isAppMode, requireFile, rpc } from '#cli/app-client'
 import { ok, printError } from '#cli/format'
@@ -12,7 +12,7 @@ import { loadDocument } from '#cli/headless'
 const io = new IORegistry(BUILTIN_IO_FORMATS)
 const RASTER_FORMATS = ['PNG', 'JPG', 'WEBP']
 const ALL_FORMATS = [...RASTER_FORMATS, 'SVG', 'PDF', 'JSX', 'FIG']
-const JSX_STYLES = ['openpencil', 'tailwind']
+const JSX_STYLES = ['nexdesign', 'tailwind']
 
 interface ExportArgs {
   file?: string
@@ -182,8 +182,8 @@ export default defineCommand({
     },
     style: {
       type: 'string',
-      description: 'JSX style: openpencil, tailwind (default: openpencil)',
-      default: 'openpencil'
+      description: 'JSX style: nexdesign, tailwind (default: nexdesign)',
+      default: 'nexdesign'
     },
     thumbnail: { type: 'boolean', description: 'Export page thumbnail instead of full render' },
     width: { type: 'string', description: 'Thumbnail width (default: 1920)', default: '1920' },
@@ -197,7 +197,7 @@ export default defineCommand({
     }
 
     if (format === 'JSX' && !JSX_STYLES.includes(args.style)) {
-      printError(`Invalid JSX style "${args.style}". Use openpencil or tailwind.`)
+      printError(`Invalid JSX style "${args.style}". Use nexdesign or tailwind.`)
       process.exit(1)
     }
 

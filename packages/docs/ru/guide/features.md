@@ -4,7 +4,7 @@
 
 Открытие и сохранение нативных файлов Figma напрямую. Конвейер импорта/экспорта использует тот же бинарный кодек Kiwi, что и Figma — 194 определения схемы, ~390 полей на узел. Сохранение по <kbd>⌘</kbd><kbd>S</kbd>, «Сохранить как» по <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>.
 
-**Копирование и вставка с Figma** — выделите узлы в Figma, <kbd>⌘</kbd><kbd>C</kbd>, переключитесь на OpenPencil, <kbd>⌘</kbd><kbd>V</kbd>. Заливки, обводки, авто-макет, текст, эффекты, радиусы скругления и векторные сети сохраняются. Работает в обоих направлениях.
+**Копирование и вставка с Figma** — выделите узлы в Figma, <kbd>⌘</kbd><kbd>C</kbd>, переключитесь на NexDesign, <kbd>⌘</kbd><kbd>V</kbd>. Заливки, обводки, авто-макет, текст, эффекты, радиусы скругления и векторные сети сохраняются. Работает в обоих направлениях.
 
 ## Рисование и редактирование
 
@@ -61,7 +61,7 @@ Skia (CanvasKit WASM) — тот же движок рендеринга, что 
 - **Tailwind JSX** — HTML с утилитарными классами Tailwind v4, готовый для React или Vue
 - **Копировать как** — текст, SVG, PNG (<kbd>⇧</kbd><kbd>⌘</kbd><kbd>C</kbd>) или JSX через контекстное меню
 
-CLI: `open-pencil export design.fig -f jsx --style tailwind`
+CLI: `nex-design export design.fig -f jsx --style tailwind`
 
 ## Чат с ИИ
 
@@ -76,14 +76,14 @@ CLI: `open-pencil export design.fig -f jsx --style tailwind`
 Подключайте Claude Code, Cursor, Windsurf или любой MCP-клиент для чтения и записи файлов `.fig` в headless-режиме. 90+ инструментов. Два транспорта: stdio и HTTP.
 
 ```sh
-bun add -g @open-pencil/mcp
+bun add -g @nex-design/mcp
 ```
 
 ```json
 {
   "mcpServers": {
-    "open-pencil": {
-      "command": "openpencil-mcp"
+    "nex-design": {
+      "command": "nexdesign-mcp"
     }
   }
 }
@@ -96,22 +96,22 @@ bun add -g @open-pencil/mcp
 Инспекция, экспорт и анализ файлов `.fig` из терминала:
 
 ```sh
-open-pencil tree design.fig          # Дерево узлов
-open-pencil find design.fig --type TEXT  # Поиск
-open-pencil export design.fig -f png     # Рендеринг
-open-pencil analyze colors design.fig    # Аудит цветов
-open-pencil analyze clusters design.fig  # Повторяющиеся паттерны
-open-pencil eval design.fig -c "..."     # Figma Plugin API
+nex-design tree design.fig          # Дерево узлов
+nex-design find design.fig --type TEXT  # Поиск
+nex-design export design.fig -f png     # Рендеринг
+nex-design analyze colors design.fig    # Аудит цветов
+nex-design analyze clusters design.fig  # Повторяющиеся паттерны
+nex-design eval design.fig -c "..."     # Figma Plugin API
 ```
 
 Когда запущено десктоп-приложение, можно не указывать файл и управлять живым редактором через RPC:
 
 ```sh
-open-pencil tree                     # Текущий документ
-open-pencil export -f png            # Скриншот канваса
+nex-design tree                     # Текущий документ
+nex-design export -f png            # Скриншот канваса
 ```
 
-Все команды поддерживают `--json`. Установка: `bun add -g @open-pencil/cli`
+Все команды поддерживают `--json`. Установка: `bun add -g @nex-design/cli`
 
 ## Совместная работа в реальном времени
 
@@ -127,14 +127,14 @@ P2P через WebRTC — сервер не нужен. Поделитесь с�
 
 **Десктоп** — Tauri v2, ~7 МБ. macOS (подписан и нотаризован), Windows, Linux. Нативные меню, офлайн-режим, автосохранение.
 
-**Веб** — работает на [app.openpencil.dev](https://app.openpencil.dev), устанавливается как PWA на мобильных устройствах с адаптированным интерфейсом.
+**Веб** — работает на [app.nexdesign.dev](https://app.nexdesign.dev), устанавливается как PWA на мобильных устройствах с адаптированным интерфейсом.
 
 **Homebrew:**
 
 ```sh
-brew install open-pencil/tap/open-pencil
+brew install nex-design/tap/nex-design
 ```
 
 ## Автоматическая подстановка Google Fonts
 
-Когда шрифт недоступен локально, OpenPencil автоматически загружает его из Google Fonts. Ручная установка не требуется при открытии файлов .fig с незнакомыми шрифтами.
+Когда шрифт недоступен локально, NexDesign автоматически загружает его из Google Fonts. Ручная установка не требуется при открытии файлов .fig с незнакомыми шрифтами.

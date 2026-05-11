@@ -18,7 +18,7 @@ It exposes state and actions for:
 ## Usage
 
 ```ts
-import { useLayout } from '@open-pencil/vue'
+import { useLayout } from '@nex-design/vue'
 
 const layout = useLayout()
 ```

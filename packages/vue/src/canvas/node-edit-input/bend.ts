@@ -1,6 +1,6 @@
-import type { Editor } from '@open-pencil/core/editor'
-import type { VectorSegment } from '@open-pencil/core/scene-graph'
-import type { Vector } from '@open-pencil/core/types'
+import type { Editor } from '@nex-design/core/editor'
+import type { VectorSegment } from '@nex-design/core/scene-graph'
+import type { Vector } from '@nex-design/core/types'
 
 import type { DragState } from '#vue/shared/input/types'
 

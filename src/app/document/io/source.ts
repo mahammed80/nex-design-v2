@@ -1,5 +1,5 @@
-import type { Editor, EditorState } from '@open-pencil/core/editor'
-import { exportFigFile } from '@open-pencil/core/io/formats/fig'
+import type { Editor, EditorState } from '@nex-design/core/editor'
+import { exportFigFile } from '@nex-design/core/io/formats/fig'
 
 import { createAutosave } from '@/app/document/autosave'
 import {

@@ -1,6 +1,6 @@
 import { type InjectionKey, type Ref, inject, provide } from 'vue'
 
-import type { SceneNode } from '@open-pencil/core/scene-graph'
+import type { SceneNode } from '@nex-design/core/scene-graph'
 
 export interface CanvasContext {
   canvasRef: Ref<HTMLCanvasElement | null>
@@ -19,6 +19,6 @@ export function provideCanvas(ctx: CanvasContext) {
 
 export function useCanvasContext(): CanvasContext {
   const ctx = inject(CANVAS_KEY)
-  if (!ctx) throw new Error('[open-pencil] useCanvasContext() called outside <CanvasRoot>')
+  if (!ctx) throw new Error('[nex-design] useCanvasContext() called outside <CanvasRoot>')
   return ctx
 }

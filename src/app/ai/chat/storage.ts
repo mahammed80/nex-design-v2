@@ -7,11 +7,11 @@ import {
   DEFAULT_AI_PROVIDER,
   IS_BROWSER,
   IS_TAURI
-} from '@open-pencil/core/constants'
-import type { AIProviderID } from '@open-pencil/core/constants'
-import { setPexelsApiKey, setUnsplashAccessKey } from '@open-pencil/core/tools'
+} from '@nex-design/core/constants'
+import type { AIProviderID } from '@nex-design/core/constants'
+import { setPexelsApiKey, setUnsplashAccessKey } from '@nex-design/core/tools'
 
-const STORAGE_PREFIX = 'open-pencil:'
+const STORAGE_PREFIX = 'nex-design:'
 const LEGACY_KEY_STORAGE = `${STORAGE_PREFIX}openrouter-api-key`
 
 export function keyStorageKey(id: string) {

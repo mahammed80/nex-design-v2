@@ -1,7 +1,7 @@
-import type { Editor } from '@open-pencil/core/editor'
-import { cloneVectorNetwork } from '@open-pencil/core/scene-graph'
-import type { SceneGraph, VectorNetwork } from '@open-pencil/core/scene-graph'
-import { computeAccurateBounds } from '@open-pencil/core/vector'
+import type { Editor } from '@nex-design/core/editor'
+import { cloneVectorNetwork } from '@nex-design/core/scene-graph'
+import type { SceneGraph, VectorNetwork } from '@nex-design/core/scene-graph'
+import { computeAccurateBounds } from '@nex-design/core/vector'
 
 import { getLiveNetwork } from './network'
 import type { VectorEditState } from './types'

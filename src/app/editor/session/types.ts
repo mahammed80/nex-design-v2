@@ -1,4 +1,4 @@
-import { createDefaultEditorState, type EditorState } from '@open-pencil/core/editor'
+import { createDefaultEditorState, type EditorState } from '@nex-design/core/editor'
 
 import type { NodeEditState } from '@/app/editor/vector-edit/types'
 

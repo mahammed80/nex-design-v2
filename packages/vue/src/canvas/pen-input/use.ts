@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
 
-import { PEN_CLOSE_THRESHOLD } from '@open-pencil/core/constants'
-import type { Editor } from '@open-pencil/core/editor'
+import { PEN_CLOSE_THRESHOLD } from '@nex-design/core/constants'
+import type { Editor } from '@nex-design/core/editor'
 
 import { createPenDrag, handlePenDragMove } from '#vue/canvas/pen-input/drag'
 import { handlePenNodeEditDown } from '#vue/shared/input/node-edit'

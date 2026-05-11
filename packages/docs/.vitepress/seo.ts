@@ -1,4 +1,4 @@
-export const BASE = 'https://openpencil.dev'
+export const BASE = 'https://nexdesign.dev'
 
 export const LOCALE_PREFIXES = ['de', 'fr', 'es', 'it', 'pl', 'ru'] as const
 
@@ -15,13 +15,13 @@ export const LOCALES: Record<string, { hreflang: string; ogLocale: string; prefi
 export const siteHead: [string, Record<string, string>][] = [
   ['link', { rel: 'icon', type: 'image/png', href: '/favicon.png' }],
   ['meta', { property: 'og:type', content: 'website' }],
-  ['meta', { property: 'og:site_name', content: 'OpenPencil' }],
+  ['meta', { property: 'og:site_name', content: 'NexDesign' }],
   ['meta', { property: 'og:image', content: `${BASE}/screenshot.png` }],
   ['meta', { property: 'og:image:width', content: '2784' }],
   ['meta', { property: 'og:image:height', content: '1824' }],
-  ['meta', { property: 'og:image:alt', content: 'OpenPencil — AI-Native Design Editor' }],
+  ['meta', { property: 'og:image:alt', content: 'NexDesign — AI-Native Design Editor' }],
   ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-  ['meta', { name: 'twitter:site', content: '@openpencildev' }],
+  ['meta', { name: 'twitter:site', content: '@nexdesigndev' }],
   ['meta', { name: 'twitter:image', content: `${BASE}/screenshot.png` }]
 ]
 
@@ -106,7 +106,7 @@ export function applyPageSeo(pageData: PageDataLike): void {
   head.push(['link', { rel: 'alternate', hreflang: 'x-default', href: enSlug }])
 
   if (pageData.title) {
-    const ogTitle = `${pageData.title} — OpenPencil`
+    const ogTitle = `${pageData.title} — NexDesign`
     head.push(['meta', { property: 'og:title', content: ogTitle }])
     head.push(['meta', { name: 'twitter:title', content: ogTitle }])
   }

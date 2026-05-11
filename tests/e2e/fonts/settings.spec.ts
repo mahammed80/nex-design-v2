@@ -8,8 +8,8 @@ test('font settings popover is available from typography panel', async ({ page }
   await canvas.waitForInit()
 
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const id = store.createShape('TEXT', 120, 120, 240, 40)
     store.updateNode(id, { characters: 'Font settings smoke' })
     store.select([id])

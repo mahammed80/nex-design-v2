@@ -12,7 +12,7 @@ Añade un valor de relleno por defecto reutilizable.
 ## Uso
 
 ```ts
-import { useFillControls } from '@open-pencil/vue'
+import { useFillControls } from '@nex-design/vue'
 
 const fills = useFillControls()
 ```

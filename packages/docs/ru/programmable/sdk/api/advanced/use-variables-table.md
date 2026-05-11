@@ -1,6 +1,6 @@
 ---
 title: useVariablesTable
-description: Создание определений колонок TanStack Table для UI переменных OpenPencil.
+description: Создание определений колонок TanStack Table для UI переменных NexDesign.
 ---
 
 # useVariablesTable
@@ -12,7 +12,7 @@ description: Создание определений колонок TanStack Tab
 ## Использование
 
 ```ts
-import { useVariablesTable } from '@open-pencil/vue'
+import { useVariablesTable } from '@nex-design/vue'
 
 const { columns } = useVariablesTable(options)
 ```

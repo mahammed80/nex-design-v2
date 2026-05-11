@@ -21,8 +21,8 @@ test.afterAll(async () => {
 
 function getPageChildren() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.graph.getChildren(store.state.currentPageId).map((n) => ({
       id: n.id,
       type: n.type,
@@ -35,8 +35,8 @@ function getPageChildren() {
 
 function getSelectedCount() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.state.selectedIds.size
   })
 }
@@ -110,8 +110,8 @@ test('toggle visibility via context menu', async () => {
   await canvas.waitForRender()
 
   const nodeId = await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return [...store.state.selectedIds][0]
   })
 
@@ -120,8 +120,8 @@ test('toggle visibility via context menu', async () => {
   await canvas.waitForRender()
 
   const hidden = await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const n = store.graph.getNode(id)
     return n ? { visible: n.visible } : null
   }, nodeId)
@@ -129,15 +129,15 @@ test('toggle visibility via context menu', async () => {
 
   // Toggle back: select via store since invisible nodes can't be hit-tested
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.toggleVisibility()
   })
   await canvas.waitForRender()
 
   const restored = await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const n = store.graph.getNode(id)
     return n ? { visible: n.visible } : null
   }, nodeId)
@@ -192,8 +192,8 @@ test('group via context menu', async () => {
 test('ungroup via store after context-menu group', async () => {
   // Groups are click-through, so ungroup via store instead
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const group = store.graph.getChildren(store.state.currentPageId).find((n) => n.type === 'GROUP')
     if (group) store.select([group.id])
     store.ungroupSelected()

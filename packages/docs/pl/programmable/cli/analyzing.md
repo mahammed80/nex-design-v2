@@ -10,7 +10,7 @@ Polecenia `analyze` audytują cały system projektowy z terminala — znajdują 
 ## Kolory
 
 ```sh
-open-pencil analyze colors design.fig
+nex-design analyze colors design.fig
 ```
 
 Znajduje każdy kolor w pliku, zlicza użycie i wyświetla wizualny histogram:
@@ -25,7 +25,7 @@ Znajduje każdy kolor w pliku, zlicza użycie i wyświetla wizualny histogram:
 ## Typografia
 
 ```sh
-open-pencil analyze typography design.fig
+nex-design analyze typography design.fig
 ```
 
 Listuje każdą kombinację rodziny czcionek, rozmiaru i grubości wraz z liczbą użyć. Przydatne do wykrywania jednorazowych stylów tekstowych, które powinny zostać ujednolicone.
@@ -33,7 +33,7 @@ Listuje każdą kombinację rodziny czcionek, rozmiaru i grubości wraz z liczb�
 ## Odstępy
 
 ```sh
-open-pencil analyze spacing design.fig
+nex-design analyze spacing design.fig
 ```
 
 Audytuje wartości gap i padding w ramkach z auto-layoutem. Pomaga zidentyfikować niespójności w skali odstępów — np. przypadkowy `13px` gap wśród wartości `8/16/24`.
@@ -41,7 +41,7 @@ Audytuje wartości gap i padding w ramkach z auto-layoutem. Pomaga zidentyfikowa
 ## Klastry
 
 ```sh
-open-pencil analyze clusters design.fig
+nex-design analyze clusters design.fig
 ```
 
 Znajduje powtarzające się wzorce węzłów, które mogłyby zostać wydzielone jako komponenty:
@@ -59,7 +59,7 @@ Znajduje powtarzające się wzorce węzłów, które mogłyby zostać wydzielone
 Wszystkie polecenia analyze obsługują `--json` dla wyjścia w formacie do odczytu maszynowego:
 
 ```sh
-open-pencil analyze colors design.fig --json
+nex-design analyze colors design.fig --json
 ```
 
 Przekieruj do `jq`, zasilaj kontrole CI lub używaj w skryptach egzekwujących budżety tokenów projektowych.

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
-import { toolCursor, useCanvas, useCanvasDrop, useCanvasInput, useTextEdit } from '@open-pencil/vue'
+import { toolCursor, useCanvas, useCanvasDrop, useCanvasInput, useTextEdit } from '@nex-design/vue'
 import { useCollabInjected } from '@/app/collab/use'
 import { useEditorStore } from '@/app/editor/active-store'
 import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaboration-awareness'

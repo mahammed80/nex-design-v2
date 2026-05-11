@@ -1,7 +1,7 @@
 import { computed, inject, provide, proxyRefs } from 'vue'
 import type { InjectionKey, ShallowUnwrapRef } from 'vue'
 
-import type { Color } from '@open-pencil/core/types'
+import type { Color } from '@nex-design/core/types'
 import {
   createColorPickerModel,
   createOkHCLSliderGradientModel,
@@ -15,8 +15,8 @@ import {
   updateHue,
   updateRGBChannel,
   useI18n
-} from '@open-pencil/vue'
-import type { OkHCLControls } from '@open-pencil/vue'
+} from '@nex-design/vue'
+import type { OkHCLControls } from '@nex-design/vue'
 
 type ColorPanelProps = {
   color: Color

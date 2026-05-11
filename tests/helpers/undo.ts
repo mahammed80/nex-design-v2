@@ -1,4 +1,4 @@
-import { UndoManager } from '@open-pencil/core'
+import { UndoManager } from '@nex-design/core'
 
 export function noop() {
   return undefined

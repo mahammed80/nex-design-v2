@@ -49,7 +49,7 @@ export function createBrowserRpcBridge({ authToken, onConnectionChange }: Browse
   function sendRpc(body: Record<string, unknown>): Promise<unknown> {
     return new Promise((resolve, reject) => {
       if (!browserWs || browserWs.readyState !== browserWs.OPEN || !browserRegistered) {
-        reject(new Error('OpenPencil app is not connected'))
+        reject(new Error('NexDesign app is not connected'))
         return
       }
       const id = randomUUID()

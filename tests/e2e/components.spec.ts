@@ -21,8 +21,8 @@ test.afterAll(async () => {
 
 function getNodeById(id: string) {
   return page.evaluate((nodeId) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const n = store.graph.getNode(nodeId)
     if (!n) return null
     return { type: n.type, name: n.name, componentId: n.componentId, childIds: n.childIds }
@@ -31,16 +31,16 @@ function getNodeById(id: string) {
 
 function getSelectedIds() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return [...store.state.selectedIds]
   })
 }
 
 function getPageChildren() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.graph.getChildren(store.state.currentPageId).map((n) => ({
       id: n.id,
       type: n.type,
@@ -79,8 +79,8 @@ test('component visible in layers panel', async () => {
   expect(count).toBeGreaterThan(0)
 
   const types = await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.graph.getChildren(store.state.currentPageId).map((n) => n.type)
   })
   expect(types).toContain('COMPONENT')
@@ -93,8 +93,8 @@ test('create instance from component (context menu)', async () => {
 
   // Use store directly to create instance
   await page.evaluate((compId) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.createInstanceFromComponent(compId, 300, 100)
   }, expectDefined(comp, 'component').id)
   await canvas.waitForRender()
@@ -113,8 +113,8 @@ test('instance shows INSTANCE type in design panel', async () => {
   )
 
   await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.select([id])
   }, instance.id)
   await canvas.waitForRender()
@@ -136,16 +136,16 @@ test('instance has "Detach" button', async () => {
 test('modifying component propagates to instance', async () => {
   // Select the component
   await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.select([id])
   }, componentId)
   await canvas.waitForRender()
 
   // Change component fill
   await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.updateNodeWithUndo(
       id,
       {
@@ -171,8 +171,8 @@ test('modifying component propagates to instance', async () => {
     'instance node'
   )
   const instanceNode = await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const n = store.graph.getNode(id)
     const child = store.graph.getChildren(id)[0]
     return child ? { fills: child.fills } : { fills: n?.fills ?? [] }
@@ -189,15 +189,15 @@ test('detach instance converts to frame', async () => {
   )
 
   await page.evaluate((id) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.select([id])
   }, instance.id)
   await canvas.waitForRender()
 
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     store.detachInstance()
   })
   await canvas.waitForRender()

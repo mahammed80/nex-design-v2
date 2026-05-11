@@ -33,11 +33,11 @@ describe('remaining Tauri integrations', () => {
   test('creates parent directory for automation new-document paths in Tauri', async () => {
     await mockTauriIPC((cmd, args) => {
       expect(cmd).toBe('plugin:fs|mkdir')
-      expect(args).toEqual({ path: '/tmp/open-pencil/nested', options: { recursive: true } })
+      expect(args).toEqual({ path: '/tmp/nex-design/nested', options: { recursive: true } })
       return null
     })
 
-    await ensureTauriParentDirectory('/tmp/open-pencil/nested/file.fig')
+    await ensureTauriParentDirectory('/tmp/nex-design/nested/file.fig')
   })
 
   test('spawns MCP server with shell plugin when health check is missing', async () => {
@@ -74,12 +74,12 @@ describe('remaining Tauri integrations', () => {
     expect(handle?.authToken).toBe('server-token')
     expect(calls[0]?.cmd).toBe('plugin:shell|spawn')
     expect(calls[0]?.args).toMatchObject({
-      program: 'openpencil-mcp-http',
+      program: 'nexdesign-mcp-http',
       args: [],
       options: {
         env: {
-          OPENPENCIL_MCP_AUTH_TOKEN: expect.any(String),
-          OPENPENCIL_MCP_CORS_ORIGIN: 'tauri://localhost'
+          NEXDESIGN_MCP_AUTH_TOKEN: expect.any(String),
+          NEXDESIGN_MCP_CORS_ORIGIN: 'tauri://localhost'
         }
       }
     })

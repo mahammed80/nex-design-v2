@@ -7,10 +7,10 @@ import Icons from 'unplugin-icons/vite'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 
-import { createOpenPencilAliases } from './vite/aliases'
-import { localAutomationToken, openPencilAutomationPlugin } from './vite/automation'
+import { createNexDesignAliases } from './vite/aliases'
+import { localAutomationToken, nexDesignAutomationPlugin } from './vite/automation'
 import { copyCanvasKitAssetsPlugin } from './vite/canvaskit-assets'
-import { openPencilPwaPlugin } from './vite/pwa'
+import { nexDesignPwaPlugin } from './vite/pwa'
 import { rawMarkdownPlugin } from './vite/raw-markdown'
 import { createDevServerOptions } from './vite/server'
 
@@ -18,10 +18,10 @@ const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig(async ({ command }) => ({
   resolve: {
-    alias: createOpenPencilAliases(__dirname)
+    alias: createNexDesignAliases(__dirname)
   },
   define: {
-    __OPENPENCIL_LOCAL_AUTOMATION_TOKEN__: JSON.stringify(localAutomationToken(command))
+    __NEXDESIGN_LOCAL_AUTOMATION_TOKEN__: JSON.stringify(localAutomationToken(command))
   },
   plugins: [
     rawMarkdownPlugin(),
@@ -29,9 +29,9 @@ export default defineConfig(async ({ command }) => ({
     tailwindcss(),
     Icons({ compiler: 'vue3' }),
     Components({ resolvers: [IconsResolver({ prefix: 'icon' })] }),
-    openPencilAutomationPlugin(command, host),
+    nexDesignAutomationPlugin(command, host),
     vue(),
-    openPencilPwaPlugin()
+    nexDesignPwaPlugin()
   ],
   clearScreen: false,
   build: {

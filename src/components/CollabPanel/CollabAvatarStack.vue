@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { colorToCSS } from '@open-pencil/core/color'
+import { colorToCSS } from '@nex-design/core/color'
 
 import Tip from '@/components/ui/Tip.vue'
 import { initials } from '@/app/shell/ui'

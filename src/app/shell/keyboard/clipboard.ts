@@ -1,6 +1,6 @@
 import { useEventListener } from '@vueuse/core'
 
-import { extractImageFilesFromClipboard } from '@open-pencil/vue'
+import { extractImageFilesFromClipboard } from '@nex-design/vue'
 
 import type { EditorStore } from '@/app/editor/active-store'
 import { isEditing } from '@/app/shell/keyboard/focus'

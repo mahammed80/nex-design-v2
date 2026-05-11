@@ -12,6 +12,6 @@ export function automationCorsOrigin(host: string | undefined): string {
   return host ? `http://${host}:1420` : 'http://localhost:1420'
 }
 
-export function openPencilAutomationPlugin(command: string, host: string | undefined) {
+export function nexDesignAutomationPlugin(command: string, host: string | undefined) {
   return automationPlugin(localAutomationToken(command), automationCorsOrigin(host))
 }

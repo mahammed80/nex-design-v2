@@ -1,4 +1,4 @@
-import { SceneGraph } from '@open-pencil/core'
+import { SceneGraph } from '@nex-design/core'
 
 export function createClipboardGraph(): { graph: SceneGraph; pageId: string } {
   const graph = new SceneGraph()

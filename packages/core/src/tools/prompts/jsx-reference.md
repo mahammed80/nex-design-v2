@@ -1,4 +1,4 @@
-# OpenPencil JSX Reference
+# NexDesign JSX Reference
 
 ## Elements
 

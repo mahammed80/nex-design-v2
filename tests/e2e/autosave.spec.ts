@@ -31,8 +31,8 @@ test('autosave triggers after scene changes with a file handle', async () => {
       createWritable: async () => mockWritable
     } as FileSystemFileHandle
 
-    window.openPencil ??= {}
-    window.openPencil.test = { writeCount: () => writes, mockHandle }
+    window.nexDesign ??= {}
+    window.nexDesign.test = { writeCount: () => writes, mockHandle }
 
     return writes
   })
@@ -64,8 +64,8 @@ test('autosave triggers after scene changes with a file handle', async () => {
 
   // Check that the scene version changed
   const versionAfterDraw = await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.state.sceneVersion
   })
   expect(versionAfterDraw).toBeGreaterThan(0)

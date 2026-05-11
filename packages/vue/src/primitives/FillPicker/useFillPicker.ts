@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue'
 
-import { colorToCSS } from '@open-pencil/core/color'
-import type { Fill, GradientStop } from '@open-pencil/core/scene-graph'
+import { colorToCSS } from '@nex-design/core/color'
+import type { Fill, GradientStop } from '@nex-design/core/scene-graph'
 
 type FillCategory = 'SOLID' | 'GRADIENT' | 'IMAGE'
 

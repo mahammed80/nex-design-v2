@@ -1,10 +1,10 @@
 import { shallowRef, computed, triggerRef } from 'vue'
 
-import { BUILTIN_IO_FORMATS, IORegistry } from '@open-pencil/core/io'
-import { readFigFile } from '@open-pencil/core/io/formats/fig'
-import type { SceneGraph } from '@open-pencil/core/scene-graph'
+import { BUILTIN_IO_FORMATS, IORegistry } from '@nex-design/core/io'
+import { readFigFile } from '@nex-design/core/io/formats/fig'
+import type { SceneGraph } from '@nex-design/core/scene-graph'
 
-import { setOpenPencilStore } from '@/app/browser-bridge'
+import { setNexDesignStore } from '@/app/browser-bridge'
 import { setActiveEditorStore } from '@/app/editor/active-store'
 import { createEditorStore } from '@/app/editor/session'
 import type { EditorStore } from '@/app/editor/session'
@@ -53,7 +53,7 @@ function activateTab(tab: Tab) {
   activeTabId.value = tab.id
   setActiveEditorStore(tab.store)
   triggerRef(tabsRef)
-  setOpenPencilStore(tab.store)
+  setNexDesignStore(tab.store)
 }
 
 export function switchTab(tabId: string) {

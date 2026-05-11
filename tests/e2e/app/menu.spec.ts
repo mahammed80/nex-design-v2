@@ -86,8 +86,8 @@ test('Object menu shows Group/Ungroup/Component', async () => {
 
 function getStoreStateNumber(key: 'selectedIds' | 'zoom') {
   return page.evaluate((stateKey) => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     if (stateKey === 'selectedIds') return store.state.selectedIds.size
     return store.state.zoom
   }, key)
@@ -110,8 +110,8 @@ test('Duplicate via Edit menu works', async () => {
   await canvas.drawRect(300, 300, 80, 80)
 
   const countBefore = await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.graph.getChildren(store.state.currentPageId).length
   })
 
@@ -120,8 +120,8 @@ test('Duplicate via Edit menu works', async () => {
   await canvas.waitForRender()
 
   const countAfter = await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.graph.getChildren(store.state.currentPageId).length
   })
 

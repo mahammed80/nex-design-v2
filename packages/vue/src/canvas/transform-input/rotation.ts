@@ -1,6 +1,6 @@
-import { getAbsolutePositionFull } from '@open-pencil/core/canvas'
-import { ROTATION_SNAP_DEGREES } from '@open-pencil/core/constants'
-import type { Editor } from '@open-pencil/core/editor'
+import { getAbsolutePositionFull } from '@nex-design/core/canvas'
+import { ROTATION_SNAP_DEGREES } from '@nex-design/core/constants'
+import type { Editor } from '@nex-design/core/editor'
 
 import {
   hitTestCornerRotationByMatrix,

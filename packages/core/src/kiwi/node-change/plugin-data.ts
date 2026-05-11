@@ -3,7 +3,7 @@ import type { PluginDataEntry, PluginRelaunchDataEntry } from '#core/scene-graph
 
 import { guidToString } from './guid'
 
-export const OPEN_PENCIL_PLUGIN_ID = 'open-pencil'
+export const NEX_DESIGN_PLUGIN_ID = 'nex-design'
 export const TEXT_DIRECTION_PLUGIN_KEY = 'textDirection'
 export const LAYOUT_DIRECTION_PLUGIN_KEY = 'layoutDirection'
 
@@ -13,9 +13,9 @@ export function upsertPluginData(
   value: string
 ): void {
   const pluginData = node.pluginData.filter(
-    (entry) => !(entry.pluginId === OPEN_PENCIL_PLUGIN_ID && entry.key === key)
+    (entry) => !(entry.pluginId === NEX_DESIGN_PLUGIN_ID && entry.key === key)
   )
-  pluginData.push({ pluginId: OPEN_PENCIL_PLUGIN_ID, key, value })
+  pluginData.push({ pluginId: NEX_DESIGN_PLUGIN_ID, key, value })
   node.pluginData = pluginData
 }
 
@@ -42,9 +42,9 @@ export function extractPluginData(nc: NodeChange): PluginDataEntry[] {
   }))
 }
 
-export function getOpenPencilPluginValue(nc: NodeChange, key: string): string | null {
+export function getNexDesignPluginValue(nc: NodeChange, key: string): string | null {
   return (
-    nc.pluginData?.find((entry) => entry.pluginID === OPEN_PENCIL_PLUGIN_ID && entry.key === key)
+    nc.pluginData?.find((entry) => entry.pluginID === NEX_DESIGN_PLUGIN_ID && entry.key === key)
       ?.value ?? null
   )
 }

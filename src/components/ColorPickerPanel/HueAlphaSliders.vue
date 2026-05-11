@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { colorToCSS } from '@open-pencil/core/color'
+import { colorToCSS } from '@nex-design/core/color'
 
 import PickerSlider from '@/components/PickerSlider.vue'
 import { useColorPickerPanelContext } from '@/components/ColorPickerPanel/context'

@@ -22,6 +22,6 @@ export function provideScrubInput(ctx: ScrubInputContext) {
 
 export function useScrubInput(): ScrubInputContext {
   const ctx = inject(SCRUB_INPUT_KEY)
-  if (!ctx) throw new Error('[open-pencil] useScrubInput() called outside <ScrubInputRoot>')
+  if (!ctx) throw new Error('[nex-design] useScrubInput() called outside <ScrubInputRoot>')
   return ctx
 }

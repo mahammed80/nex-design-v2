@@ -4,9 +4,9 @@ import { computed, ref } from 'vue'
 import ProviderSelectField from '@/components/chat/ProviderSelect/ProviderSelectField.vue'
 import { useInputUI } from '@/components/ui/input'
 import { useAIChat } from '@/app/ai/chat/use'
-import { ACP_AGENTS } from '@open-pencil/core/constants'
+import { ACP_AGENTS } from '@nex-design/core/constants'
 import { openExternalLink } from '@/app/shell/ui'
-import { useI18n } from '@open-pencil/vue'
+import { useI18n } from '@nex-design/vue'
 
 const { providerID, providerDef, setAPIKey, customBaseURL, customModelID } = useAIChat()
 const { dialogs } = useI18n()

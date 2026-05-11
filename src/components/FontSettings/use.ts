@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 
-import type { LocalFontAccessState } from '@open-pencil/core/text'
+import type { LocalFontAccessState } from '@nex-design/core/text'
 
 import {
   clearDownloadedFontCache,

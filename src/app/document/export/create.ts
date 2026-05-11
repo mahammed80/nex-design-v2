@@ -1,5 +1,5 @@
-import type { Editor, EditorState } from '@open-pencil/core/editor'
-import type { ExportRequest, IORegistry } from '@open-pencil/core/io'
+import type { Editor, EditorState } from '@nex-design/core/editor'
+import type { ExportRequest, IORegistry } from '@nex-design/core/io'
 
 import {
   createExportTargetActions,
@@ -13,7 +13,7 @@ import {
 type ExportOptions = {
   scale?: number
   quality?: number
-  jsxFormat?: 'openpencil' | 'tailwind'
+  jsxFormat?: 'nexdesign' | 'tailwind'
 }
 
 type DownloadBlob = (data: Uint8Array, filename: string, mime: string) => void

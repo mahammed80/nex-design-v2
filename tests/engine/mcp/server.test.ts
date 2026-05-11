@@ -12,7 +12,7 @@ import {
   SceneGraph,
   computeAllLayouts,
   executeRpcCommand
-} from '@open-pencil/core'
+} from '@nex-design/core'
 
 import { startServer, paramToZod } from '#mcp/server'
 

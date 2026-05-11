@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 
-import { useEditorCommands, useI18n } from '@open-pencil/vue'
-import type { MenuEntry } from '@open-pencil/vue'
+import { useEditorCommands, useI18n } from '@nex-design/vue'
+import type { MenuEntry } from '@nex-design/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { APP_MENU_SCHEMA } from '@/app/shell/menu/schema'

@@ -21,24 +21,24 @@ test.afterAll(async () => {
 
 function getActiveTool() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.state.activeTool
   })
 }
 
 function getSelectedCount() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.state.selectedIds.size
   })
 }
 
 function getPageChildren() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.graph.getChildren(store.state.currentPageId).map((n) => ({
       id: n.id,
       type: n.type,
@@ -50,16 +50,16 @@ function getPageChildren() {
 
 function getUIVisible() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.state.showUI
   })
 }
 
 function getZoom() {
   return page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     return store.state.zoom
   })
 }
@@ -150,8 +150,8 @@ test.describe('z-order shortcuts', () => {
 
     // Select the first (bottom) node
     await page.evaluate((id) => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       store.select([id])
     }, firstId)
     await canvas.waitForRender()
@@ -169,8 +169,8 @@ test.describe('z-order shortcuts', () => {
 
     // Select the last (top) node
     await page.evaluate((id) => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       store.select([id])
     }, lastId)
     await canvas.waitForRender()
@@ -245,8 +245,8 @@ test.describe('zoom shortcuts', () => {
 
     // Set zoom to something other than 100%
     await page.evaluate(() => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       store.state.zoom = 2
     })
     await canvas.waitForRender()
@@ -327,16 +327,16 @@ test.describe('auto-layout shortcut', () => {
 
     // Change to frame type for auto-layout
     await page.evaluate(() => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       const nodes = [...store.state.selectedIds]
       if (nodes[0]) store.updateNode(nodes[0], { type: 'FRAME' })
     })
     await canvas.waitForRender()
 
     const layoutBefore = await page.evaluate(() => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       const nodes = [...store.state.selectedIds]
       return store.graph.getNode(nodes[0])?.layoutMode
     })
@@ -346,8 +346,8 @@ test.describe('auto-layout shortcut', () => {
     await canvas.waitForRender()
 
     const layoutAfter = await page.evaluate(() => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       const nodes = [...store.state.selectedIds]
       return store.graph.getNode(nodes[0])?.layoutMode
     })
@@ -358,8 +358,8 @@ test.describe('auto-layout shortcut', () => {
     await canvas.waitForRender()
 
     const layoutFinal = await page.evaluate(() => {
-      const store = window.openPencil?.getStore?.()
-      if (!store) throw new Error('OpenPencil store not initialized')
+      const store = window.nexDesign?.getStore?.()
+      if (!store) throw new Error('NexDesign store not initialized')
       const nodes = [...store.state.selectedIds]
       return store.graph.getNode(nodes[0])?.layoutMode
     })

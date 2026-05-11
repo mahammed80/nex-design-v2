@@ -19,7 +19,7 @@ Udostępnia pomocniki dla:
 ## Użycie
 
 ```ts
-import { useEffectsControls } from '@open-pencil/vue'
+import { useEffectsControls } from '@nex-design/vue'
 
 const effects = useEffectsControls()
 ```

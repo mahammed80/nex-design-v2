@@ -27,7 +27,7 @@
 
 - Fix inner shadow rendering for text nodes to be more in line with Figma's behavior
 - Fix bug causing exponential (decompressed) .fig growth triggered by repeated save / load cycles
-- Fix `@open-pencil/vue` failing to import from npm — `getAbsolutePositionFull` was imported from `@open-pencil/core/canvas/coordinate`, an unexported subpath. Re-exported the function from `@open-pencil/core/canvas` and updated the vue import.
+- Fix `@nex-design/vue` failing to import from npm — `getAbsolutePositionFull` was imported from `@nex-design/core/canvas/coordinate`, an unexported subpath. Re-exported the function from `@nex-design/core/canvas` and updated the vue import.
 - Fix large `.fig` files freezing during open — parsing and scene graph import now run in the worker, and opened files fit to the canvas viewport after loading.
 - Improve Figma import fidelity for Preline UI files — preserve variable aliases, derived instance layout, nested instance scaling, avatar swaps, badge internals, and input text alignment.
 - Improve Figma render fidelity for exports — preserve flipped vector bounds, render Figma stroke geometry for shapes/vectors, fix clipped visual overflow, and render drop shadows for stroked shapes from the stroke outline.
@@ -64,7 +64,7 @@
 
 ### Features
 
-- Add stdio transport for MCP server — `openpencil-mcp` now works as a proper stdio MCP server for Claude Code, Cursor, etc. HTTP server available as `openpencil-mcp-http`.
+- Add stdio transport for MCP server — `nexdesign-mcp` now works as a proper stdio MCP server for Claude Code, Cursor, etc. HTTP server available as `nexdesign-mcp-http`.
 - Default canvas background to dark when system prefers dark color scheme
 - Add `list_available_fonts` MCP tool for font discovery
 - Copy node ID / XPath from context menu; CLI selection command
@@ -72,7 +72,7 @@
 - JSX renderer: `position="absolute"`, `top`, `left` props for absolute children inside auto-layout containers
 - MCP server sends `notifications/tools/list_changed` when the desktop app connects or disconnects
 - Headless text measurement via opentype.js per-glyph advance widths — no CanvasKit needed
-- Add `open_file` and `new_document` MCP tools with `OPENPENCIL_MCP_ROOT` path scoping
+- Add `open_file` and `new_document` MCP tools with `NEXDESIGN_MCP_ROOT` path scoping
 - Optional `path` param on `export_image`, `export_svg`, `get_jsx` — write output to disk instead of returning base64/string
 - Multi-root JSX support — multiple top-level elements auto-wrapped in a fragment
 - `Component` and `Instance` tag aliases in JSX renderer
@@ -101,7 +101,7 @@
 - Show "Create Instance" instead of "Create Component" in context menu when a component is selected
 - Fix headless layout: use stored .fig dimensions instead of rough text size estimates (26K → 11K mismatches on material3.fig)
 - Fix `--help` output with huge vertical gaps between commands — remove inline examples from query description
-- Fix `openpencil-mcp` npm package missing `dist/stdio.js` — explicitly list entry points in tsconfig
+- Fix `nexdesign-mcp` npm package missing `dist/stdio.js` — explicitly list entry points in tsconfig
 - Show toast when MCP server fails to start instead of silently swallowing the error
 - Fix provider settings popover not appearing — tooltip wrapper broke floating-ui positioning
 - Fix `set_font_range` producing invalid style runs that crash `.fig` export — use `applyStyleToRange`, apply color and fontWeight from style name
@@ -112,7 +112,7 @@
 
 ### Fixes
 
-- Switch `@open-pencil/core` build from `tsgo` + `fix-esm-import-path` to `tsdown` — fixes bare directory imports that broke Node.js and Bun consumers
+- Switch `@nex-design/core` build from `tsgo` + `fix-esm-import-path` to `tsdown` — fixes bare directory imports that broke Node.js and Bun consumers
 
 ## 0.11.5 — 2026-04-08
 
@@ -125,7 +125,7 @@
 
 ### Fixes
 
-- Fix `@open-pencil/core` published package containing stale import paths from before the domain module restructuring — CLI and MCP installs from npm now resolve correctly
+- Fix `@nex-design/core` published package containing stale import paths from before the domain module restructuring — CLI and MCP installs from npm now resolve correctly
 - Add `save_file` MCP tool for saving the current document to disk
 - Clipboard text export now writes richer v4 `derivedTextData` payloads with glyph outlines for better paste fidelity
 
@@ -150,16 +150,16 @@
 
 - Stabilize npm publishing with isolated temp publish directories instead of mutating tracked package manifests in CI
 - Strip build-time scripts and dev dependencies from generated publish manifests so tarballs pack from verified artifacts only
-- Fix `@open-pencil/mcp` release packaging so the published npm tarball includes its built `dist/` CLI and server entrypoints deterministically
-- Fix `@open-pencil/core` release build configuration so CI publish jobs include Node and Bun ambient types when compiling package artifacts
+- Fix `@nex-design/mcp` release packaging so the published npm tarball includes its built `dist/` CLI and server entrypoints deterministically
+- Fix `@nex-design/core` release build configuration so CI publish jobs include Node and Bun ambient types when compiling package artifacts
 
 ## 0.11.1 — 2026-03-30
 
 ### Fixes
 
 - Fix npm publishing pipeline to publish packed tarballs instead of raw package folders
-- Attempt to fix `@open-pencil/mcp` npm package contents so the published CLI includes its built `dist/` entrypoints
-- Fix `@open-pencil/vue` npm package metadata and build output so the published package resolves from `dist/` while local workspace development keeps using source aliases
+- Attempt to fix `@nex-design/mcp` npm package contents so the published CLI includes its built `dist/` entrypoints
+- Fix `@nex-design/vue` npm package metadata and build output so the published package resolves from `dist/` while local workspace development keeps using source aliases
 
 ## 0.11.0 — 2026-03-30
 
@@ -172,7 +172,7 @@
 - Layer panel click syncs canvas scope automatically
 - Vue SDK internationalization primitives — `useI18n()`, locale detection, persisted locale selection, lazy-loaded locale JSON files, and exported locale metadata for custom editor shells
 - Vue SDK docs and public API audit — documented advanced exports (`useOkHCL()`, variables helpers, viewport and locale APIs), aligned docs with the actual `provideEditor()` injection model, and expanded release-ready SDK guidance
-- npm release pipeline now publishes `@open-pencil/core`, `@open-pencil/cli`, `@open-pencil/mcp`, and `@open-pencil/vue` together on version tags
+- npm release pipeline now publishes `@nex-design/core`, `@nex-design/cli`, `@nex-design/mcp`, and `@nex-design/vue` together on version tags
 - App language picker in the menu bar — switch UI locale without reloading
 - Added a vector curve editor and improved drawing experience with the pen tool
 - Resume pen drawing from existing open path endpoints — click an endpoint to continue the curve
@@ -180,7 +180,7 @@
 - Align selected anchor points relative to each other in vector edit mode — the standard alignment buttons in the position panel now operate on selected vertices when 2 or more are selected
 - Unified core IO format registry — `.fig` is now modeled as the native document format alongside shared export adapters for PNG, JPG, WEBP, SVG, and JSX
 - Export selection or current page as `.fig` from the app export UI and app menu
-- New CLI commands: `open-pencil convert` for document conversion, `open-pencil formats` to inspect readable/writable/exportable formats, and `open-pencil lint` for design consistency, structure, and accessibility checks
+- New CLI commands: `nex-design convert` for document conversion, `nex-design formats` to inspect readable/writable/exportable formats, and `nex-design lint` for design consistency, structure, and accessibility checks
 - CLI export now supports `.fig` output and routes PNG/JPG/WEBP/SVG/JSX/`.fig` through the shared IO layer
 - `Open…` now supports `.pen` Pencil documents through the shared document reader pipeline while keeping `.fig` as the native save format
 - Display‑P3 document color space pipeline — documents now default to Display‑P3, `.fig` import/export preserves document color profiles, the live canvas requests P3 surfaces with sRGB fallback, and raster/SVG export paths accept explicit color-space targets
@@ -208,7 +208,7 @@
 - TEXT nodes now default to a solid black fill — previously exported with no fill, making text invisible when opened in Figma
 - Fix save crash when COLOR variable is missing alpha channel
 - Fix console error spam on deployed web app from automation WebSocket reconnect loop
-- Fix headless CLI font fallback — bundled Inter font now ships with `@open-pencil/core` and loads without a web server
+- Fix headless CLI font fallback — bundled Inter font now ships with `@nex-design/core` and loads without a web server
 - Locked nodes now block move, resize, rotate, and delete on canvas
 - Locked containers block double-click enter
 - Marquee selection skips locked and hidden nodes
@@ -289,8 +289,8 @@
 
 ### Features
 
-- XPath query command — `open-pencil query design.fig "//FRAME[@width < 300]"` to find nodes by type, attributes, and tree structure using XPath selectors
-- CSS Grid layout mode — select a frame, click the grid icon in the auto layout toolbar to switch from flex to grid. Configure column/row tracks (fr, fixed px, auto), column and row gaps, and per-side padding. Powered by a [Yoga fork](https://github.com/open-pencil/yoga/tree/grid) with cherry-picked CSS Grid PRs from upstream
+- XPath query command — `nex-design query design.fig "//FRAME[@width < 300]"` to find nodes by type, attributes, and tree structure using XPath selectors
+- CSS Grid layout mode — select a frame, click the grid icon in the auto layout toolbar to switch from flex to grid. Configure column/row tracks (fr, fixed px, auto), column and row gaps, and per-side padding. Powered by a [Yoga fork](https://github.com/nex-design/yoga/tree/grid) with cherry-picked CSS Grid PRs from upstream
 - JSX and Tailwind CSS export for grid layouts — `grid grid-cols-N`, `gap-x-*`/`gap-y-*`, child `col-start-*`/`row-start-*`/`col-span-*`/`row-span-*`
 - Multi-provider AI support — connect to Anthropic, OpenAI, Google AI, or any OpenAI-compatible endpoint directly, in addition to OpenRouter. Per-provider API key storage, provider settings popover, automatic migration from single OpenRouter key
 - Anthropic-compatible provider for custom API endpoints
@@ -352,13 +352,13 @@
 ### Features
 
 - Mobile layout & PWA — responsive editor with touch-optimized toolbar, swipeable bottom drawer (layers/properties/design/code), HUD overlay, and installable PWA with icons and service worker
-- Tailwind CSS v4 JSX export — export selections as HTML with Tailwind utility classes (`<div className="flex gap-4 p-3">`) from the Code panel, CLI (`bun open-pencil export --format jsx --style tailwind`), or programmatically via `sceneNodeToJSX(id, graph, 'tailwind')`. Supports layout, sizing, colors, border radius, opacity, rotation, overflow, shadows, blur, and typography. Uses v4 spacing semantics (px/4 multiplier) with automatic fallback to arbitrary values.
-- Code panel format toggle — switch between OpenPencil (custom components) and Tailwind (HTML + utility classes) output
-- Homebrew tap — `brew install open-pencil/tap/open-pencil` for macOS (arm64 + x64), auto-updated on each release
+- Tailwind CSS v4 JSX export — export selections as HTML with Tailwind utility classes (`<div className="flex gap-4 p-3">`) from the Code panel, CLI (`bun nex-design export --format jsx --style tailwind`), or programmatically via `sceneNodeToJSX(id, graph, 'tailwind')`. Supports layout, sizing, colors, border radius, opacity, rotation, overflow, shadows, blur, and typography. Uses v4 spacing semantics (px/4 multiplier) with automatic fallback to arbitrary values.
+- Code panel format toggle — switch between NexDesign (custom components) and Tailwind (HTML + utility classes) output
+- Homebrew tap — `brew install nex-design/tap/nex-design` for macOS (arm64 + x64), auto-updated on each release
 - Double-click to rename layers — inline rename in layer panel, shared `useInlineRename` composable
 - New AI/MCP tools: `analyze_colors`, `analyze_typography`, `analyze_spacing`, `analyze_clusters`, `diff_create`, `diff_show`, `get_components`, `get_current_page`, `arrange`, `node_to_component`
-- CLI-to-app RPC bridge — all CLI commands work against the running app when no file is specified. Start the app, then run `bun open-pencil tree` to inspect the live document
-- VitePress docs site — user guide, reference, architecture, and development docs at openpencil.dev with 6 locales (en, de, fr, es, it, pl), SEO (OG tags, hreflang, JSON-LD, sitemap), and dark theme
+- CLI-to-app RPC bridge — all CLI commands work against the running app when no file is specified. Start the app, then run `bun nex-design tree` to inspect the live document
+- VitePress docs site — user guide, reference, architecture, and development docs at nexdesign.dev with 6 locales (en, de, fr, es, it, pl), SEO (OG tags, hreflang, JSON-LD, sitemap), and dark theme
 
 ### Improvements
 
@@ -379,7 +379,7 @@
 - Fix `ALL_TOOLS` registry missing newer tools (`analyzeColors`, `diffCreate`, `exportImage`, `arrangeNodes`)
 - Fix `renderJSX` typo in tool definitions (`renderJsx` → `renderJSX`)
 - Fix all oxlint warnings and tsgo errors — replace `!` non-null assertions in `use-collab.ts` with local const captures
-- Fix broken test imports — stale `../../src/engine/` paths updated to `@open-pencil/core`
+- Fix broken test imports — stale `../../src/engine/` paths updated to `@nex-design/core`
 - Fix flaky E2E tests: layers panel navigates to `/demo`, zoom-to-fit test zooms in first, snapshot rendering stabilized with `workers: 1` and `colorScheme: dark`
 - Fix bogus .fig import mappings for `expanded` and `strokeMiterLimit` fields
 - Fix PWA manifest error in dev mode, handle invalid font data gracefully
@@ -402,7 +402,7 @@
 
 ### Features
 
-- SVG export — export selections as SVG from the export panel, context menu, CLI (`bun open-pencil export --format svg`), or MCP/AI tools (`export_svg`). Supports rectangles, ellipses, lines, stars, polygons, vectors, text with style runs, gradients, image fills, effects, blend modes, clip paths, and nested groups (#46)
+- SVG export — export selections as SVG from the export panel, context menu, CLI (`bun nex-design export --format svg`), or MCP/AI tools (`export_svg`). Supports rectangles, ellipses, lines, stars, polygons, vectors, text with style runs, gradients, image fills, effects, blend modes, clip paths, and nested groups (#46)
 - Copy/Paste as submenu in context menu — Copy as text, Copy as SVG, Copy as PNG (⇧⌘C), Copy as JSX
 - Stroke align (Inside/Center/Outside) with clip-based rendering matching Figma behavior
 - Individual stroke weights per side (Top/Right/Bottom/Left) with side selector dropdown
@@ -554,7 +554,7 @@
 
 - Extract shared color constants (`BLACK`, `TRANSPARENT`, `DEFAULT_SHADOW_COLOR`) — replaces 8 inline literals across core
 - Extract shared `NodeContextMenuContent` component to avoid menu duplication
-- Fix `@open-pencil/core` dep in MCP package: `workspace:*` for local dev (pnpm resolves at publish time)
+- Fix `@nex-design/core` dep in MCP package: `workspace:*` for local dev (pnpm resolves at publish time)
 - Replace store thunks with a late-binding proxy
 
 ### Tests
@@ -600,14 +600,14 @@
 
 ### Features
 
-- MCP server (`@open-pencil/mcp`) — 29 tools for headless .fig editing via stdio (Claude Code, Cursor, Windsurf) or HTTP (Hono + Streamable HTTP with sessions)
-- `openpencil-mcp` and `openpencil-mcp-http` binaries — install globally via `bun add -g @open-pencil/mcp`
+- MCP server (`@nex-design/mcp`) — 29 tools for headless .fig editing via stdio (Claude Code, Cursor, Windsurf) or HTTP (Hono + Streamable HTTP with sessions)
+- `nexdesign-mcp` and `nexdesign-mcp-http` binaries — install globally via `bun add -g @nex-design/mcp`
 
 ### Build
 
-- All packages emit JS via tsgo + fix-esm-import-path — `@open-pencil/core` and `@open-pencil/mcp` work on Node.js without Bun
+- All packages emit JS via tsgo + fix-esm-import-path — `@nex-design/core` and `@nex-design/mcp` work on Node.js without Bun
 - Core package exports: `bun` condition → src (dev), `import` condition → dist (npm consumers)
-- `@open-pencil/mcp` added to CI publish workflow
+- `@nex-design/mcp` added to CI publish workflow
 
 ## [0.3.2] (2026-03-02)
 
@@ -618,7 +618,7 @@
 ### Tests
 
 - Visual regression tests for SkPicture cache: hover on/off cycle, multiple cycles, mouse hover, scene change + hover
-- Type `window.__OPEN_PENCIL_STORE__` globally, remove ad-hoc casts from tests
+- Type `window.__NEX_DESIGN_STORE__` globally, remove ad-hoc casts from tests
 
 ## [0.3.1] (2026-03-02)
 
@@ -717,7 +717,7 @@ First public alpha. The editor is functional but not production-ready.
 
 - .fig file import via Kiwi binary codec (194 definitions, ~390 fields)
 - .fig file export with Kiwi encoding, Zstd compression, thumbnail generation
-- Figma clipboard: copy/paste between OpenPencil and Figma
+- Figma clipboard: copy/paste between NexDesign and Figma
 - Round-trip fidelity for supported node types
 
 ### AI Integration
@@ -735,7 +735,7 @@ First public alpha. The editor is functional but not production-ready.
 - Syntax highlighting via Prism.js
 - Copy to clipboard
 
-### CLI (`@open-pencil/cli`)
+### CLI (`@nex-design/cli`)
 
 - `info` — document stats, node types, fonts
 - `tree` — visual node tree
@@ -751,7 +751,7 @@ First public alpha. The editor is functional but not production-ready.
 - `analyze clusters` — repeated patterns
 - All commands support `--json`
 
-### Core (`@open-pencil/core`)
+### Core (`@nex-design/core`)
 
 - Scene graph with flat Map storage and parentIndex tree
 - FigmaAPI with ~65% Figma plugin API compatibility
@@ -769,11 +769,11 @@ First public alpha. The editor is functional but not production-ready.
 
 ### Web App
 
-- Runs at [app.openpencil.dev](https://app.openpencil.dev)
+- Runs at [app.nexdesign.dev](https://app.nexdesign.dev)
 - No installation required
 - File System Access API for save/open (Chrome/Edge), download fallback elsewhere
 
 ### Documentation
 
-- [openpencil.dev](https://openpencil.dev) — VitePress site with user guide, reference, and development docs
+- [nexdesign.dev](https://nexdesign.dev) — VitePress site with user guide, reference, and development docs
 - Deployed via Cloudflare Pages

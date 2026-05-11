@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
-import { ALL_TOOLS, CODEGEN_PROMPT } from '@open-pencil/core/tools'
+import { ALL_TOOLS, CODEGEN_PROMPT } from '@nex-design/core/tools'
 
 import { fail, ok } from '#mcp/result'
 

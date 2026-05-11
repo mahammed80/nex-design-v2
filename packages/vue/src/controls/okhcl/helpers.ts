@@ -7,10 +7,10 @@ import {
   rgbaToOkHCL,
   setNodeFillOkHCL,
   setNodeStrokeOkHCL
-} from '@open-pencil/core/color'
-import type { OkHCLColor } from '@open-pencil/core/color'
-import type { Editor } from '@open-pencil/core/editor'
-import type { SceneNode } from '@open-pencil/core/scene-graph'
+} from '@nex-design/core/color'
+import type { OkHCLColor } from '@nex-design/core/color'
+import type { Editor } from '@nex-design/core/editor'
+import type { SceneNode } from '@nex-design/core/scene-graph'
 
 import type { ColorFieldFormat } from '#vue/primitives/ColorPicker/types'
 

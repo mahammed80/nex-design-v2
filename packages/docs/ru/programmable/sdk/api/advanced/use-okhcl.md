@@ -12,7 +12,7 @@ description: Работа с цветовыми моделями RGBA и OkHCL �
 ## Использование
 
 ```ts
-import { useOkHCL } from '@open-pencil/vue'
+import { useOkHCL } from '@nex-design/vue'
 
 const okhcl = useOkHCL()
 ```

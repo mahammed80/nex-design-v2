@@ -1,11 +1,11 @@
 ---
 title: Komponenty
-description: Dokumentacja komponentów bezstanowych prymitywów Vue w @open-pencil/vue.
+description: Dokumentacja komponentów bezstanowych prymitywów Vue w @nex-design/vue.
 ---
 
 # Komponenty
 
-`@open-pencil/vue` udostępnia bezstanowe prymitywy strukturalne do okablowania kanvasu, UI nawigacji, paneli właściwości i skupionych kontrolek wejścia.
+`@nex-design/vue` udostępnia bezstanowe prymitywy strukturalne do okablowania kanvasu, UI nawigacji, paneli właściwości i skupionych kontrolek wejścia.
 
 ## Podstawowe prymitywy edytora
 

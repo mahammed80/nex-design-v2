@@ -10,7 +10,7 @@ description: Аудит цветов, типографики, отступов �
 ## Цвета
 
 ```sh
-open-pencil analyze colors design.fig
+nex-design analyze colors design.fig
 ```
 
 Находит каждый цвет в файле, подсчитывает использование и показывает визуальную гистограмму:
@@ -25,7 +25,7 @@ open-pencil analyze colors design.fig
 ## Типографика
 
 ```sh
-open-pencil analyze typography design.fig
+nex-design analyze typography design.fig
 ```
 
 Выводит список всех комбинаций шрифтов, размеров и начертаний с количеством использований. Помогает обнаружить единичные стили текста, которые следует унифицировать.
@@ -33,7 +33,7 @@ open-pencil analyze typography design.fig
 ## Отступы
 
 ```sh
-open-pencil analyze spacing design.fig
+nex-design analyze spacing design.fig
 ```
 
 Анализирует значения gap и padding во фреймах с автолейаутом. Помогает выявить несоответствия в шкале отступов — например, случайный `13px` среди стандартных значений `8/16/24`.
@@ -41,7 +41,7 @@ open-pencil analyze spacing design.fig
 ## Кластеры
 
 ```sh
-open-pencil analyze clusters design.fig
+nex-design analyze clusters design.fig
 ```
 
 Находит повторяющиеся паттерны узлов, которые можно выделить в компоненты:
@@ -59,7 +59,7 @@ open-pencil analyze clusters design.fig
 Все команды анализа поддерживают `--json` для машиночитаемого вывода:
 
 ```sh
-open-pencil analyze colors design.fig --json
+nex-design analyze colors design.fig --json
 ```
 
 Передавайте в `jq`, используйте в CI-проверках или в скриптах, контролирующих бюджет дизайн-токенов.

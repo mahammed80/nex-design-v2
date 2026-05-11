@@ -2,11 +2,11 @@
 
 ## Wypróbuj online
 
-OpenPencil działa w przeglądarce — bez instalacji. Otwórz [app.openpencil.dev](https://app.openpencil.dev).
+NexDesign działa w przeglądarce — bez instalacji. Otwórz [app.nexdesign.dev](https://app.nexdesign.dev).
 
 ## Pobierz aplikację desktopową
 
-Binaria dla macOS, Windows i Linux na [stronie wydań](https://github.com/open-pencil/open-pencil/releases/latest).
+Binaria dla macOS, Windows i Linux na [stronie wydań](https://github.com/nex-design/nex-design/releases/latest).
 
 | Platforma | Pobieranie |
 |-----------|-----------|
@@ -19,8 +19,8 @@ Binaria dla macOS, Windows i Linux na [stronie wydań](https://github.com/open-p
 ## Kompilacja ze źródeł
 
 ```sh
-git clone https://github.com/open-pencil/open-pencil.git
-cd open-pencil
+git clone https://github.com/nex-design/nex-design.git
+cd nex-design
 bun install
 bun run dev
 ```

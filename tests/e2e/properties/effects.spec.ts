@@ -30,8 +30,8 @@ async function expectCanvas(name: string) {
 
 test('drop shadow on white card', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('FRAME', pageId, {
       name: 'Card',
@@ -61,8 +61,8 @@ test('drop shadow on white card', async () => {
 
 test('drop shadow with spread', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('FRAME', pageId, {
       name: 'Card',
@@ -92,8 +92,8 @@ test('drop shadow with spread', async () => {
 
 test('inner shadow', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('FRAME', pageId, {
       name: 'Card',
@@ -125,8 +125,8 @@ test('inner shadow', async () => {
 
 test('inner shadow with spread', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('FRAME', pageId, {
       name: 'Card',
@@ -158,8 +158,8 @@ test('inner shadow with spread', async () => {
 
 test('drop shadow on ellipse', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('ELLIPSE', pageId, {
       name: 'Circle',
@@ -190,8 +190,8 @@ test('drop shadow on ellipse', async () => {
 
 test('combined drop and inner shadow', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('FRAME', pageId, {
       name: 'Card',
@@ -229,8 +229,8 @@ test('combined drop and inner shadow', async () => {
 
 test('text drop shadow on glyphs', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('TEXT', pageId, {
       name: 'Shadow Text',
@@ -265,8 +265,8 @@ test('text drop shadow on glyphs', async () => {
 
 test('layer blur', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('RECTANGLE', pageId, {
       name: 'Blurred',
@@ -298,8 +298,8 @@ test('layer blur', async () => {
 
 test('invisible effect has no visual impact', async () => {
   await page.evaluate(() => {
-    const store = window.openPencil?.getStore?.()
-    if (!store) throw new Error('OpenPencil store not initialized')
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
     const pageId = store.state.currentPageId
     store.graph.createNode('FRAME', pageId, {
       name: 'Card',

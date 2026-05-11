@@ -1,4 +1,4 @@
-import type { Editor } from '@open-pencil/core/editor'
+import type { Editor } from '@nex-design/core/editor'
 
 import { duplicateAndDrag } from '#vue/shared/input/duplicate-drag'
 import { detectAutoLayoutParent } from '#vue/shared/input/move'

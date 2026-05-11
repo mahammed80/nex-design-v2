@@ -17,7 +17,7 @@ Espone lo stato UI derivato dalla selezione per:
 ## Utilizzo
 
 ```ts
-import { useAppearance } from '@open-pencil/vue'
+import { useAppearance } from '@nex-design/vue'
 
 const appearance = useAppearance()
 ```

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { Color } from '@open-pencil/core/types'
-import type { OkHCLControls } from '@open-pencil/vue'
+import type { Color } from '@nex-design/core/types'
+import type { OkHCLControls } from '@nex-design/vue'
 
 import ColorAreaControl from '@/components/ColorPickerPanel/ColorAreaControl.vue'
 import FormatControls from '@/components/ColorPickerPanel/FormatControls.vue'

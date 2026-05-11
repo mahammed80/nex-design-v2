@@ -1,5 +1,5 @@
-import { createEditor } from '@open-pencil/core/editor'
-import type { Editor } from '@open-pencil/core/editor'
+import { createEditor } from '@nex-design/core/editor'
+import type { Editor } from '@nex-design/core/editor'
 
 export function setupEditorPage() {
   const editor = createEditor()

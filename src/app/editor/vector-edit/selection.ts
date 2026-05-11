@@ -1,5 +1,5 @@
-import type { Editor } from '@open-pencil/core/editor'
-import { breakAtVertex, deleteVertex } from '@open-pencil/core/vector'
+import type { Editor } from '@nex-design/core/editor'
+import { breakAtVertex, deleteVertex } from '@nex-design/core/vector'
 
 import { getLiveNetwork, setNodeEditNetwork } from './network'
 import type { VectorEditState } from './types'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { selectTarget } from '@open-pencil/vue'
+import { selectTarget } from '@nex-design/vue'
 import { useCollabPanelContext } from '@/components/CollabPanel/context'
 
 const collab = useCollabPanelContext()

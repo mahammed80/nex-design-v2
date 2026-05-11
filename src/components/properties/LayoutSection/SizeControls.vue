@@ -17,10 +17,10 @@ import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
 import BoundVariableButton from '@/components/properties/BoundVariableButton.vue'
 import VariablePickerPopover from '@/components/properties/VariablePickerPopover.vue'
 import { useSelectUI } from '@/components/ui/select'
-import { useI18n, useLayoutControlsContext, useNumberVariableBinding } from '@open-pencil/vue'
+import { useI18n, useLayoutControlsContext, useNumberVariableBinding } from '@nex-design/vue'
 
-import type { LayoutSizing } from '@open-pencil/core/scene-graph'
-import type { SizeLimitProp } from '@open-pencil/vue'
+import type { LayoutSizing } from '@nex-design/core/scene-graph'
+import type { SizeLimitProp } from '@nex-design/vue'
 
 type SizeSelectValue = LayoutSizing | `add-${SizeLimitProp}` | `remove-${SizeLimitProp}`
 

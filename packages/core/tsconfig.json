@@ -15,8 +15,8 @@
     "rootDir": "src",
     "paths": {
       "#core/*": ["./src/*"],
-      "@open-pencil/core": ["./src/index.ts"],
-      "@open-pencil/core/*": ["./src/*"]
+      "@nex-design/core": ["./src/index.ts"],
+      "@nex-design/core/*": ["./src/*"]
     }
   },
   "include": ["src"]

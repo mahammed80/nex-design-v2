@@ -3,9 +3,9 @@
 ## Setup
 
 ```bash
-git clone https://github.com/open-pencil/open-pencil.git
-cd open-pencil
-git clone https://github.com/open-pencil/vue-stream-markdown.git
+git clone https://github.com/nex-design/nex-design.git
+cd nex-design
+git clone https://github.com/nex-design/vue-stream-markdown.git
 bun install
 ```
 
@@ -36,7 +36,7 @@ bun run test         # Playwright E2E (auto-starts dev server)
 - `packages/core` — scene graph, renderer, layout, codec (zero DOM deps)
 - `packages/cli` — headless CLI for .fig inspection and export
 - `packages/mcp` — MCP server for AI tools (stdio + HTTP)
-- `packages/docs` — VitePress documentation site (openpencil.dev)
+- `packages/docs` — VitePress documentation site (nexdesign.dev)
 - `src/` — Tauri/Vite desktop editor
 
 ## Conventions

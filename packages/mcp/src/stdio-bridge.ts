@@ -15,8 +15,8 @@ type StdioRpcBridgeOptions = {
 
 const RPC_TIMEOUT = 30_000
 const DISCONNECTED_MESSAGE =
-  'OpenPencil app is not connected. ' +
-  'STOP and tell the user: "The OpenPencil desktop app is not running or no document is open. ' +
+  'NexDesign app is not connected. ' +
+  'STOP and tell the user: "The NexDesign desktop app is not running or no document is open. ' +
   'Please start the app and open a document, then try again." ' +
   'Do NOT attempt to start the app yourself or retry automatically.'
 

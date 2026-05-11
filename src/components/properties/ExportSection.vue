@@ -5,9 +5,9 @@ import AppSelect from '@/components/ui/AppSelect.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
 import { useEditorStore } from '@/app/editor/active-store'
-import { useExport, useI18n } from '@open-pencil/vue'
+import { useExport, useI18n } from '@nex-design/vue'
 
-import type { ExportFormatId } from '@open-pencil/vue'
+import type { ExportFormatId } from '@nex-design/vue'
 
 const editorStore = useEditorStore()
 const { panels } = useI18n()

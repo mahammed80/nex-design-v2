@@ -1,4 +1,4 @@
-import type { Color } from '@open-pencil/core/types'
+import type { Color } from '@nex-design/core/types'
 
 export interface RemotePeer {
   clientId: number

@@ -1,4 +1,4 @@
-import type { Editor } from '@open-pencil/core/editor'
+import type { Editor } from '@nex-design/core/editor'
 
 export function createProfilerActions(editor: Editor) {
   function viewportScreenCenter() {

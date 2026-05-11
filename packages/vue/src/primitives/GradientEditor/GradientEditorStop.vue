@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { colorToCSS, colorToHexRaw } from '@open-pencil/core/color'
+import { colorToCSS, colorToHexRaw } from '@nex-design/core/color'
 
-import type { GradientStop } from '@open-pencil/core/scene-graph'
+import type { GradientStop } from '@nex-design/core/scene-graph'
 
 const { stop, index, active } = defineProps<{
   stop: GradientStop

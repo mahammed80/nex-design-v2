@@ -7,10 +7,10 @@ import IconChevronRight from '~icons/lucide/chevron-right'
 import ToolButton from '@/components/Toolbar/ToolButton.vue'
 import ToolFlyout from '@/components/Toolbar/ToolFlyout.vue'
 import ToolbarActionGroup from '@/components/Toolbar/ToolbarActionGroup.vue'
-import { ToolbarItem } from '@open-pencil/vue'
+import { ToolbarItem } from '@nex-design/vue'
 
-import type { Tool } from '@open-pencil/vue'
-import type { EditorToolDef } from '@open-pencil/core/editor'
+import type { Tool } from '@nex-design/vue'
+import type { EditorToolDef } from '@nex-design/core/editor'
 import type {
   ToolbarActionItem,
   ToolbarUi,

@@ -1,11 +1,11 @@
 ---
 title: Kompozyty
-description: Podstawowe API kompozytów w @open-pencil/vue.
+description: Podstawowe API kompozytów w @nex-design/vue.
 ---
 
 # Kompozyty
 
-Są to główne kompozyty, z których korzysta większość konsumentów `@open-pencil/vue`.
+Są to główne kompozyty, z których korzysta większość konsumentów `@nex-design/vue`.
 
 ## Kontekst i kanvas
 

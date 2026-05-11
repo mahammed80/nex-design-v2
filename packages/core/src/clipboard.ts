@@ -344,7 +344,7 @@ export async function buildFigmaClipboardHTML(
     sessionID: 0,
     ackID: 0,
     pasteID: randomInt(),
-    pasteFileKey: 'openpencil',
+    pasteFileKey: 'nexdesign',
     nodeChanges
   }
 
@@ -357,7 +357,7 @@ export async function buildFigmaClipboardHTML(
   const bufferB64 = figKiwiBinary.toBase64()
 
   const meta: FigmaClipboardMeta = {
-    fileKey: 'openpencil',
+    fileKey: 'nexdesign',
     pasteID: msg.pasteID as number,
     dataType: 'scene'
   }
@@ -371,8 +371,8 @@ export async function buildFigmaClipboardHTML(
 }
 
 export {
-  buildOpenPencilClipboardHTML,
-  parseOpenPencilClipboard,
-  type OpenPencilClipboardData,
+  buildNexDesignClipboardHTML,
+  parseNexDesignClipboard,
+  type NexDesignClipboardData,
   type TextPictureBuilder
-} from './clipboard/openpencil'
+} from './clipboard/nexdesign'

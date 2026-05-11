@@ -9,7 +9,7 @@ import {
   useI18n,
   useInlineRename,
   useLayerDrag
-} from '@open-pencil/vue'
+} from '@nex-design/vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import { nodeIcon, COMPONENT_TYPES } from '@/app/editor/icons'
 import CanvasMenu from './CanvasMenu.vue'

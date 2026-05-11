@@ -1,5 +1,5 @@
-import { colorToCSS } from '@open-pencil/core/color'
-import type { Color, Fill, Variable } from '@open-pencil/core/scene-graph'
+import { colorToCSS } from '@nex-design/core/color'
+import type { Color, Fill, Variable } from '@nex-design/core/scene-graph'
 
 export type ColorVariableBindingApi = {
   store: {

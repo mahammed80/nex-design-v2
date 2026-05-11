@@ -12,8 +12,8 @@ export {
   isEndpoint,
   NODE_HIT_THRESHOLD
 } from '#vue/shared/input/node-edit/hit-test'
-import type { Editor } from '@open-pencil/core/editor'
-import type { Vector } from '@open-pencil/core/types'
+import type { Editor } from '@nex-design/core/editor'
+import type { Vector } from '@nex-design/core/types'
 
 type NodeEditEditor = Partial<{
   nodeEditSelectVertex: (vertexIndex: number, addToSelection: boolean) => void

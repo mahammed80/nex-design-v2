@@ -63,10 +63,10 @@ fn build_schema_menus<R: tauri::Runtime>(
 
 pub fn install_app_menu<R: tauri::Runtime>(app: &mut tauri::App<R>) -> tauri::Result<()> {
     #[cfg(target_os = "macos")]
-    let app_menu = SubmenuBuilder::new(app, "OpenPencil")
+    let app_menu = SubmenuBuilder::new(app, "NexDesign")
         .item(&PredefinedMenuItem::about(
             app,
-            Some("About OpenPencil"),
+            Some("About NexDesign"),
             None,
         )?)
         .item(
