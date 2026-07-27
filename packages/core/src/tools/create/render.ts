@@ -54,12 +54,16 @@ export const render = defineTool({
       id: result.id,
       name: result.name,
       type: result.type,
+      x: result.x,
+      y: result.y,
+      width: result.width,
+      height: result.height,
       children: result.childIds,
       ...(results.length > 1
         ? {
             siblings: results
               .slice(1)
-              .map((node) => ({ id: node.id, name: node.name, type: node.type }))
+              .map((node) => ({ id: node.id, name: node.name, type: node.type, x: node.x, y: node.y, width: node.width, height: node.height }))
           }
         : {})
     }

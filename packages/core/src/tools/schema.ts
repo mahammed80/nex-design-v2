@@ -86,6 +86,14 @@ export function nodeToResult(node: FigmaNodeProxy, maxDepth?: number): Record<st
   return node.toJSON(maxDepth)
 }
 
-export function nodeSummary(node: FigmaNodeProxy): { id: string; name: string; type: string } {
-  return { id: node.id, name: node.name, type: node.type }
+export function nodeSummary(node: FigmaNodeProxy): {
+  id: string
+  name: string
+  type: string
+  x: number
+  y: number
+  width: number
+  height: number
+} {
+  return { id: node.id, name: node.name, type: node.type, x: node.x, y: node.y, width: node.width, height: node.height }
 }
