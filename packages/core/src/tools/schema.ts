@@ -95,5 +95,13 @@ export function nodeSummary(node: FigmaNodeProxy): {
   width: number
   height: number
 } {
-  return { id: node.id, name: node.name, type: node.type, x: node.x, y: node.y, width: node.width, height: node.height }
+  return {
+    id: node.id,
+    name: node.name,
+    type: node.type,
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height
+  }
 }

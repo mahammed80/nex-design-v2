@@ -6,4 +6,7 @@ export interface FontPickerUi {
   viewport?: string
   empty?: string
   emptyAction?: string
+  providerFilter?: string
+  providerFilterBtn?: string
+  providerBadge?: string
 }

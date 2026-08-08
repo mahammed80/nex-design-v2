@@ -48,6 +48,68 @@ export function applyMoveSnap(
     height: bounds.height
   }
   const snap = computeSnap(editor.state.selectedIds, absBounds, absTargets)
-  editor.setSnapGuides(snap.guides)
-  return { dx: dx + snap.dx, dy: dy + snap.dy }
+  let finalDx = dx + snap.dx
+  let finalDy = dy + snap.dy
+  const finalGuides = [...snap.guides]
+
+  if (editor.state.guidesVisible && editor.state.guides.length > 0) {
+    const SNAP_THRESHOLD = 5
+    let bestGuideDx = Infinity
+    let bestGuideDy = Infinity
+    let bestGuideXPosition = 0
+    let bestGuideYPosition = 0
+
+    const m = {
+      left: absBounds.x,
+      right: absBounds.x + absBounds.width,
+      centerX: absBounds.x + absBounds.width / 2,
+      top: absBounds.y,
+      bottom: absBounds.y + absBounds.height,
+      centerY: absBounds.y + absBounds.height / 2
+    }
+
+    for (const g of editor.state.guides) {
+      if (g.type === 'horizontal') {
+        const yPairs = [m.top, m.bottom, m.centerY]
+        for (const mVal of yPairs) {
+          const d = g.value - (mVal + finalDy)
+          if (Math.abs(d) < SNAP_THRESHOLD && Math.abs(d) < Math.abs(bestGuideDy)) {
+            bestGuideDy = d
+            bestGuideYPosition = g.value
+          }
+        }
+      } else {
+        const xPairs = [m.left, m.right, m.centerX]
+        for (const mVal of xPairs) {
+          const d = g.value - (mVal + finalDx)
+          if (Math.abs(d) < SNAP_THRESHOLD && Math.abs(d) < Math.abs(bestGuideDx)) {
+            bestGuideDx = d
+            bestGuideXPosition = g.value
+          }
+        }
+      }
+    }
+
+    if (Math.abs(bestGuideDx) <= SNAP_THRESHOLD) {
+      finalDx += bestGuideDx
+      finalGuides.push({
+        axis: 'x',
+        position: bestGuideXPosition,
+        from: absBounds.y + finalDy,
+        to: absBounds.y + finalDy + absBounds.height
+      })
+    }
+    if (Math.abs(bestGuideDy) <= SNAP_THRESHOLD) {
+      finalDy += bestGuideDy
+      finalGuides.push({
+        axis: 'y',
+        position: bestGuideYPosition,
+        from: absBounds.x + finalDx,
+        to: absBounds.x + finalDx + absBounds.width
+      })
+    }
+  }
+
+  editor.setSnapGuides(finalGuides)
+  return { dx: finalDx, dy: finalDy }
 }

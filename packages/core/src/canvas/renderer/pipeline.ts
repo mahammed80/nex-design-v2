@@ -53,6 +53,9 @@ export function renderFromEditorState(
     graph,
     state.selectedIds,
     {
+      mode: state.mode,
+      prototypeDragLine: state.prototypeDragLine,
+      prototypeReconnectDrag: state.prototypeReconnectDrag,
       hoveredNodeId: state.hoveredNodeId,
       enteredContainerId: state.enteredContainerId,
       editingTextId: state.editingTextId,
@@ -70,7 +73,11 @@ export function renderFromEditorState(
           } as RenderOverlays['penState'])
         : null,
       nodeEditState: state.nodeEditState ?? null,
-      remoteCursors: state.remoteCursors
+      remoteCursors: state.remoteCursors,
+      fontPreviewActive: state.fontPreviewActive,
+      guides: state.guides,
+      selectedGuideId: state.selectedGuideId,
+      guidesVisible: state.guidesVisible
     },
     state.sceneVersion,
     layer
@@ -82,7 +89,8 @@ function hasVolatileOverlay(overlays: RenderOverlays): boolean {
     overlays.dropTargetId != null ||
     overlays.rotationPreview != null ||
     overlays.editingTextId != null ||
-    overlays.nodeEditState != null
+    overlays.nodeEditState != null ||
+    overlays.fontPreviewActive === true
   )
 }
 
@@ -198,6 +206,8 @@ export function render(
     r.drawNodeEditOverlay(canvas, graph, overlays.nodeEditState)
     r.drawPenOverlay(canvas, overlays.penState)
     r.drawRemoteCursors(canvas, graph, overlays.remoteCursors)
+    r.drawPrototypeOverlay(canvas, graph, selectedIds, overlays)
+    r.drawGuides(canvas, overlays.guides, overlays.selectedGuideId, overlays.guidesVisible)
     p.beginPhase('render:rulers')
     if (r.showRulers) r.drawRulers(canvas, graph, selectedIds)
     p.endPhase('render:rulers')

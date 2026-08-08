@@ -3,7 +3,7 @@ import type { Ref } from 'vue'
 import type { Editor } from '@nex-design/core/editor'
 
 import { startPenInput } from '#vue/canvas/pen-input/use'
-import { startShapeDraw, startTextTool } from '#vue/shared/input/draw'
+import { startShapeDraw } from '#vue/shared/input/draw'
 import { startPanDrag } from '#vue/shared/input/pan'
 import { handleSelectDown } from '#vue/shared/input/select'
 import type { HitTestFns } from '#vue/shared/input/select'
@@ -48,11 +48,6 @@ export function handleToolMouseDown({
 
   if (tool === 'PEN') {
     startPenInput(event, cx, cy, editor, setDrag, cursorOverride)
-    return
-  }
-
-  if (tool === 'TEXT') {
-    startTextTool(cx, cy, editor)
     return
   }
 

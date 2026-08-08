@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 
 import { useI18n, useSelectionState, useEditorCommands } from '@nex-design/vue'
+import { useEditorStore } from '@/app/editor/active-store'
 
 import VariablesDialog from './VariablesDialog.vue'
 import AppearanceSection from './properties/AppearanceSection.vue'
@@ -15,9 +16,14 @@ import StrokeSection from './properties/StrokeSection.vue'
 import TypographySection from './properties/TypographySection.vue'
 import VariablesSection from './properties/VariablesSection.vue'
 import VariantSection from './properties/VariantSection.vue'
+import DevicePresetsSection from './properties/DevicePresetsSection.vue'
+import GridSection from './properties/GridSection.vue'
 
 const variablesOpen = ref(false)
 const { selectedNode: node, selectedCount: multiCount } = useSelectionState()
+const store = useEditorStore()
+const isFrameToolActive = computed(() => store.state.activeTool === 'FRAME')
+
 const { getCommand } = useEditorCommands()
 const goToMainComponent = getCommand('selection.goToMainComponent')
 const detachInstance = getCommand('selection.detachInstance')
@@ -29,9 +35,18 @@ const { panels } = useI18n()
 </script>
 
 <template>
+  <!-- Frame tool active: show device presets -->
+  <div
+    v-if="isFrameToolActive"
+    data-test-id="design-panel-presets"
+    class="scrollbar-thin flex-1 overflow-x-hidden overflow-y-auto"
+  >
+    <DevicePresetsSection />
+  </div>
+
   <!-- Multi-select summary -->
   <div
-    v-if="multiCount > 1"
+    v-else-if="multiCount > 1"
     data-test-id="design-panel-multi"
     class="scrollbar-thin flex-1 overflow-x-hidden overflow-y-auto pb-4"
   >
@@ -49,6 +64,7 @@ const { panels } = useI18n()
     <FillSection />
     <StrokeSection />
     <EffectsSection />
+    <GridSection />
   </div>
 
   <!-- Single selection -->
@@ -97,6 +113,7 @@ const { panels } = useI18n()
     <FillSection />
     <StrokeSection />
     <EffectsSection />
+    <GridSection />
 
     <ExportSection />
   </div>

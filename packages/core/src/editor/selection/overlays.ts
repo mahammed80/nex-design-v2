@@ -24,6 +24,12 @@ export function createSelectionOverlayActions(ctx: EditorContext) {
     ctx.requestRepaint()
   }
 
+  function setHoveredConnection(id: string | null) {
+    if (ctx.state.hoveredConnectionId === id) return
+    ctx.state.hoveredConnectionId = id
+    ctx.requestRepaint()
+  }
+
   function setDropTarget(id: string | null) {
     ctx.state.dropTargetId = id
     ctx.requestRepaint()
@@ -39,6 +45,7 @@ export function createSelectionOverlayActions(ctx: EditorContext) {
     setSnapGuides,
     setRotationPreview,
     setHoveredNode,
+    setHoveredConnection,
     setDropTarget,
     setLayoutInsertIndicator
   }

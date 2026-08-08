@@ -1,8 +1,7 @@
-import { randomUUID } from 'crypto'
-
 import { automationPlugin } from '../src/app/automation/bridge/vite-plugin'
 
-const devAutomationAuthToken = randomUUID()
+// Use a stable dev token to prevent WebSocket token mismatches when Vite config hot-reloads
+const devAutomationAuthToken = 'dev-token-nex-design'
 
 export function localAutomationToken(command: string): string | null {
   return command === 'serve' ? devAutomationAuthToken : null

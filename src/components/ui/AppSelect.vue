@@ -25,7 +25,7 @@ const {
   ui,
   testId = 'app-select-trigger'
 } = defineProps<{
-  options: { value: T; label: string }[]
+  options: readonly { value: T; label: string }[]
   placeholder?: string
   ui?: AppSelectUi
   testId?: string

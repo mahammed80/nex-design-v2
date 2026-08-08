@@ -32,9 +32,10 @@ const CONTAINER_TYPES = ['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE']
             <template v-if="ctx.isGrid">
               <GridControls />
               <PaddingControls />
-              <ClipContentControl />
             </template>
           </template>
+
+          <ClipContentControl class="mt-2.5" />
         </div>
       </template>
     </template>

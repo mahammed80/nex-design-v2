@@ -6,6 +6,7 @@ import { createNanoEvents } from 'nanoevents'
 import * as HitTest from './hit-test'
 import * as Instances from './instances'
 import { CONTAINER_TYPES, createDefaultNode } from './node-defaults'
+import * as Traversal from './traversal'
 import * as Variables from './variables'
 import { normalizeVectorNetwork } from './vector-network'
 
@@ -30,6 +31,15 @@ import type {
 } from './types'
 
 export { cloneVectorNetwork, normalizeVectorNetwork, validateVectorNetwork } from './vector-network'
+
+export {
+  findEditableNode,
+  findLockedAncestor,
+  findSelectableNode,
+  findVisibleAncestor,
+  getAncestorStack
+} from './traversal'
+export { hitTestStack } from './hit-test'
 
 let nextLocalID = 1
 
@@ -497,6 +507,14 @@ export class SceneGraph {
 
   hitTestDeep(px: number, py: number, scopeId?: string): SceneNode | null {
     return HitTest.hitTestDeep(this, px, py, scopeId)
+  }
+
+  hitTestStack(px: number, py: number, scopeId?: string): SceneNode[] {
+    return HitTest.hitTestStack(this, px, py, scopeId)
+  }
+
+  getAncestorStack(nodeId: string, scopeId?: string): SceneNode[] {
+    return Traversal.getAncestorStack(this, nodeId, scopeId)
   }
 
   hitTestFrame(

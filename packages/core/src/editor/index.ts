@@ -9,5 +9,6 @@ export type {
   EditorEvents,
   EditorOptions,
   EditorState,
-  Tool
+  Tool,
+  Guide
 } from './types'

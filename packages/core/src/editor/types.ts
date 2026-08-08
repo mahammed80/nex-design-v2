@@ -22,10 +22,27 @@ export type Tool =
   | 'HAND'
 
 export interface EditorState {
+  mode: 'DESIGN' | 'PROTOTYPE' | 'DEVELOPER'
   activeTool: Tool
   currentPageId: string
   selectedIds: Set<string>
   marquee: Rect | null
+  prototypeDragLine: {
+    startX: number
+    startY: number
+    endX: number
+    endY: number
+    hoveredNodeId?: string | null
+    hoveredSide?: import('#core/prototype').ConnectionSide | null
+  } | null
+  prototypeReconnectDrag: {
+    connectionId: string
+    endpoint: 'source' | 'target'
+    currentX: number
+    currentY: number
+    hoveredNodeId: string | null
+    hoveredSide: import('#core/prototype').ConnectionSide | null
+  } | null
   snapGuides: SnapGuide[]
   rotationPreview: { nodeId: string; angle: number } | null
   dropTargetId: string | null
@@ -38,6 +55,7 @@ export interface EditorState {
     direction: 'HORIZONTAL' | 'VERTICAL'
   } | null
   hoveredNodeId: string | null
+  hoveredConnectionId?: string | null
   editingTextId: string | null
   penState: {
     vertices: VectorVertex[]
@@ -72,6 +90,17 @@ export interface EditorState {
   nodeEditState?: RenderOverlays['nodeEditState'] | null
   cursorCanvasX?: number | null
   cursorCanvasY?: number | null
+  fontPreviewActive: boolean
+  guides: Guide[]
+  selectedGuideId: string | null
+  guidesVisible: boolean
+  guidesLocked: boolean
+}
+
+export interface Guide {
+  id: string
+  type: 'horizontal' | 'vertical'
+  value: number
 }
 
 export interface EditorEvents {

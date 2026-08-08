@@ -58,6 +58,11 @@
       "bun": "./src/editor/index.ts",
       "default": "./src/editor/index.ts"
     },
+    "./interaction": {
+      "types": "./src/interaction/index.ts",
+      "bun": "./src/interaction/index.ts",
+      "default": "./src/interaction/index.ts"
+    },
     "./tools": {
       "types": "./src/tools/index.ts",
       "bun": "./src/tools/index.ts",
@@ -143,6 +148,11 @@
       "bun": "./src/layout.ts",
       "default": "./src/layout.ts"
     },
+    "./prototype": {
+      "types": "./src/prototype/index.ts",
+      "bun": "./src/prototype/index.ts",
+      "default": "./src/prototype/index.ts"
+    },
     "./geometry": {
       "types": "./src/geometry.ts",
       "bun": "./src/geometry.ts",
@@ -157,7 +167,7 @@
     "assets"
   ],
   "scripts": {
-    "build": "bunx tsdown --config tsdown.config.ts",
+    "build": "npx tsdown --config tsdown.config.ts",
     "prepublishOnly": "bun run build"
   },
   "repository": {
@@ -218,6 +228,11 @@
         "types": "./dist/editor/index.d.ts",
         "import": "./dist/editor/index.js",
         "default": "./dist/editor/index.js"
+      },
+      "./interaction": {
+        "types": "./dist/interaction/index.d.ts",
+        "import": "./dist/interaction/index.js",
+        "default": "./dist/interaction/index.js"
       },
       "./tools": {
         "types": "./dist/tools/index.d.ts",
@@ -304,6 +319,11 @@
         "import": "./dist/layout.js",
         "default": "./dist/layout.js"
       },
+      "./prototype": {
+        "types": "./dist/prototype/index.d.ts",
+        "import": "./dist/prototype/index.js",
+        "default": "./dist/prototype/index.js"
+      },
       "./geometry": {
         "types": "./dist/geometry.d.ts",
         "import": "./dist/geometry.js",
@@ -327,7 +347,7 @@
     "opentype.js": "^1.3.4",
     "sucrase": "^3.35.1",
     "svgpath": "^2.6.0",
-    "yoga-layout": "npm:@nex-design/yoga-layout@3.3.0-grid.3"
+    "yoga-layout": "npm:@open-pencil/yoga-layout@3.3.0-grid.3"
   },
   "devDependencies": {
     "@types/culori": "^4.0.1",

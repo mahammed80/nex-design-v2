@@ -94,6 +94,7 @@ export class SkiaRenderer {
   declare penHandlePaint: Paint
   declare penVertexFill: Paint
   declare penVertexStroke: Paint
+  declare guidePaint: Paint
 
   panX = 0
   panY = 0
@@ -180,7 +181,19 @@ export class SkiaRenderer {
     graph: SceneGraph,
     cursors?: RenderOverlays['remoteCursors']
   ) => void
+  declare drawPrototypeOverlay: (
+    canvas: Canvas,
+    graph: SceneGraph,
+    selectedIds: Set<string>,
+    overlays: RenderOverlays
+  ) => void
   declare drawRulers: (canvas: Canvas, graph: SceneGraph, selectedIds: Set<string>) => void
+  declare drawGuides: (
+    canvas: Canvas,
+    guides?: import('#core/editor/types').Guide[],
+    selectedGuideId?: string | null,
+    visible?: boolean
+  ) => void
   declare drawSectionTitles: (canvas: Canvas, graph: SceneGraph) => void
   declare drawComponentLabels: (canvas: Canvas, graph: SceneGraph) => void
   declare renderNode: (

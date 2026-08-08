@@ -1,4 +1,5 @@
 import type { EditorContext } from '#core/editor/types'
+import { PrototypeGraph } from '#core/prototype'
 import type { SceneNode } from '#core/scene-graph'
 
 export function createSelectionHitTestActions(
@@ -27,7 +28,17 @@ export function createSelectionHitTestActions(
   }
 
   function selectAtPoint(cx: number, cy: number) {
-    const hit = hitTestAtPoint(cx, cy)
+    if (ctx.state.mode === 'PROTOTYPE') {
+      const protoGraph = new PrototypeGraph(ctx.graph, ctx.state.currentPageId)
+      const hitConn = protoGraph.hitTestAtPoint(cx, cy, 8 / ctx.state.zoom)
+      if (hitConn) {
+        if (!ctx.state.selectedIds.has(hitConn.connection.id)) {
+          select([hitConn.connection.id])
+        }
+        return
+      }
+    }
+    const hit = hitTestAtPoint(cx, cy, ctx.state.mode === 'PROTOTYPE')
     if (hit) {
       if (!ctx.state.selectedIds.has(hit.id)) select([hit.id])
     } else {

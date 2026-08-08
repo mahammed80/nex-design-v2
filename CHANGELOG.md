@@ -4,10 +4,13 @@
 
 ### Added
 
+- Add first-class prototype connection support with interactive connection handles, endpoint dragging to reconnect or delete, custom control-point editing for Bezier curves, edge-snapping on candidate target nodes, and a graph-driven preview presentation player.
 - Add variable mode management — create, rename, duplicate, delete modes and set the default mode per collection. Modes appear as interactive table column headers (double-click to rename, right-click for context menu).
 - Add collection deletion from the variables dialog.
 - Bind variables to line height, letter spacing, font weight, paragraph spacing, and paragraph indent in the typography inspector.
 - Add editor event bus with typed lifecycle events — subscribe via `editor.onEditorEvent()` in core or `useEditorEvent()` composable in the Vue SDK.
+- Add a hit-test stack (`SceneGraph.hitTestStack`, `getAncestorStack`) that returns the full node ancestry chain at a canvas point, plus traversal helpers (`findEditableNode`, `findSelectableNode`, `findLockedAncestor`, `findVisibleAncestor`).
+- Add a node-level interaction event dispatcher (`@nex-design/core/interaction`) with capture/target/bubble propagation and pointer enter/leave hover transitions, exposed in the Vue SDK via `useCanvasInteraction()`.
 
 ### Changed
 
@@ -43,6 +46,7 @@
 - Fix bound color variable inspector swatches to display the resolved variable color and detach the binding when edited directly.
 - Fix dashed strokes on vector nodes rendering as solid lines — dash pattern now uses `PathEffect.MakeDash` directly instead of outline conversion, and closed crescent shapes (e.g. annular wedges) render a single dashed centerline arc instead of two parallel arcs.
 - Fix gradient fills on text nodes by clipping gradient paints through the shaped paragraph mask.
+- Fix DOM font registration type warnings by extending the global `FontFaceSet` interface with the `add` method in the core global typings.
 
 ### Performance
 
@@ -51,6 +55,7 @@
 - Add a curated fallback font manifest for CJK and Arabic font downloads.
 - Cache instance override resolution and lazily populate opened `.fig` pages to reduce load time for large community files.
 - Reduce zoom and overlay rendering work by separating scene rendering from rulers, selection, labels, and input overlays.
+- Optimize local font lookup by caching `window.queryLocalFonts()` results in the FontManager, refreshed only on user-initiated local font access requests, so font previews and selection respond instantly instead of re-querying the OS fonts on every hover/click.
 
 ## 0.11.8 — 2026-04-23
 

@@ -1,16 +1,37 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 
 import { useI18n } from '@nex-design/vue'
 import { useAIChat } from '@/app/ai/chat/use'
+import { useEditorStore } from '@/app/editor/active-store'
 
 import ChatPanel from './ChatPanel.vue'
 import CodePanel from './CodePanel.vue'
 import DesignPanel from './DesignPanel.vue'
+import PrototypePanel from './properties/PrototypePanel.vue'
 import ZoomDropdown from './ZoomDropdown.vue'
 
 const { activeTab } = useAIChat()
 const { panels } = useI18n()
+const editor = useEditorStore()
+
+watch(activeTab, (tab) => {
+  if (editor) {
+    if (tab === 'design') editor.state.mode = 'DESIGN'
+    else if (tab === 'prototype') editor.state.mode = 'PROTOTYPE'
+    else if (tab === 'code') editor.state.mode = 'DEVELOPER'
+  }
+})
+
+watch(
+  () => editor?.state?.mode,
+  (mode) => {
+    if (mode === 'DESIGN') activeTab.value = 'design'
+    else if (mode === 'PROTOTYPE') activeTab.value = 'prototype'
+    else if (mode === 'DEVELOPER') activeTab.value = 'code'
+  }
+)
 </script>
 
 <template>
@@ -27,6 +48,13 @@ const { panels } = useI18n()
           class="rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
           {{ panels.design }}
+        </TabsTrigger>
+        <TabsTrigger
+          value="prototype"
+          data-test-id="properties-tab-prototype"
+          class="rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
+        >
+          Prototype
         </TabsTrigger>
         <TabsTrigger
           value="code"
@@ -54,6 +82,15 @@ const { panels } = useI18n()
         :hidden="activeTab !== 'design'"
       >
         <DesignPanel />
+      </TabsContent>
+
+      <TabsContent
+        value="prototype"
+        class="flex min-h-0 flex-1 flex-col pb-4"
+        :force-mount="true"
+        :hidden="activeTab !== 'prototype'"
+      >
+        <PrototypePanel />
       </TabsContent>
 
       <TabsContent

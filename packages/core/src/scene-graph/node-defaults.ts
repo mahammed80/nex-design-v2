@@ -41,7 +41,7 @@ export function createDefaultNode(
     fontFamily: DEFAULT_FONT_FAMILY,
     fontWeight: 400,
     italic: false,
-    textAlignHorizontal: 'LEFT',
+    textAlignHorizontal: 'CENTER',
     textDirection: 'AUTO',
     lineHeight: null,
     letterSpacing: 0,
@@ -70,6 +70,11 @@ export function createDefaultNode(
     textAutoResize: 'NONE',
     textCase: 'ORIGINAL',
     textDecoration: 'NONE',
+    wordSpacing: 0,
+    paragraphSpacing: 0,
+    listStyle: 'NONE',
+    baselineShift: 0,
+    openTypeFeatures: {},
     maxLines: null,
     styleRuns: [],
     horizontalConstraint: 'MIN',
@@ -113,6 +118,11 @@ export function createDefaultNode(
     flipX: false,
     flipY: false,
     textPicture: null,
+    layoutGrids: [],
+    reactions: [],
+    prototypeStartNodeId: null,
+    prototypeFlows: [],
+    prototypeConnections: [],
     ...overrides
   }
 }
@@ -124,5 +134,13 @@ export const CONTAINER_TYPES = new Set<NodeType>([
   'SECTION',
   'COMPONENT',
   'COMPONENT_SET',
-  'INSTANCE'
+  'INSTANCE',
+  'RECTANGLE',
+  'ROUNDED_RECTANGLE',
+  'ELLIPSE',
+  'TEXT',
+  'LINE',
+  'STAR',
+  'POLYGON',
+  'VECTOR'
 ])

@@ -9,7 +9,13 @@ export {
   drawSelection,
   getRotatedCorners
 } from './selection'
-export { drawFlashes, drawLayoutInsertIndicator, drawMarquee, drawSnapGuides } from './feedback'
+export {
+  drawFlashes,
+  drawLayoutInsertIndicator,
+  drawMarquee,
+  drawSnapGuides,
+  drawGuides
+} from './feedback'
 export { drawTextEditOverlay } from './text-edit'
 export { drawSelectionLabels } from '#core/canvas/selection-labels'
 export { drawPenOverlay, drawRemoteCursors } from '#core/canvas/pen-overlay'

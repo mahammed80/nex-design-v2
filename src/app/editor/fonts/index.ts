@@ -1,4 +1,13 @@
-import { fontManager, styleToWeight, type LocalFontAccessState } from '@nex-design/core/text'
+import {
+  fontManager,
+  styleToWeight,
+  listAllProviderFamilies,
+  getAdobeProjectIds,
+  setAdobeProjectIds,
+  type FontEntry,
+  type FontProviderId,
+  type LocalFontAccessState
+} from '@nex-design/core/text'
 
 import {
   clearDownloadedFontCache as clearTauriDownloadedFontCache,
@@ -93,6 +102,33 @@ export async function listFamilies(): Promise<string[]> {
   return fontManager.listFamilies()
 }
 
+export async function listAllFamilies(): Promise<FontEntry[]> {
+  configureTauriFontCache()
+  const local: FontEntry[] = (await listFamilies()).map((f) => ({
+    family: f,
+    provider: 'system' as FontProviderId
+  }))
+  const providers = await listAllProviderFamilies()
+  const seen = new Set<string>()
+  const merged: FontEntry[] = []
+  for (const entry of [...local, ...providers]) {
+    const key = entry.family.toLowerCase()
+    if (!seen.has(key)) {
+      seen.add(key)
+      merged.push(entry)
+    }
+  }
+  merged.sort((a, b) => a.family.localeCompare(b.family))
+  return merged
+}
+
+export async function getProviderMap(): Promise<Record<string, FontProviderId>> {
+  const entries = await listAllFamilies()
+  const map: Record<string, FontProviderId> = {}
+  for (const e of entries) map[e.family] = e.provider
+  return map
+}
+
 export async function listFonts(): Promise<TauriFontFamily[]> {
   configureTauriFontCache()
   if (isTauri()) {
@@ -128,3 +164,5 @@ export async function loadFont(family: string, style = 'Regular'): Promise<Array
 
   return fontManager.loadFont(family, style)
 }
+
+export { getAdobeProjectIds, setAdobeProjectIds }

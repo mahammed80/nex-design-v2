@@ -27,7 +27,7 @@ export function reparentOutsideNodes(editor: Editor) {
     const node = editor.graph.getNode(id)
     if (!node?.parentId || editor.isTopLevel(node.parentId)) continue
     const parent = editor.graph.getNode(node.parentId)
-    if (!parent || (parent.type !== 'FRAME' && parent.type !== 'SECTION')) continue
+    if (!parent) continue
     const outsideX = node.x + node.width < 0 || node.x > parent.width
     const outsideY = node.y + node.height < 0 || node.y > parent.height
     if (outsideX || outsideY) {

@@ -29,14 +29,14 @@
 }
 
 @theme {
-  --color-panel: #2a2a2a;
-  --color-canvas: #1e1e1e;
-  --color-border: #3a3a3a;
-  --color-hover: #353535;
-  --color-accent: #3b82f6;
-  --color-surface: #e0e0e0;
-  --color-muted: #888888;
-  --color-input: #1e1e1e;
+  --color-panel: #323134;
+  --color-canvas: #1d1c1f;
+  --color-border: #4c4b4e;
+  --color-hover: #424144;
+  --color-accent: #670f0f;
+  --color-surface: #f7f5f5;
+  --color-muted: #9c999a;
+  --color-input: #1d1c1f;
   --color-component: #9747ff;
   --color-warning-bg: rgb(245 158 11 / 0.1);
   --color-warning-border: rgb(245 158 11 / 0.3);
@@ -45,28 +45,28 @@
   --color-success: #4ade80;
   --color-success-bg: #16a34a;
   --color-success-bg-hover: #15803d;
-  --color-code-tag: #7dd3fc;
-  --color-code-attribute: #c4b5fd;
-  --color-code-string: #86efac;
+  --color-code-tag: #84b899;
+  --color-code-attribute: #ebd0b9;
+  --color-code-string: #ebdca9;
   --color-code-number: #fca5a5;
-  --color-code-punctuation: #888888;
-  --color-checkerboard: #3a3a3a;
-  --color-checkerboard-muted: #4a4a4a;
-  --color-ruler-bg: rgb(36, 36, 36);
-  --color-ruler-tick: rgb(102, 102, 102);
-  --color-ruler-text: rgb(140, 140, 140);
-  --color-ruler-label: rgb(255, 255, 255);
+  --color-code-punctuation: #b8ae9f;
+  --color-checkerboard: #1d1c1f;
+  --color-checkerboard-muted: #2c2b2e;
+  --color-ruler-bg: #323134;
+  --color-ruler-tick: #4c4b4e;
+  --color-ruler-text: #9c999a;
+  --color-ruler-label: #f7f5f5;
 }
 
 html[data-theme='light'] {
-  --color-panel: #ffffff;
-  --color-canvas: #f3f4f6;
-  --color-border: #d8dce3;
-  --color-hover: #eef1f5;
-  --color-accent: #2563eb;
-  --color-surface: #202124;
-  --color-muted: #6b7280;
-  --color-input: #ffffff;
+  --color-panel: #f7f5f5;
+  --color-canvas: #ece9e9;
+  --color-border: #c9c5c5;
+  --color-hover: #ece9e9;
+  --color-accent: #670f0f;
+  --color-surface: #1d1c1f;
+  --color-muted: #6d6d6e;
+  --color-input: #f7f5f5;
   --color-component: #7c3aed;
   --color-warning-bg: rgb(245 158 11 / 0.14);
   --color-warning-border: rgb(245 158 11 / 0.32);
@@ -75,17 +75,17 @@ html[data-theme='light'] {
   --color-success: #15803d;
   --color-success-bg: #16a34a;
   --color-success-bg-hover: #15803d;
-  --color-code-tag: #0369a1;
-  --color-code-attribute: #6d28d9;
-  --color-code-string: #15803d;
+  --color-code-tag: #2d4036;
+  --color-code-attribute: #7c3aed;
+  --color-code-string: #b45309;
   --color-code-number: #b91c1c;
-  --color-code-punctuation: #64748b;
-  --color-checkerboard: #d1d5db;
-  --color-checkerboard-muted: #e5e7eb;
-  --color-ruler-bg: rgb(229, 231, 235);
-  --color-ruler-tick: rgb(148, 163, 184);
-  --color-ruler-text: rgb(100, 116, 139);
-  --color-ruler-label: rgb(255, 255, 255);
+  --color-code-punctuation: #4a5f51;
+  --color-checkerboard: #f7f5f5;
+  --color-checkerboard-muted: #ece9e9;
+  --color-ruler-bg: #ece9e9;
+  --color-ruler-tick: #c9c5c5;
+  --color-ruler-text: #6d6d6e;
+  --color-ruler-label: #1d1c1f;
 }
 
 html,

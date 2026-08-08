@@ -1,17 +1,9 @@
 import { DEFAULT_TEXT_HEIGHT, DEFAULT_TEXT_WIDTH } from '@nex-design/core/constants'
 import type { Editor } from '@nex-design/core/editor'
 
+import { findMoveDropTarget } from '#vue/shared/input/drop-target'
 import { TOOL_TO_NODE } from '#vue/shared/input/types'
 import type { DragDraw, DragState } from '#vue/shared/input/types'
-
-export function startTextTool(cx: number, cy: number, editor: Editor) {
-  const nodeId = editor.createShape('TEXT', cx, cy, DEFAULT_TEXT_WIDTH, DEFAULT_TEXT_HEIGHT)
-  editor.graph.updateNode(nodeId, { text: '' })
-  editor.select([nodeId])
-  editor.startTextEditing(nodeId)
-  editor.setTool('SELECT')
-  editor.requestRender()
-}
 
 export function startShapeDraw(
   cx: number,
@@ -52,15 +44,51 @@ export function handleDrawMove(
   })
 }
 
+import type { SceneNode } from '@nex-design/core/scene-graph'
+
 export function handleDrawUp(d: DragDraw, editor: Editor) {
   const node = editor.graph.getNode(d.nodeId)
   if (node && node.width < 2 && node.height < 2) {
-    editor.updateNode(d.nodeId, { width: 100, height: 100 })
+    if (node.type === 'TEXT') {
+      editor.updateNode(d.nodeId, {
+        width: DEFAULT_TEXT_WIDTH,
+        height: DEFAULT_TEXT_HEIGHT,
+        textAutoResize: 'NONE'
+      })
+    } else {
+      editor.updateNode(d.nodeId, { width: 100, height: 100 })
+    }
+  } else if (node && node.type === 'TEXT') {
+    editor.updateNode(d.nodeId, { textAutoResize: 'NONE' })
   }
+
+  // Find target container and reparent if inside it
+  const target = findMoveDropTarget(d.startX, d.startY, editor)
+  if (target && target.id !== editor.state.currentPageId) {
+    editor.graph.reparentNode(d.nodeId, target.id)
+  }
+
   if (node?.type === 'SECTION') {
     editor.adoptNodesIntoSection(node.id)
   }
-  editor.commitResize(d.nodeId, { x: d.startX, y: d.startY, width: 0, height: 0 })
+
+  const origSubtree = new Map<string, SceneNode>()
+  if (node) {
+    origSubtree.set(d.nodeId, {
+      ...node,
+      x: d.startX,
+      y: d.startY,
+      width: 0,
+      height: 0
+    })
+  }
+
+  editor.commitResize(d.nodeId, origSubtree)
   editor.undo.commitBatch()
+
+  if (node?.type === 'TEXT') {
+    editor.startTextEditing(d.nodeId)
+  }
+
   editor.setTool('SELECT')
 }

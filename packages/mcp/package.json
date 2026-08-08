@@ -19,7 +19,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "bunx tsgo && bunx fix-esm-import-path dist",
+    "build": "npx tsgo && npx fix-esm-import-path dist",
     "prepublishOnly": "bun run build"
   },
   "repository": {

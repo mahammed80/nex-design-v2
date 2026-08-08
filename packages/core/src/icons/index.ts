@@ -3,6 +3,7 @@ import { buildIconData } from './svg'
 import type { IconData, IconSearchResult } from './types'
 
 export type { IconData, IconPath, IconSearchResult } from './types'
+export { extractPaths } from './svg'
 
 const iconCache = new Map<string, IconData>()
 

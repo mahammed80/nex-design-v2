@@ -50,20 +50,31 @@ export const render = defineTool({
       figma.graph.reorderChild(result.id, parentId, args.insert_index)
     }
 
+    const node = figma.graph.getNode(result.id)
+
     return {
       id: result.id,
       name: result.name,
       type: result.type,
-      x: result.x,
-      y: result.y,
-      width: result.width,
-      height: result.height,
+      x: node?.x,
+      y: node?.y,
+      width: node?.width,
+      height: node?.height,
       children: result.childIds,
       ...(results.length > 1
         ? {
-            siblings: results
-              .slice(1)
-              .map((node) => ({ id: node.id, name: node.name, type: node.type, x: node.x, y: node.y, width: node.width, height: node.height }))
+            siblings: results.slice(1).map((res) => {
+              const sNode = figma.graph.getNode(res.id)
+              return {
+                id: res.id,
+                name: res.name,
+                type: res.type,
+                x: sNode?.x,
+                y: sNode?.y,
+                width: sNode?.width,
+                height: sNode?.height
+              }
+            })
           }
         : {})
     }

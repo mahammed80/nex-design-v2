@@ -7,11 +7,11 @@ export const IS_TAURI = IS_BROWSER && '__TAURI_INTERNALS__' in window
 export const BLACK: Color = { r: 0, g: 0, b: 0, a: 1 }
 export const TRANSPARENT: Color = { r: 0, g: 0, b: 0, a: 0 }
 export const DEFAULT_SHADOW_COLOR: Color = { r: 0, g: 0, b: 0, a: 0.25 }
-export const SELECTION_COLOR = { r: 0.23, g: 0.51, b: 0.96, a: 1 } satisfies Color
+export const SELECTION_COLOR = { r: 0.404, g: 0.059, b: 0.059, a: 1 } satisfies Color
 export const COMPONENT_COLOR = { r: 0.592, g: 0.278, b: 1, a: 1 } satisfies Color
 export const SNAP_COLOR = { r: 1.0, g: 0.0, b: 0.56, a: 1 } satisfies Color
-export const CANVAS_BG_COLOR = { r: 0.96, g: 0.96, b: 0.96, a: 1 } satisfies Color
-export const CANVAS_BG_COLOR_DARK = { r: 0.173, g: 0.173, b: 0.173, a: 1 } satisfies Color // #2c2c2c, Figma-ish dark canvas
+export const CANVAS_BG_COLOR = { r: 0.925, g: 0.914, b: 0.914, a: 1 } satisfies Color
+export const CANVAS_BG_COLOR_DARK = { r: 0.114, g: 0.11, b: 0.122, a: 1 } satisfies Color // #2c2c2c, Figma-ish dark canvas
 
 /**
  * Returns the canvas background to initialize new pages with. Defers
@@ -44,9 +44,9 @@ export function getDefaultCanvasBgColor(): Color {
 export const SNAP_THRESHOLD = 5
 
 export const RULER_SIZE = 20
-export const RULER_BG_COLOR = { r: 0.14, g: 0.14, b: 0.14, a: 1 } satisfies Color
-export const RULER_TICK_COLOR = { r: 0.4, g: 0.4, b: 0.4, a: 1 } satisfies Color
-export const RULER_TEXT_COLOR = { r: 0.55, g: 0.55, b: 0.55, a: 1 } satisfies Color
+export const RULER_BG_COLOR = { r: 0.196, g: 0.192, b: 0.204, a: 1 } satisfies Color
+export const RULER_TICK_COLOR = { r: 0.298, g: 0.294, b: 0.306, a: 1 } satisfies Color
+export const RULER_TEXT_COLOR = { r: 0.612, g: 0.6, b: 0.604, a: 1 } satisfies Color
 export const RULER_BADGE_HEIGHT = 14
 export const RULER_BADGE_PADDING = 3
 export const RULER_BADGE_RADIUS = 2

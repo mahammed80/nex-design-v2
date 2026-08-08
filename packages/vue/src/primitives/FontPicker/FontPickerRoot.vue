@@ -9,7 +9,6 @@ import {
   ComboboxItemIndicator,
   ComboboxPortal,
   ComboboxRoot,
-  ComboboxVirtualizer,
   ComboboxViewport,
   type AcceptableValue
 } from 'reka-ui'
@@ -17,16 +16,25 @@ import {
 import { useFontPicker, type FontAccessController } from '#vue/primitives/FontPicker/useFontPicker'
 
 import type { FontPickerUi } from '#vue/primitives/FontPicker/types'
+import type { FontProviderId } from '@nex-design/core/text'
 
-const { listFamilies, localFontAccess, ui, emptySearchText, emptyFontsText, emptyFontsHint } =
-  defineProps<{
-    listFamilies: () => Promise<string[]>
-    localFontAccess?: FontAccessController
-    ui?: FontPickerUi
-    emptySearchText?: string
-    emptyFontsText?: string
-    emptyFontsHint?: string
-  }>()
+const {
+  listFamilies,
+  localFontAccess,
+  ui,
+  emptySearchText,
+  emptyFontsText,
+  emptyFontsHint,
+  providerMap
+} = defineProps<{
+  listFamilies: () => Promise<string[]>
+  localFontAccess?: FontAccessController
+  ui?: FontPickerUi
+  emptySearchText?: string
+  emptyFontsText?: string
+  emptyFontsHint?: string
+  providerMap?: Record<string, FontProviderId>
+}>()
 
 const modelValue = defineModel<string>({ required: true })
 const emit = defineEmits<{ select: [family: string] }>()
@@ -41,12 +49,30 @@ function focusSearchInput() {
   })
 }
 
-const { searchTerm, open, filtered, loading, accessState, requestAccess, select } = useFontPicker({
+const {
+  searchTerm,
+  open,
+  filtered,
+  loading,
+  accessState,
+  providerFilter,
+  providerList,
+  requestAccess,
+  select,
+  setProviderFilter
+} = useFontPicker({
   modelValue,
   listFamilies,
   localFontAccess,
+  providerMap,
   onSelect: (family) => emit('select', family)
 })
+
+const PROVIDER_LABELS: Record<string, string> = {
+  bundled: 'Bundled',
+  fontsource: 'Fontsource',
+  system: 'System'
+}
 </script>
 
 <template>
@@ -60,7 +86,7 @@ const { searchTerm, open, filtered, loading, accessState, requestAccess, select 
       }
     "
   >
-    <ComboboxAnchor as-child>
+    <ComboboxAnchor as-child @click="open = !open">
       <slot name="trigger" :value="modelValue" :open="open">
         <button :class="ui?.trigger">
           <span class="truncate">{{ modelValue }}</span>
@@ -90,26 +116,49 @@ const { searchTerm, open, filtered, loading, accessState, requestAccess, select 
           />
         </slot>
 
+        <div
+          v-if="providerList.length > 1"
+          :class="ui?.providerFilter ?? 'flex gap-1 border-b border-border px-2 py-1.5'"
+        >
+          <button
+            v-for="p in providerList"
+            :key="p"
+            type="button"
+            :class="
+              ui?.providerFilterBtn ??
+              'rounded px-2 py-0.5 text-[11px] font-medium transition-colors'
+            "
+            :data-active="providerFilter === p ? '' : undefined"
+            @click="setProviderFilter(p)"
+          >
+            {{ (p as string) === 'all' ? 'All' : (PROVIDER_LABELS[p] ?? p) }}
+          </button>
+        </div>
+
         <ComboboxViewport :class="ui?.viewport ?? 'max-h-72 overflow-y-auto'">
-          <ComboboxVirtualizer
-            v-slot="{ option }"
-            :options="filtered"
-            :text-content="(family: string) => family"
-            :estimate-size="36"
+          <ComboboxItem
+            v-for="option in filtered"
+            :key="option"
+            :value="option"
+            :class="ui?.item"
+            :style="{ fontFamily: `'${option}', sans-serif` }"
           >
             <slot name="item" :family="option" :selected="option === modelValue">
-              <ComboboxItem
-                :value="option"
-                :class="ui?.item"
-                :style="{ fontFamily: `'${option}', sans-serif` }"
+              <ComboboxItemIndicator>
+                <slot name="indicator" :selected="option === modelValue" />
+              </ComboboxItemIndicator>
+              <span class="truncate">{{ option }}</span>
+              <span
+                v-if="providerMap?.[option]"
+                :class="
+                  ui?.providerBadge ??
+                  'ml-auto shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted'
+                "
               >
-                <ComboboxItemIndicator>
-                  <slot name="indicator" :selected="option === modelValue" />
-                </ComboboxItemIndicator>
-                <span class="truncate">{{ option }}</span>
-              </ComboboxItem>
+                {{ PROVIDER_LABELS[providerMap[option]] ?? providerMap[option] }}
+              </span>
             </slot>
-          </ComboboxVirtualizer>
+          </ComboboxItem>
 
           <div v-if="filtered.length === 0 && searchTerm" :class="ui?.empty">
             {{ emptySearchText ?? 'No fonts found' }}

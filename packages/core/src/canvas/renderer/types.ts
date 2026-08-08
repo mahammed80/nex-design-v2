@@ -11,6 +11,23 @@ export interface RulerTheme {
 }
 
 export interface RenderOverlays {
+  mode?: 'DESIGN' | 'PROTOTYPE' | 'DEVELOPER'
+  prototypeDragLine?: {
+    startX: number
+    startY: number
+    endX: number
+    endY: number
+    hoveredNodeId?: string | null
+    hoveredSide?: import('#core/prototype').ConnectionSide | null
+  } | null
+  prototypeReconnectDrag?: {
+    connectionId: string
+    endpoint: 'source' | 'target'
+    currentX: number
+    currentY: number
+    hoveredNodeId: string | null
+    hoveredSide: import('#core/prototype').ConnectionSide | null
+  } | null
   hoveredNodeId?: string | null
   enteredContainerId?: string | null
   editingTextId?: string | null
@@ -62,4 +79,8 @@ export interface RenderOverlays {
     y: number
     selection?: string[]
   }>
+  fontPreviewActive?: boolean
+  guides?: import('#core/editor/types').Guide[]
+  selectedGuideId?: string | null
+  guidesVisible?: boolean
 }

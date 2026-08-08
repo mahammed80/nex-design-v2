@@ -8,9 +8,56 @@
  * no shared references between source and copy.
  */
 
-import type { Effect, Fill, GeometryPath, GradientStop, Stroke, StyleRun } from './'
+import type { Effect, Fill, GeometryPath, GradientStop, Stroke, StyleRun, SceneNode } from './'
 
 // --- Individual copy functions ---
+
+export function cloneNode(node: SceneNode): SceneNode {
+  const clone: SceneNode = {
+    ...node,
+    childIds: [...node.childIds],
+    fills: copyFills(node.fills),
+    strokes: copyStrokes(node.strokes),
+    effects: copyEffects(node.effects),
+    styleRuns: copyStyleRuns(node.styleRuns),
+    fillGeometry: copyGeometryPaths(node.fillGeometry),
+    strokeGeometry: copyGeometryPaths(node.strokeGeometry),
+    overrides: node.overrides ? structuredClone(node.overrides) : {},
+    layoutGrids: node.layoutGrids ? node.layoutGrids.map((g) => ({ ...g })) : [],
+    reactions: node.reactions
+      ? node.reactions.map((r) => ({
+          trigger: { ...r.trigger },
+          actions: r.actions.map((a) => ({
+            ...a,
+            transition: a.transition ? { ...a.transition } : undefined
+          }))
+        }))
+      : [],
+    prototypeStartNodeId: node.prototypeStartNodeId,
+    prototypeFlows: node.prototypeFlows ? node.prototypeFlows.map((f) => ({ ...f })) : [],
+    prototypeConnections: node.prototypeConnections
+      ? structuredClone(node.prototypeConnections)
+      : []
+  }
+  if (node.vectorNetwork) {
+    clone.vectorNetwork = {
+      vertices: node.vectorNetwork.vertices.map((v) => ({ ...v })),
+      segments: node.vectorNetwork.segments.map((s) => ({
+        ...s,
+        tangentStart: { ...s.tangentStart },
+        tangentEnd: { ...s.tangentEnd }
+      })),
+      regions: node.vectorNetwork.regions ? structuredClone(node.vectorNetwork.regions) : []
+    }
+  }
+  if (node.boundVariables) {
+    clone.boundVariables = structuredClone(node.boundVariables)
+  }
+  if (node.textPicture) {
+    clone.textPicture = node.textPicture.slice()
+  }
+  return clone
+}
 
 export function copyFill(f: Fill): Fill {
   const copy: Fill = { ...f, color: { ...f.color } }

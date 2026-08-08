@@ -1,6 +1,7 @@
 import type { EditorContext } from '#core/editor/types'
 import { computeAllLayouts } from '#core/layout'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
+import { cloneNode } from '#core/scene-graph/copy'
 
 export type PageSnapshot = Map<string, SceneNode>
 
@@ -9,7 +10,7 @@ export function snapshotPage(graph: SceneGraph, pageId: string): PageSnapshot {
   const walk = (id: string) => {
     const node = graph.getNode(id)
     if (!node) return
-    snapshot.set(id, structuredClone(node))
+    snapshot.set(id, cloneNode(node))
     for (const childId of node.childIds) walk(childId)
   }
   walk(pageId)

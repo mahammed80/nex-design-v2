@@ -23,7 +23,7 @@ const store = useEditorStore()
 const renameInput = templateRef<HTMLInputElement>('renameInput')
 const rename = useInlineRename((id, name) => store.renameNode(id, name))
 const { menu: t } = useI18n()
-const { draggingId, instruction, instructionTargetId } = useLayerDrag(store, INDENT)
+const { draggingId, instruction, instructionTargetId, setupItem } = useLayerDrag(store, INDENT)
 
 watch(renameInput, (input) => {
   if (input) void rename.focusInput(input)
@@ -69,6 +69,7 @@ function onTreeSelect(e: CustomEvent, select: (additive: boolean) => void) {
               :node="item.value"
               :level="item.level"
               :has-children="item.hasChildren"
+              :setup-item="setupItem"
             >
               <TreeItem
                 v-slot="{ isExpanded }"

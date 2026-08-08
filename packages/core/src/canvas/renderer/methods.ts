@@ -8,6 +8,7 @@ import * as NodeEditOverlay from '#core/canvas/node-edit-overlay'
 import type { NodeEditOverlayState } from '#core/canvas/node-edit-overlay'
 import * as Overlays from '#core/canvas/overlays'
 import * as PenOverlay from '#core/canvas/pen-overlay'
+import { drawPrototypeOverlay } from '#core/canvas/prototype-overlay'
 import type { SkiaRenderer } from '#core/canvas/renderer'
 import type { RenderOverlays } from '#core/canvas/renderer/types'
 import * as Rulers from '#core/canvas/rulers'
@@ -79,6 +80,15 @@ const rendererMethods: ThisType<SkiaRenderer> = {
     Overlays.drawSnapGuides(this, canvas, guides)
   },
 
+  drawGuides(
+    canvas: Canvas,
+    guides?: import('#core/editor/types').Guide[],
+    selectedGuideId?: string | null,
+    visible?: boolean
+  ): void {
+    Overlays.drawGuides(this, canvas, guides, selectedGuideId, visible)
+  },
+
   drawMarquee(canvas: Canvas, marquee?: Rect | null): void {
     Overlays.drawMarquee(this, canvas, marquee)
   },
@@ -122,6 +132,15 @@ const rendererMethods: ThisType<SkiaRenderer> = {
     cursors?: RenderOverlays['remoteCursors']
   ): void {
     PenOverlay.drawRemoteCursors(this, canvas, graph, cursors)
+  },
+
+  drawPrototypeOverlay(
+    canvas: Canvas,
+    graph: SceneGraph,
+    selectedIds: Set<string>,
+    overlays: RenderOverlays
+  ): void {
+    drawPrototypeOverlay(this, canvas, graph, selectedIds, overlays)
   },
 
   drawRulers(canvas: Canvas, graph: SceneGraph, selectedIds: Set<string>): void {

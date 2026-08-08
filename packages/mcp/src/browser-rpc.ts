@@ -67,6 +67,7 @@ export function createBrowserRpcBridge({ authToken, onConnectionChange }: Browse
       const msg = JSON.parse(data) as BrowserMessage
       if (msg.type === 'register' && msg.token) {
         if (authToken && msg.token !== authToken) {
+          console.warn(`[MCP] Auth token mismatch: client=${msg.token}, server=${authToken}`)
           ws.close()
           return
         }

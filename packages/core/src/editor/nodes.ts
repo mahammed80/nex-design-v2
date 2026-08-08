@@ -13,6 +13,12 @@ export function createNodeActions(ctx: EditorContext) {
   function updateNode(id: string, changes: Partial<SceneNode>) {
     ctx.graph.updateNode(id, changes)
     ctx.runLayoutForNode(id)
+
+    const te = ctx.getTextEditor()
+    if (te && te.nodeId === id) {
+      const node = ctx.graph.getNode(id)
+      if (node) te.rebuildParagraph(node)
+    }
   }
 
   function updateNodeWithUndo(id: string, changes: Partial<SceneNode>, label = 'Update') {
@@ -23,15 +29,30 @@ export function createNodeActions(ctx: EditorContext) {
     ) as Partial<SceneNode>
     ctx.graph.updateNode(id, changes)
     ctx.runLayoutForNode(id)
+
+    const te = ctx.getTextEditor()
+    if (te && te.nodeId === id) {
+      const n = ctx.graph.getNode(id)
+      if (n) te.rebuildParagraph(n)
+    }
+
     ctx.undo.push({
       label,
       forward: () => {
         ctx.graph.updateNode(id, changes)
         ctx.runLayoutForNode(id)
+        if (te && te.nodeId === id) {
+          const n = ctx.graph.getNode(id)
+          if (n) te.rebuildParagraph(n)
+        }
       },
       inverse: () => {
         ctx.graph.updateNode(id, previous)
         ctx.runLayoutForNode(id)
+        if (te && te.nodeId === id) {
+          const n = ctx.graph.getNode(id)
+          if (n) te.rebuildParagraph(n)
+        }
       }
     })
     ctx.requestRender()

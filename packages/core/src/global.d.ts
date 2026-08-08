@@ -10,6 +10,10 @@ interface Window {
   queryLocalFonts?(): Promise<FontData[]>
 }
 
+interface FontFaceSet {
+  add(font: FontFace): FontFaceSet
+}
+
 interface Uint8ArrayConstructor {
   fromBase64(base64: string, options?: { alphabet?: 'base64' | 'base64url' }): Uint8Array
 }

@@ -92,79 +92,88 @@ function handleAlign(
         </div>
       </div>
 
-      <div class="flex gap-1.5">
-        <ScrubInput
-          icon="X"
-          :model-value="xValue"
-          @update:model-value="actions.updateProp('x', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('x', v, p)"
-        />
-        <ScrubInput
-          icon="Y"
-          :model-value="yValue"
-          @update:model-value="actions.updateProp('y', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('y', v, p)"
-        />
+      <div class="flex flex-col gap-1 w-full">
+        <span class="text-[9px] text-muted uppercase font-semibold">Position</span>
+        <div class="flex gap-1.5">
+          <ScrubInput
+            icon="X"
+            :model-value="xValue"
+            @update:model-value="actions.updateProp('x', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('x', v, p)"
+          />
+          <ScrubInput
+            icon="Y"
+            :model-value="yValue"
+            @update:model-value="actions.updateProp('y', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('y', v, p)"
+          />
+        </div>
       </div>
 
-      <div v-if="isMulti" class="mt-1.5 flex gap-1.5">
-        <ScrubInput
-          icon="W"
-          :model-value="wValue"
-          :min="1"
-          @update:model-value="actions.updateProp('width', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('width', v, p)"
-        />
-        <ScrubInput
-          icon="H"
-          :model-value="hValue"
-          :min="1"
-          @update:model-value="actions.updateProp('height', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('height', v, p)"
-        />
+      <div v-if="isMulti" class="mt-1.5 flex flex-col gap-1 w-full">
+        <span class="text-[9px] text-muted uppercase font-semibold">Size</span>
+        <div class="flex gap-1.5">
+          <ScrubInput
+            icon="W"
+            :model-value="wValue"
+            :min="1"
+            @update:model-value="actions.updateProp('width', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('width', v, p)"
+          />
+          <ScrubInput
+            icon="H"
+            :model-value="hValue"
+            :min="1"
+            @update:model-value="actions.updateProp('height', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('height', v, p)"
+          />
+        </div>
       </div>
 
-      <div class="mt-1.5 flex items-center gap-1.5">
-        <ScrubInput
-          class="flex-1"
-          suffix="°"
-          :model-value="rotationValue"
-          :min="-360"
-          :max="360"
-          @update:model-value="actions.updateProp('rotation', $event)"
-          @commit="(v: number, p: number) => actions.commitProp('rotation', v, p)"
-        >
-          <template #icon>
-            <icon-lucide-rotate-cw class="size-3" />
-          </template>
-        </ScrubInput>
-        <Tip :label="panels.flipHorizontal">
-          <button
-            :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
-            data-test-id="position-flip-horizontal"
-            @click="actions.flip('horizontal')"
+      <div class="mt-1.5 flex flex-col gap-1 w-full">
+        <span class="text-[9px] text-muted uppercase font-semibold">Rotation & Transform</span>
+        <div class="flex items-center gap-1.5">
+          <ScrubInput
+            class="flex-1"
+            suffix="°"
+            :model-value="rotationValue"
+            :min="-360"
+            :max="360"
+            @update:model-value="actions.updateProp('rotation', $event)"
+            @commit="(v: number, p: number) => actions.commitProp('rotation', v, p)"
           >
-            <icon-lucide-flip-horizontal-2 class="size-3.5" />
-          </button>
-        </Tip>
-        <Tip :label="panels.flipVertical">
-          <button
-            :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
-            data-test-id="position-flip-vertical"
-            @click="actions.flip('vertical')"
-          >
-            <icon-lucide-flip-vertical-2 class="size-3.5" />
-          </button>
-        </Tip>
-        <Tip :label="panels.rotate90">
-          <button
-            :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
-            data-test-id="position-rotate-90"
-            @click="actions.rotate(90)"
-          >
-            <icon-lucide-rotate-cw-square class="size-3.5" />
-          </button>
-        </Tip>
+            <template #icon>
+              <icon-lucide-rotate-cw class="size-3" />
+            </template>
+          </ScrubInput>
+          <Tip :label="panels.flipHorizontal">
+            <button
+              :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
+              data-test-id="position-flip-horizontal"
+              @click="actions.flip('horizontal')"
+            >
+              <icon-lucide-flip-horizontal-2 class="size-3.5" />
+            </button>
+          </Tip>
+          <Tip :label="panels.flipVertical">
+            <button
+              :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
+              data-test-id="position-flip-vertical"
+              @click="actions.flip('vertical')"
+            >
+              <icon-lucide-flip-vertical-2 class="size-3.5" />
+            </button>
+          </Tip>
+          <Tip :label="panels.rotate90">
+            <button
+              :class="useIconButtonUI({ size: 'md', ui: { base: 'shrink-0' } }).base"
+              data-test-id="position-rotate-90"
+              @click="actions.rotate(90)"
+            >
+              <icon-lucide-rotate-cw-square class="size-3.5" />
+            </button>
+          </Tip>
+        </div>
       </div>
     </div>
   </PositionControlsRoot>

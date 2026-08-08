@@ -21,6 +21,15 @@ export { provideEditor, useEditor, EDITOR_KEY } from '#vue/editor/context'
 export { useCanvas } from '#vue/canvas/surface/use'
 export type { UseCanvasOptions } from '#vue/canvas/surface/use'
 export { useCanvasInput } from '#vue/canvas/useCanvasInput'
+export { useCanvasInteraction } from '#vue/canvas/interaction/use'
+export type { CanvasInteraction } from '#vue/canvas/interaction/use'
+export type {
+  InteractionEvent,
+  InteractionEventInit,
+  InteractionEventPhase,
+  InteractionEventType,
+  InteractionHandler
+} from '@nex-design/core/interaction'
 export { useTextEdit } from '#vue/canvas/text-edit/use'
 export { useCanvasDrop, extractImageFilesFromClipboard } from '#vue/canvas/drop/use'
 
@@ -54,6 +63,7 @@ export type { SizeLimitProp } from '#vue/controls/layout/helpers'
 export { useAppearance } from '#vue/controls/appearance/use'
 export { useTypography } from '#vue/controls/typography/use'
 export type { UseTypographyOptions } from '#vue/controls/typography/use'
+export { useEditorFontPicker } from '#vue/controls/typography/useEditorFontPicker'
 export { useExport } from '#vue/document/export/use'
 export type { ExportFormatId } from '#vue/document/export/use'
 export { useFillControls } from '#vue/controls/fill/use'

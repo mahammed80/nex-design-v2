@@ -1,11 +1,18 @@
 import { useFilter } from 'reka-ui'
 import { computed, ref, watch } from 'vue'
 
+import type { FontProviderId } from '@nex-design/core/text'
+
 export type FontAccessState = 'unsupported' | 'prompt' | 'granted' | 'denied'
 
 export interface FontAccessController {
   state: () => FontAccessState
   load: () => Promise<string[]>
+}
+
+export interface FontFamilyEntry {
+  family: string
+  provider?: FontProviderId
 }
 
 /**
@@ -16,6 +23,8 @@ export interface UseFontPickerOptions {
   modelValue: { value: string }
   /** Async source for available font families. */
   listFamilies: () => Promise<string[]>
+  /** Optional map of family → provider ID for provider badges and filtering. */
+  providerMap?: Record<string, FontProviderId>
   /** Host-provided local-font permission controller. */
   localFontAccess?: FontAccessController
   /** Optional callback fired after a family is selected. */
@@ -31,11 +40,23 @@ export function useFontPicker(options: UseFontPickerOptions) {
   const open = ref(false)
   const loading = ref(false)
   const accessState = ref<FontAccessState>(options.localFontAccess?.state() ?? 'granted')
+  const providerFilter = ref<FontProviderId | 'all'>('all')
 
   const { contains } = useFilter({ sensitivity: 'base' })
+
+  const providerList = computed<FontProviderId[]>(() => {
+    if (!options.providerMap) return []
+    const providers = new Set(Object.values(options.providerMap))
+    return ['all', ...providers] as FontProviderId[]
+  })
+
   const filtered = computed(() => {
-    if (!searchTerm.value) return families.value
-    return families.value.filter((family) => contains(family, searchTerm.value))
+    let list = families.value
+    if (providerFilter.value !== 'all' && options.providerMap) {
+      list = list.filter((family) => options.providerMap![family] === providerFilter.value)
+    }
+    if (!searchTerm.value) return list
+    return list.filter((family) => contains(family, searchTerm.value))
   })
 
   async function loadFamilies() {
@@ -52,10 +73,9 @@ export function useFontPicker(options: UseFontPickerOptions) {
   watch(open, async (isOpen) => {
     if (!isOpen) return
     searchTerm.value = ''
+    providerFilter.value = 'all'
     accessState.value = options.localFontAccess?.state() ?? accessState.value
-    if (accessState.value !== 'prompt') {
-      await loadFamilies()
-    }
+    await loadFamilies()
   })
 
   async function requestAccess() {
@@ -75,6 +95,10 @@ export function useFontPicker(options: UseFontPickerOptions) {
     open.value = false
   }
 
+  function setProviderFilter(filter: FontProviderId | 'all') {
+    providerFilter.value = filter
+  }
+
   return {
     families,
     searchTerm,
@@ -82,7 +106,10 @@ export function useFontPicker(options: UseFontPickerOptions) {
     filtered,
     loading,
     accessState,
+    providerFilter,
+    providerList,
     requestAccess,
-    select
+    select,
+    setProviderFilter
   }
 }

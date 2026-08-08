@@ -13,8 +13,12 @@ export function drawTextEditOverlay(
 ): void {
   r.auxStroke.setStrokeWidth(1 / r.zoom)
   r.auxStroke.setColor(r.selColor())
-  r.auxStroke.setPathEffect(null)
+
+  // Dashed border effect for editing
+  const pathEffect = r.ck.PathEffect.MakeDash([4 / r.zoom, 4 / r.zoom], 0)
+  r.auxStroke.setPathEffect(pathEffect)
   canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.auxStroke)
+  if (pathEffect) pathEffect.delete()
 
   const selRects = editor.getSelectionRects()
   if (selRects.length > 0) {

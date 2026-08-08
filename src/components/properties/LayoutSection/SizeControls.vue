@@ -13,6 +13,7 @@ import {
 } from 'reka-ui'
 
 import ScrubInput from '@/components/ScrubInput.vue'
+import AppSelect from '@/components/ui/AppSelect.vue'
 import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
 import BoundVariableButton from '@/components/properties/BoundVariableButton.vue'
 import VariablePickerPopover from '@/components/properties/VariablePickerPopover.vue'
@@ -325,6 +326,31 @@ function handleSizeSelect(axis: 'width' | 'height', value: SizeSelectValue) {
           </SelectRoot>
         </template>
       </ScrubInput>
+    </div>
+  </div>
+
+  <div
+    v-if="ctx.isFlex || ctx.isInAutoLayout"
+    class="mt-2.5 flex flex-col gap-1 border-t border-border/30 pt-2"
+  >
+    <span class="text-[9px] text-muted uppercase font-semibold">Resizing</span>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[9px] text-muted font-medium">Horizontal</span>
+        <AppSelect
+          :model-value="ctx.widthSizing"
+          :options="ctx.widthSizingOptions"
+          @update:model-value="handleSizeSelect('width', $event as SizeSelectValue)"
+        />
+      </div>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[9px] text-muted font-medium">Vertical</span>
+        <AppSelect
+          :model-value="ctx.heightSizing"
+          :options="ctx.heightSizingOptions"
+          @update:model-value="handleSizeSelect('height', $event as SizeSelectValue)"
+        />
+      </div>
     </div>
   </div>
 

@@ -2,6 +2,7 @@ import { getWorldMatrix } from '#core/canvas/coordinate'
 import Matrix from '#core/canvas/matrix'
 
 import type { SceneGraph, SceneNode, NodeType } from './'
+import { getAncestorStack } from './traversal'
 
 const CONTAINER_TYPES = new Set<NodeType>([
   'CANVAS',
@@ -10,7 +11,15 @@ const CONTAINER_TYPES = new Set<NodeType>([
   'SECTION',
   'COMPONENT',
   'COMPONENT_SET',
-  'INSTANCE'
+  'INSTANCE',
+  'RECTANGLE',
+  'ROUNDED_RECTANGLE',
+  'ELLIPSE',
+  'TEXT',
+  'LINE',
+  'STAR',
+  'POLYGON',
+  'VECTOR'
 ])
 const OPAQUE_CONTAINER_TYPES = new Set<NodeType>(['COMPONENT', 'INSTANCE'])
 
@@ -61,6 +70,9 @@ function hitTestTransparentContainer(
   const childHit = hitTestChildren(graph, px, py, childId, deep)
   if (childHit) {
     if (child.locked) return child
+    if (!deep && (child.type === 'FRAME' || child.type === 'SECTION')) {
+      return child
+    }
     return childHit
   }
 
@@ -122,6 +134,26 @@ export function hitTestDeep(
 ): SceneNode | null {
   const scope = scopeId ?? graph.rootId
   return hitTestChildren(graph, px, py, scope, true)
+}
+
+/**
+ * Deep hit-test that returns the full ancestry chain of the deepest node hit,
+ * ordered outermost-first and ending at the target node. The scope (or graph
+ * root) is excluded.
+ *
+ * Example for `Frame -> Rectangle -> Text` at a point over the text:
+ * `[frame, rectangle, text]`. Returns an empty array when nothing is hit.
+ */
+export function hitTestStack(
+  graph: SceneGraph,
+  px: number,
+  py: number,
+  scopeId?: string
+): SceneNode[] {
+  const scope = scopeId ?? graph.rootId
+  const deepest = hitTestDeep(graph, px, py, scope)
+  if (!deepest) return []
+  return getAncestorStack(graph, deepest.id, scope)
 }
 
 function hitTestFrameChildren(

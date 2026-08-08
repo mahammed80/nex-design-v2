@@ -1,11 +1,15 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["node", "bun"],
-
+    "types": [
+      "node"
+    ],
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
@@ -14,10 +18,18 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "#core/*": ["./src/*"],
-      "@nex-design/core": ["./src/index.ts"],
-      "@nex-design/core/*": ["./src/*"]
+      "#core/*": [
+        "./src/*"
+      ],
+      "@nex-design/core": [
+        "./src/index.ts"
+      ],
+      "@nex-design/core/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

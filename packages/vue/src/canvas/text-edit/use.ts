@@ -47,13 +47,19 @@ export function useTextEdit(canvasRef: Ref<HTMLCanvasElement | null>, store: Edi
     toggleUnderline
   })
 
-  useEventListener(textareaRef, 'input', onInput)
-  useEventListener(textareaRef, 'compositionstart', onCompositionStart)
-  useEventListener(textareaRef, 'compositionend', onCompositionEnd)
-  useEventListener(textareaRef, 'keydown', onKeyDown)
   useEventListener(canvasRef, 'mousedown', () =>
     focusTextAreaOnCanvasPointerDown(textareaRef, store)
   )
 
-  useTextEditingSession({ store, textareaRef, resetBlink, stopBlink, resetComposition })
+  useTextEditingSession({
+    store,
+    textareaRef,
+    resetBlink,
+    stopBlink,
+    resetComposition,
+    onInput,
+    onCompositionStart,
+    onCompositionEnd,
+    onKeyDown
+  })
 }

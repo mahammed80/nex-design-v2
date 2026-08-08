@@ -15,6 +15,7 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
   let ws: WebSocket | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined
   let intentionalDisconnect = false
+  let wasConnected = false
 
   function makeFigma() {
     return makeFigmaFromStore(getStore())
@@ -41,6 +42,7 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     ws.onopen = () => {
       console.debug('[Automation] WebSocket connected to MCP server')
       ws?.send(JSON.stringify({ type: 'register', token }))
+      wasConnected = true
     }
 
     ws.onmessage = async (event) => {
@@ -73,12 +75,20 @@ export function connectAutomation(getStore: () => EditorStore, authToken: string
     ws.onclose = (event) => {
       ws = null
       if (intentionalDisconnect || event.code === 1000) return
-      console.error('[Automation] WebSocket closed:', `code=${event.code} reason=${event.reason}`)
+      if (wasConnected) {
+        console.warn(
+          '[Automation] WebSocket disconnected:',
+          `code=${event.code} reason=${event.reason}`
+        )
+        wasConnected = false
+      } else {
+        console.debug('[Automation] WebSocket connection failed:', `code=${event.code}`)
+      }
       scheduleReconnect()
     }
 
     ws.onerror = (event) => {
-      console.error('[Automation] WebSocket error:', event)
+      console.debug('[Automation] WebSocket error:', event)
       ws?.close()
     }
   }

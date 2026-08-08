@@ -23,6 +23,12 @@ export type { EditorToolDef as ToolDef, Tool } from '@nex-design/core/editor'
 export function createEditorStore(initialGraph?: SceneGraph) {
   const graph = initialGraph ?? new SceneGraph()
 
+  // Ensure "Style Guide" page exists
+  const hasStyleGuide = graph.getPages().some((p) => p.name === 'Style Guide')
+  if (!hasStyleGuide) {
+    graph.addPage('Style Guide')
+  }
+
   const state = shallowReactive<AppEditorState>(createInitialAppEditorState(graph.getPages()[0].id))
 
   const viewportSize = { width: 0, height: 0 }

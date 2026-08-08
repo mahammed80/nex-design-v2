@@ -105,7 +105,7 @@ async function updatePreview() {
   const data = await editorStore.renderExportImage(ids, scale, 'PNG')
   if (data) {
     const prev = previewUrl.value
-    previewUrl.value = URL.createObjectURL(new Blob([data], { type: 'image/png' }))
+    previewUrl.value = URL.createObjectURL(new Blob([data as BlobPart], { type: 'image/png' }))
     if (prev) URL.revokeObjectURL(prev)
   }
 }
@@ -128,10 +128,20 @@ onScopeDispose(() => {
 </script>
 
 <template>
-  <div data-test-id="export-section" :class="sectionCls.wrapper">
+  <div
+    data-test-id="export-section"
+    :class="[
+      sectionCls.wrapper,
+      'bg-accent rounded-lg p-3 m-2 text-white border border-accent/20 shadow-lg'
+    ]"
+  >
     <div class="flex items-center justify-between">
-      <label :class="sectionCls.label">{{ panels.export }}</label>
-      <button data-test-id="export-section-add" :class="useIconButtonUI().base" @click="addSetting">
+      <label class="mb-1 block text-[11px] font-bold text-white/80">{{ panels.export }}</label>
+      <button
+        data-test-id="export-section-add"
+        :class="useIconButtonUI({ ui: { base: 'text-white hover:bg-white/10' } }).base"
+        @click="addSetting"
+      >
         +
       </button>
     </div>
@@ -154,7 +164,10 @@ onScopeDispose(() => {
         :options="FORMAT_OPTIONS"
         @update:model-value="updateFormat(i, $event as ExportFormatId)"
       />
-      <button :class="useIconButtonUI({ ui: { base: 'shrink-0' } }).base" @click="removeSetting(i)">
+      <button
+        :class="useIconButtonUI({ ui: { base: 'shrink-0 text-white hover:bg-white/10' } }).base"
+        @click="removeSetting(i)"
+      >
         −
       </button>
     </div>
@@ -162,7 +175,7 @@ onScopeDispose(() => {
     <button
       v-if="activeSettings.length > 0"
       data-test-id="export-button"
-      class="mt-1.5 w-full cursor-pointer truncate rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-default disabled:opacity-50"
+      class="mt-1.5 w-full cursor-pointer truncate rounded bg-white px-3 py-1.5 text-xs font-bold text-accent hover:bg-white/90 disabled:cursor-default disabled:opacity-50"
       :disabled="exporting"
       @click="doExport"
     >
@@ -172,7 +185,7 @@ onScopeDispose(() => {
     <button
       v-if="activeSettings.length > 0"
       data-test-id="export-preview-toggle"
-      class="mt-1 flex w-full cursor-pointer items-center gap-1 rounded border-none bg-transparent px-0 py-1 text-[11px] text-muted hover:text-surface"
+      class="mt-1 flex w-full cursor-pointer items-center gap-1 rounded border-none bg-transparent px-0 py-1 text-[11px] text-white/80 hover:text-white"
       @click="showPreview = !showPreview"
     >
       <icon-lucide-chevron-down v-if="showPreview" class="size-3" />
@@ -180,7 +193,10 @@ onScopeDispose(() => {
       {{ panels.exportPreview }}
     </button>
 
-    <div v-if="showPreview && previewUrl" class="mt-1 overflow-hidden rounded border border-border">
+    <div
+      v-if="showPreview && previewUrl"
+      class="mt-1 overflow-hidden rounded border border-white/10"
+    >
       <img
         :src="previewUrl"
         class="block w-full"
@@ -193,7 +209,7 @@ onScopeDispose(() => {
     </div>
     <div
       v-else-if="showPreview"
-      class="mt-1 rounded border border-border px-3 py-2 text-[11px] text-muted"
+      class="mt-1 rounded border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-white/80"
     >
       {{ panels.exportRenderingPreview }}
     </div>

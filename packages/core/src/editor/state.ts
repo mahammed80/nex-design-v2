@@ -3,15 +3,19 @@ import type { EditorState } from '#core/editor/types'
 
 export function createDefaultEditorState(pageId: string): EditorState {
   return {
+    mode: 'DESIGN',
     activeTool: 'SELECT',
     currentPageId: pageId,
     selectedIds: new Set<string>(),
     marquee: null,
+    prototypeDragLine: null,
+    prototypeReconnectDrag: null,
     snapGuides: [],
     rotationPreview: null,
     dropTargetId: null,
     layoutInsertIndicator: null,
     hoveredNodeId: null,
+    hoveredConnectionId: null,
     editingTextId: null,
     penState: null,
     penCursorX: null,
@@ -25,6 +29,11 @@ export function createDefaultEditorState(pageId: string): EditorState {
     renderVersion: 0,
     sceneVersion: 0,
     loading: false,
-    enteredContainerId: null
+    enteredContainerId: null,
+    fontPreviewActive: false,
+    guides: [],
+    selectedGuideId: null,
+    guidesVisible: true,
+    guidesLocked: false
   }
 }

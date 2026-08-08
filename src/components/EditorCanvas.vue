@@ -9,6 +9,7 @@ import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaborati
 import { createCanvasContextSelection } from '@/app/editor/canvas/context-selection'
 import { fadeOutGlobalLoader } from '@/app/editor/canvas/loader-overlay'
 import CanvasMenu from './CanvasMenu.vue'
+import StyleGuideEditor from './StyleGuideEditor.vue'
 
 const store = useEditorStore()
 const collab = useCollabInjected()
@@ -43,6 +44,10 @@ useTextEdit(canvasRef, store)
 const { isDraggingOver } = useCanvasDrop(canvasRef, store)
 
 const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.value))
+const isStyleGuidePageActive = computed(() => {
+  const page = store.graph.getNode(store.state.currentPageId)
+  return page?.name === 'Style Guide'
+})
 </script>
 
 <template>
@@ -65,6 +70,7 @@ const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.
           :style="{ cursor }"
           class="absolute inset-0 block size-full touch-none outline-none"
         />
+        <StyleGuideEditor v-if="isStyleGuidePageActive" />
         <Transition
           enter-active-class="transition-opacity duration-150"
           enter-from-class="opacity-0"

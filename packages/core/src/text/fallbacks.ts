@@ -22,7 +22,12 @@ export const ARABIC_LOCAL_FALLBACK_FAMILIES = [
   'Amiri'
 ]
 
-export const ARABIC_REMOTE_FALLBACK_FAMILIES = ['Noto Naskh Arabic', 'Noto Sans Arabic']
+export const ARABIC_REMOTE_FALLBACK_FAMILIES = [
+  'Noto Naskh Arabic',
+  'Noto Sans Arabic',
+  'Cairo',
+  'Amiri'
+]
 
 export function cjkLocalFallbackFamilies(userAgent?: string): string[] {
   if (!userAgent) return [...CJK_FALLBACK_FAMILIES_LINUX]

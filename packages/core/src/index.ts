@@ -19,7 +19,8 @@ export type {
   EditorOptions,
   EditorState,
   EditorToolDef,
-  Tool
+  Tool,
+  Guide
 } from './editor'
 
 export {
@@ -153,6 +154,7 @@ export {
 export type { FrameCapture, NodeProfile } from './profiler'
 export { computeLayout, computeAllLayouts, setTextMeasurer } from './layout'
 export type { TextMeasurer } from './layout'
+export * from './prototype'
 export { getCanvasKit, type CanvasKitOptions } from './canvaskit'
 export {
   detectTextDirection,
@@ -239,7 +241,27 @@ export {
   type NearestResult,
   type NetworkNearestResult
 } from './vector/bezier'
+export {
+  createInteractionDispatcher,
+  createInteractionEvent,
+  type InteractionDispatcher,
+  type InteractionEvent,
+  type InteractionEventInit,
+  type InteractionEventPhase,
+  type InteractionEventType,
+  type InteractionHandler
+} from './interaction'
+
 export { computeSelectionBounds, computeSnap, type SnapGuide } from './scene-graph/snap'
+export {
+  findEditableNode,
+  findLockedAncestor,
+  findSelectableNode,
+  findVisibleAncestor,
+  getAncestorStack,
+  hitTestStack
+} from './scene-graph'
+
 export { UndoManager, type UndoEntry, type UndoManagerOptions } from './scene-graph/undo'
 export { TextEditor, type TextCaret, type TextEditorState } from './text/editor'
 export {
@@ -277,6 +299,7 @@ export {
   searchIcons,
   searchIconsBatch,
   clearIconCache,
+  extractPaths,
   type IconData,
   type IconPath,
   type IconSearchResult

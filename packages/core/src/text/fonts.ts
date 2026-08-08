@@ -1,3 +1,4 @@
+/// <reference path="../global.d.ts" />
 import type { CanvasKit, TypefaceFontProvider } from 'canvaskit-wasm'
 
 import { DEFAULT_FONT_FAMILY, IS_BROWSER, GOOGLE_FONTS_API_KEY } from '#core/constants'
@@ -91,6 +92,7 @@ export class FontManager {
   private loadedFamilies = new Map<string, ArrayBuffer>()
   private fontProvider: TypefaceFontProvider | null = null
   private localFonts: FontInfo[] | null = null
+  private rawLocalFonts: FontData[] | null = null
   private localFontAccessState: LocalFontAccessState = IS_BROWSER ? 'prompt' : 'unsupported'
   private downloadedFontCache: DownloadedFontCache | null = null
   private fallbackUserAgent: string | undefined
@@ -100,6 +102,19 @@ export class FontManager {
   private cjkFallbackPromise: Promise<string[]> | null = null
   private arabicFallbackFamilies: string[] = []
   private arabicFallbackPromise: Promise<string[]> | null = null
+
+  private async getRawLocalFonts(): Promise<FontData[]> {
+    if (this.rawLocalFonts) return this.rawLocalFonts
+    if (!IS_BROWSER || !window.queryLocalFonts) return []
+    try {
+      this.rawLocalFonts = await window.queryLocalFonts()
+      return this.rawLocalFonts
+    } catch (e) {
+      console.warn('Failed to query local fonts:', e)
+      this.rawLocalFonts = []
+      return []
+    }
+  }
 
   attachProvider(_canvasKit: CanvasKit, provider: TypefaceFontProvider): void {
     this.fontProvider = provider
@@ -142,7 +157,8 @@ export class FontManager {
       return []
     }
     try {
-      const fonts = await window.queryLocalFonts()
+      this.rawLocalFonts = null
+      const fonts = await this.getRawLocalFonts()
       const seen = new Set<string>()
       const result: FontInfo[] = []
       for (const f of fonts) {
@@ -420,6 +436,10 @@ export class FontManager {
     return response.arrayBuffer()
   }
 
+  async loadLocalFont(family: string, style = 'Regular'): Promise<ArrayBuffer | null> {
+    return this.findLocalFont(family, style)
+  }
+
   private async findLocalFont(
     family: string,
     style?: string,
@@ -427,12 +447,12 @@ export class FontManager {
   ): Promise<ArrayBuffer | null> {
     if (!IS_BROWSER || !window.queryLocalFonts) return null
     try {
-      const fonts = await window.queryLocalFonts()
+      const fonts = await this.getRawLocalFonts()
       const families = [family]
       const normalized = normalizeFontFamily(family)
       if (normalized !== family) families.push(normalized)
 
-      let match: (typeof fonts)[number] | undefined
+      let match: FontData | undefined
       for (const f of families) {
         match = style ? fonts.find((x) => x.family === f && x.style === style) : undefined
         match ??= fonts.find((x) => x.family === f)
@@ -442,7 +462,8 @@ export class FontManager {
       if (!match) return null
       const blob: Blob = await match.blob()
       const buffer = await blob.arrayBuffer()
-      if (!options.allowVariable && isVariableFont(buffer)) return null
+      const allowVariable = options.allowVariable ?? true
+      if (!allowVariable && isVariableFont(buffer)) return null
       return buffer
     } catch (e) {
       console.warn(`Local font access failed for "${family}" ${style ?? ''}:`, e)

@@ -16,7 +16,7 @@ export async function readReloadSource({
   if (filePath && isTauri()) {
     const { readFile: tauriRead } = await import('@tauri-apps/plugin-fs')
     const bytes = await tauriRead(filePath)
-    const blob = new Blob([bytes])
+    const blob = new Blob([bytes as BlobPart])
     const file = new File([blob], `${documentName}.fig`)
     return readFigFile(file, { populate: 'first-page' })
   }

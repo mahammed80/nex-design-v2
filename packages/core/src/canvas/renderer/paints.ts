@@ -108,4 +108,8 @@ export function initializeRendererPaints(r: SkiaRenderer): void {
   r.penVertexStroke.setStrokeWidth(1)
   r.penVertexStroke.setColor(r.selColor())
   r.penVertexStroke.setAntiAlias(true)
+
+  r.guidePaint = new ck.Paint()
+  r.guidePaint.setStyle(ck.PaintStyle.Stroke)
+  r.guidePaint.setAntiAlias(true)
 }

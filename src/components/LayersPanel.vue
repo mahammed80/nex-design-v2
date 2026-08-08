@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 
-import { useI18n } from '@nex-design/vue'
-
 import AppMenu from './AppMenu.vue'
 import LayerTree from './LayerTree.vue'
 import PagesPanel from './PagesPanel.vue'
-
-const { panels } = useI18n()
 </script>
 
 <template>
@@ -32,12 +28,16 @@ const { panels } = useI18n()
         />
       </SplitterResizeHandle>
       <SplitterPanel :default-size="70" :min-size="20" class="flex flex-col overflow-hidden">
-        <header
-          data-test-id="layers-header"
-          class="shrink-0 px-3 py-2 text-[11px] tracking-wider text-muted uppercase"
-        >
-          {{ panels.layers }}
-        </header>
+        <!-- Tabs Header -->
+        <div class="shrink-0 border-b border-border px-1.5 py-1.5 flex gap-1 bg-panel">
+          <button
+            type="button"
+            class="rounded px-2.5 py-1.5 text-[10px] font-bold tracking-wider uppercase transition-colors cursor-pointer bg-hover text-surface"
+          >
+            Layers
+          </button>
+        </div>
+
         <LayerTree data-test-id="layers-tree" />
       </SplitterPanel>
     </SplitterGroup>

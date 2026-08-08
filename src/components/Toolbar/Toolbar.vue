@@ -69,6 +69,7 @@ function onActionTap(item: ToolbarActionItem) {
   <ToolbarRoot v-slot="{ tools, activeTool, actions }">
     <DesktopToolbar
       v-if="!isMobile"
+      :editor="store"
       :tools="tools"
       :active-tool="activeTool"
       :tool-icons="toolIcons"

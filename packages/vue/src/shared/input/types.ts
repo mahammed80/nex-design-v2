@@ -1,5 +1,6 @@
 import type { Tool } from '@nex-design/core/editor'
-import type { NodeType, VectorNetwork } from '@nex-design/core/scene-graph'
+import type { PrototypeStateSnapshot } from '@nex-design/core/prototype'
+import type { NodeType, SceneNode, VectorNetwork } from '@nex-design/core/scene-graph'
 import type { Rect, Vector } from '@nex-design/core/types'
 
 export type HandlePosition = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w'
@@ -42,6 +43,7 @@ export interface DragResize {
   origRect: Rect
   nodeId: string
   origVectorNetwork: VectorNetwork | null
+  origSubtree: Map<string, SceneNode>
 }
 
 export interface DragMarquee {
@@ -106,6 +108,45 @@ export interface DragBendHandle {
   targetTangentField: 'tangentStart' | 'tangentEnd' | null
 }
 
+export interface DragPrototype {
+  type: 'prototype-drag'
+  startX: number
+  startY: number
+  nodeId: string
+  side: 'LEFT' | 'RIGHT'
+}
+
+export interface DragPrototypeReconnect {
+  type: 'prototype-reconnect'
+  connectionId: string
+  endpoint: 'source' | 'target'
+  startX: number
+  startY: number
+  currentX: number
+  currentY: number
+  hoveredNodeId?: string | null
+  hoveredSide?: 'TOP' | 'RIGHT' | 'BOTTOM' | 'LEFT' | null
+}
+
+export interface DragPrototypeControlPoint {
+  type: 'prototype-control-point'
+  connectionId: string
+  controlIndex: number
+  startX: number
+  startY: number
+  origCp1: Vector | null
+  origCp2: Vector | null
+  beforeSnapshot: PrototypeStateSnapshot
+}
+
+export interface DragGuide {
+  type: 'guide-drag'
+  guideId: string
+  axis: 'horizontal' | 'vertical'
+  startValue: number
+  isNew: boolean
+}
+
 export type DragState =
   | DragDraw
   | DragMove
@@ -118,6 +159,10 @@ export type DragState =
   | DragEditNode
   | DragEditHandle
   | DragBendHandle
+  | DragPrototype
+  | DragPrototypeReconnect
+  | DragPrototypeControlPoint
+  | DragGuide
 
 export const TOOL_TO_NODE: Partial<Record<Tool, NodeType>> = {
   FRAME: 'FRAME',

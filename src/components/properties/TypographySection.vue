@@ -4,7 +4,6 @@ import { ToggleGroupItem, ToggleGroupRoot } from 'reka-ui'
 import { TypographyControlsRoot, useI18n } from '@nex-design/vue'
 
 import FontPicker from '@/components/FontPicker.vue'
-import FontSettingsPopover from '@/components/FontSettings/FontSettingsPopover.vue'
 import VariableScrubInput from '@/components/properties/VariableScrubInput.vue'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Tip from '@/components/ui/Tip.vue'
@@ -27,7 +26,6 @@ const fontLoader = { load: loadFont }
           :model-value="ctx.node.value.fontFamily"
           @select="ctx.actions.setFamily"
         />
-        <FontSettingsPopover />
         <Tip
           v-if="ctx.hasMissingFonts.value"
           :label="
@@ -91,6 +89,76 @@ const fontLoader = { load: loadFont }
             <icon-lucide-a-large-small class="size-3" />
           </template>
         </VariableScrubInput>
+      </div>
+
+      <!-- Paragraph Spacing -->
+      <div class="mb-1.5 flex gap-1.5">
+        <VariableScrubInput
+          class="flex-1"
+          :model-value="ctx.node.value.paragraphSpacing"
+          :node-id="ctx.node.value.id"
+          binding-path="paragraphSpacing"
+          @update:model-value="ctx.actions.updateProp('paragraphSpacing', $event)"
+          @commit="(v: number, p: number) => ctx.actions.commitProp('paragraphSpacing', v, p)"
+        >
+          <template #icon>
+            <icon-lucide-align-justify class="size-3" />
+          </template>
+        </VariableScrubInput>
+      </div>
+
+      <!-- Alignment Vertical -->
+      <div class="mb-1.5">
+        <label class="mb-1 block text-[11px] text-muted">Vertical Align</label>
+        <ToggleGroupRoot
+          type="single"
+          class="flex gap-0.5"
+          :model-value="ctx.node.value.textAlignVertical"
+          @update:model-value="
+            (val) => {
+              if (typeof val === 'string') ctx.actions.updateProp('textAlignVertical', val)
+            }
+          "
+        >
+          <ToggleGroupItem
+            v-for="val in ['TOP', 'CENTER', 'BOTTOM'] as const"
+            :key="val"
+            :value="val"
+            class="flex-1 cursor-pointer items-center justify-center rounded border border-border bg-input px-2 py-1 text-[10px] font-medium text-muted hover:bg-hover hover:text-surface data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-white text-center"
+          >
+            {{ val }}
+          </ToggleGroupItem>
+        </ToggleGroupRoot>
+      </div>
+
+      <!-- Text Case -->
+      <div class="mb-1.5">
+        <label class="mb-1 block text-[11px] text-muted">Case</label>
+        <AppSelect
+          :model-value="ctx.node.value.textCase"
+          :options="[
+            { value: 'ORIGINAL', label: 'As typed' },
+            { value: 'UPPER', label: 'Uppercase' },
+            { value: 'LOWER', label: 'Lowercase' },
+            { value: 'TITLE', label: 'Title Case' },
+            { value: 'SMALL_CAPS', label: 'Small Caps' }
+          ]"
+          @update:model-value="ctx.actions.updateProp('textCase', $event)"
+        />
+      </div>
+
+      <!-- List Style -->
+      <div class="mb-1.5">
+        <label class="mb-1 block text-[11px] text-muted">List Style</label>
+        <AppSelect
+          :model-value="ctx.node.value.listStyle"
+          :options="[
+            { value: 'NONE', label: 'None' },
+            { value: 'UNORDERED', label: 'Bullets' },
+            { value: 'ORDERED', label: 'Numbered' }
+          ]"
+          @update:model-value="ctx.actions.updateProp('listStyle', $event)"
+        />
       </div>
 
       <div class="mb-1.5">

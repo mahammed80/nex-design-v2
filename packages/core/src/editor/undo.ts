@@ -1,6 +1,6 @@
-import type { SceneNode } from '#core/scene-graph'
+import type { SceneGraph, SceneNode } from '#core/scene-graph'
 import type { UndoEntry } from '#core/scene-graph/undo'
-import type { Rect, Vector } from '#core/types'
+import type { Vector } from '#core/types'
 
 import { restoreSubtree, snapshotSubtree } from './clipboard/subtree-history'
 import { collectNodePositions, pushPositionUndo } from './history/position'
@@ -75,18 +75,16 @@ export function createUndoActions(ctx: EditorContext) {
     })
   }
 
-  function commitResize(nodeId: string, origRect: Rect) {
-    const node = ctx.graph.getNode(nodeId)
-    if (!node) return
-    const finalRect = { x: node.x, y: node.y, width: node.width, height: node.height }
+  function commitResize(nodeId: string, origSubtree: Map<string, SceneNode>) {
+    const finalSubtree = snapshotSubtree(ctx.graph, nodeId)
     ctx.undo.push({
       label: 'Resize',
       forward: () => {
-        ctx.graph.updateNode(nodeId, finalRect)
+        restoreSubtreeProperties(ctx.graph, finalSubtree)
         ctx.runLayoutForNode(nodeId)
       },
       inverse: () => {
-        ctx.graph.updateNode(nodeId, origRect)
+        restoreSubtreeProperties(ctx.graph, origSubtree)
         ctx.runLayoutForNode(nodeId)
       }
     })
@@ -162,5 +160,22 @@ export function createUndoActions(ctx: EditorContext) {
     snapshotPage,
     restorePageFromSnapshot,
     pushUndoEntry
+  }
+}
+
+function restoreSubtreeProperties(graph: SceneGraph, subtree: Map<string, SceneNode>) {
+  for (const [id, snap] of subtree) {
+    const node = graph.getNode(id)
+    if (node) {
+      graph.updateNode(id, {
+        x: snap.x,
+        y: snap.y,
+        width: snap.width,
+        height: snap.height,
+        vectorNetwork: snap.vectorNetwork ? structuredClone(snap.vectorNetwork) : null,
+        fillGeometry: snap.fillGeometry,
+        strokeGeometry: snap.strokeGeometry
+      })
+    }
   }
 }

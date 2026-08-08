@@ -1,6 +1,15 @@
-import { spawn } from 'node:child_process'
+import { spawn, execSync } from 'node:child_process'
 
 import type { Plugin } from 'vite'
+
+function hasBun(): boolean {
+  try {
+    execSync('bun --version', { stdio: 'ignore' })
+    return true
+  } catch {
+    return false
+  }
+}
 
 // TODO: production — bundle MCP server as Tauri sidecar or spawn via shell plugin
 export function automationPlugin(authToken: string | null, corsOrigin: string): Plugin {
@@ -11,8 +20,15 @@ export function automationPlugin(authToken: string | null, corsOrigin: string): 
     configureServer() {
       if (child) return
 
-      child = spawn('bun', ['run', 'packages/mcp/src/index.ts'], {
+      const useBun = hasBun()
+      const cmd = useBun ? 'bun' : 'node'
+      const args = useBun
+        ? ['run', 'packages/mcp/src/index.ts']
+        : ['--import', 'tsx', '--loader', './vite/node-md-loader.js', 'packages/mcp/src/index.ts']
+
+      child = spawn(cmd, args, {
         stdio: ['ignore', 'inherit', 'pipe'],
+        shell: useBun && process.platform === 'win32',
         env: {
           ...process.env,
           PORT: '7600',

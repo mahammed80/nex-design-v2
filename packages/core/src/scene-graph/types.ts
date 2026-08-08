@@ -1,3 +1,4 @@
+import type { PrototypeConnection } from '#core/prototype/types'
 import type { Color, Matrix, Vector } from '#core/types'
 
 export interface SceneGraphEvents {
@@ -106,6 +107,57 @@ export interface GradientStop {
 
 export type GradientTransform = Matrix
 
+export interface BgRemovalSettings {
+  enabled?: boolean
+  targetColor?: [number, number, number] // [r, g, b] in [0, 1]
+  hueThreshold?: number // 0 to 1
+  satThreshold?: number // 0 to 1
+  valThreshold?: number // 0 to 1
+  edgeSmoothness?: number // 0 to 1
+  erodeRadius?: number // 0 to 2
+  dilateRadius?: number // 0 to 2
+}
+
+export interface BlendSettings {
+  enabled?: boolean
+  mode?: string // darken, multiply, color-burn, linear-burn, lighten, screen, color-dodge, linear-dodge, overlay, soft-light, hard-light, vivid-light, difference, exclusion, subtract, divide, hue, saturation, color, luminosity
+  color?: [number, number, number] // [r, g, b] in [0, 1]
+  opacity?: number // 0 to 1
+}
+
+export interface ImageFilters {
+  brightness?: number // -1.0 to 1.0 (default 0)
+  contrast?: number // -1.0 to 1.0 (default 0)
+  exposure?: number // -1.0 to 1.0 (default 0)
+  highlights?: number // -1.0 to 1.0 (default 0)
+  shadows?: number // -1.0 to 1.0 (default 0)
+  whites?: number // -1.0 to 1.0 (default 0)
+  blacks?: number // -1.0 to 1.0 (default 0)
+  gamma?: number // -1.0 to 1.0 (default 0)
+  // Color Correction
+  hue?: number
+  saturation?: number
+  vibrance?: number
+  temperature?: number
+  tint?: number
+
+  // CMYK Adjustments
+  cyan?: number
+  magenta?: number
+  yellow?: number
+  key?: number
+
+  bgRemoval?: BgRemovalSettings
+  blend?: BlendSettings
+  lumaThresholdEnabled?: boolean
+  lumaThreshold?: number // 0 to 1
+  lumaTolerance?: number // 0 to 1
+
+  pointsR?: [number, number][] // list of [x, y] coordinates, sorted by x
+  pointsG?: [number, number][]
+  pointsB?: [number, number][]
+}
+
 export interface Fill {
   type: FillType
   color: Color
@@ -117,6 +169,7 @@ export interface Fill {
   imageHash?: string
   imageScaleMode?: ImageScaleMode
   imageTransform?: GradientTransform
+  filters?: ImageFilters
 }
 
 export type StrokeCap = 'NONE' | 'ROUND' | 'SQUARE' | 'ARROW_LINES' | 'ARROW_EQUILATERAL'
@@ -147,10 +200,17 @@ export interface Effect {
 export type ConstraintType = 'MIN' | 'CENTER' | 'MAX' | 'STRETCH' | 'SCALE'
 export type TextAutoResize = 'NONE' | 'HEIGHT' | 'WIDTH_AND_HEIGHT' | 'TRUNCATE'
 export type TextAlignVertical = 'TOP' | 'CENTER' | 'BOTTOM'
-export type TextCase = 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE'
+export type TextCase = 'ORIGINAL' | 'UPPER' | 'LOWER' | 'TITLE' | 'SMALL_CAPS'
 export type TextDecoration = 'NONE' | 'UNDERLINE' | 'STRIKETHROUGH'
 export type TextDirection = 'AUTO' | 'LTR' | 'RTL'
 export type LayoutDirection = 'AUTO' | 'LTR' | 'RTL'
+
+export interface OpenTypeFeatures {
+  kerning?: boolean
+  ligatures?: boolean
+  hinting?: boolean
+  [tag: string]: any
+}
 
 export interface CharacterStyleOverride {
   fontWeight?: number
@@ -159,8 +219,14 @@ export interface CharacterStyleOverride {
   fontSize?: number
   fontFamily?: string
   letterSpacing?: number
+  wordSpacing?: number
   lineHeight?: number | null
   fills?: Fill[]
+  textCase?: TextCase
+  baselineShift?: number
+  superscript?: boolean
+  subscript?: boolean
+  openTypeFeatures?: OpenTypeFeatures
 }
 
 export interface StyleRun {
@@ -255,6 +321,11 @@ export interface SceneNode {
   textDecoration: TextDecoration
   lineHeight: number | null
   letterSpacing: number
+  wordSpacing: number
+  paragraphSpacing: number
+  listStyle: 'NONE' | 'UNORDERED' | 'ORDERED'
+  baselineShift: number
+  openTypeFeatures: OpenTypeFeatures
   maxLines: number | null
 
   styleRuns: StyleRun[]
@@ -339,6 +410,65 @@ export interface SceneNode {
   flipY: boolean
 
   textPicture: Uint8Array | null
+  layoutGrids?: LayoutGrid[]
+
+  reactions?: Reaction[]
+  prototypeStartNodeId?: string | null
+  prototypeFlows?: PrototypeFlow[]
+  prototypeConnections?: PrototypeConnection[]
+}
+
+export type TriggerType =
+  | 'ON_CLICK'
+  | 'ON_HOVER'
+  | 'ON_PRESS'
+  | 'MOUSE_ENTER'
+  | 'MOUSE_LEAVE'
+  | 'MOUSE_DOWN'
+  | 'MOUSE_UP'
+  | 'AFTER_DELAY'
+
+export type ActionType = 'BACK' | 'CLOSE' | 'NAVIGATE' | 'URL'
+
+export type TransitionType =
+  | 'INSTANT'
+  | 'DISSOLVE'
+  | 'SMART'
+  | 'MOVE_IN'
+  | 'MOVE_OUT'
+  | 'PUSH'
+  | 'SLIDE_IN'
+  | 'SLIDE_OUT'
+
+export type EasingType = 'LINEAR' | 'EASE_IN' | 'EASE_OUT' | 'EASE_IN_AND_OUT' | 'BOUNCE' | 'SPRING'
+
+export interface Transition {
+  type: TransitionType
+  duration: number // in ms
+  easing: EasingType
+  direction?: string
+}
+
+export interface Action {
+  type: ActionType
+  destinationId?: string // node ID for NAVIGATE
+  url?: string // URL for URL action
+  transition?: Transition
+}
+
+export interface Trigger {
+  type: TriggerType
+  delay?: number // delay in ms for AFTER_DELAY
+}
+
+export interface Reaction {
+  trigger: Trigger
+  actions: Action[]
+}
+
+export interface PrototypeFlow {
+  name: string
+  startNodeId: string
 }
 
 export type ComponentPropertyType = 'VARIANT' | 'TEXT' | 'BOOLEAN' | 'INSTANCE_SWAP'
@@ -375,4 +505,18 @@ export interface VariableCollection {
   modes: VariableCollectionMode[]
   defaultModeId: string
   variableIds: string[]
+}
+
+export interface LayoutGrid {
+  id: string
+  pattern: 'COLUMNS' | 'ROWS' | 'GRID'
+  sectionSize?: number
+  visible: boolean
+  color: Color
+  alignment: 'MIN' | 'MAX' | 'CENTER' | 'STRETCH'
+  count: number
+  gutterSize: number
+  width?: number
+  height?: number
+  offset: number
 }

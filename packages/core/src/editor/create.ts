@@ -22,9 +22,11 @@ import { createComponentSyncScheduler } from './component-sync'
 import { createComponentActions } from './components'
 import { createGraphEventSubscription } from './graph-events'
 import { createGraphReadActions } from './graph-reads'
+import { createGuidesActions } from './guides'
 import { createLayoutRunner } from './layout-runner'
 import { createNodeActions } from './nodes'
 import { createPageActions } from './pages'
+import { createPrototypeActions } from './prototype'
 import { createSelectionActions } from './selection'
 import { createShapeActions } from './shapes'
 import { createDefaultEditorState } from './state'
@@ -164,6 +166,8 @@ export function createEditor(options?: EditorOptions) {
   const nodes = createNodeActions(ctx)
   const variables = createVariableActions(ctx)
   const alignment = createAlignmentActions(ctx)
+  const prototype = createPrototypeActions(ctx)
+  const guides = createGuidesActions(ctx)
   const clipboardBridge = createClipboardBridge(clipboard, selection)
   const componentBridge = createComponentBridge(components, selection, structure, pages)
   const structureBridge = createStructureBridge(structure, selection)
@@ -174,6 +178,7 @@ export function createEditor(options?: EditorOptions) {
     _renderer = renderer
     _renderers.add(renderer)
     _textEditor ??= new TextEditor(ck)
+    _textEditor.setRenderer(renderer)
     setTextMeasurer((node, maxWidth) => renderer.measureTextNode(node, maxWidth))
   }
 
@@ -248,6 +253,12 @@ export function createEditor(options?: EditorOptions) {
     // Text editing
     ...text,
 
+    // Prototyping
+    ...prototype,
+
+    // Guides
+    ...guides,
+
     // Viewport
     ...viewport,
 
@@ -255,6 +266,7 @@ export function createEditor(options?: EditorOptions) {
     ...undoBridge,
 
     setDocumentColorSpace: colorSpace.setDocumentColorSpace,
+    loadFont: _loadFont,
 
     // Clipboard — bridge functions that need selectedNodes
     ...clipboardBridge,

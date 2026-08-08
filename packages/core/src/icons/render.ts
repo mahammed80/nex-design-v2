@@ -38,6 +38,8 @@ export function createIconFromPaths(
       name: 'path',
       width: size,
       height: size,
+      horizontalConstraint: 'SCALE',
+      verticalConstraint: 'SCALE',
       vectorNetwork: path.vectorNetwork
     })
     vector.x = 0

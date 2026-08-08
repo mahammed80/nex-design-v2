@@ -3,6 +3,7 @@ export { resolveHit } from '#vue/shared/input/select/hit'
 import { resolveHit } from '#vue/shared/input/select/hit'
 export { updateHoverCursor } from '#vue/shared/input/select/hover'
 import type { Editor } from '@nex-design/core/editor'
+import { PrototypeGraph } from '@nex-design/core/prototype'
 import type { SceneNode } from '@nex-design/core/scene-graph'
 
 import { tryStartResize } from '#vue/shared/input/resize'
@@ -43,6 +44,19 @@ export function handleSelectDown(
   if (resizeDrag) {
     setDrag(resizeDrag)
     return
+  }
+
+  if (editor.state.mode === 'PROTOTYPE') {
+    const protoGraph = new PrototypeGraph(editor.graph, editor.state.currentPageId)
+    const hitConn = protoGraph.hitTestAtPoint(cx, cy, 8 / editor.state.zoom)
+    if (hitConn) {
+      if (!editor.state.selectedIds.has(hitConn.connection.id) && !e.shiftKey) {
+        editor.select([hitConn.connection.id])
+      } else if (e.shiftKey) {
+        editor.select([hitConn.connection.id], true)
+      }
+      return
+    }
   }
 
   const hit = resolveHit(cx, cy, editor, fns)

@@ -66,84 +66,92 @@ function onToggleCorners() {
     </div>
 
     <div class="flex gap-1.5">
-      <VariableScrubInput
-        v-if="node"
-        suffix="%"
-        :model-value="opacityPercent"
-        :min="0"
-        :max="100"
-        :node-id="node.id"
-        binding-path="opacity"
-        @update:model-value="updateProp('opacity', $event / 100)"
-        @commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
-      >
-        <template #icon>
-          <icon-lucide-blend class="size-3" />
-        </template>
-      </VariableScrubInput>
-      <ScrubInput
-        v-else
-        suffix="%"
-        :model-value="opacityPercent"
-        :min="0"
-        :max="100"
-        @update:model-value="updateProp('opacity', $event / 100)"
-        @commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
-      >
-        <template #icon>
-          <icon-lucide-blend class="size-3" />
-        </template>
-      </ScrubInput>
-
-      <template v-if="hasCornerRadius">
+      <div class="flex flex-col gap-0.5 flex-1">
+        <span class="text-[9px] text-muted uppercase font-semibold">Opacity</span>
         <VariableScrubInput
-          v-if="!showIndependentCorners && node"
-          data-test-id="corner-radius-input"
-          :model-value="cornerRadiusValue"
+          v-if="node"
+          suffix="%"
+          :model-value="opacityPercent"
           :min="0"
+          :max="100"
           :node-id="node.id"
-          binding-path="cornerRadius"
-          @update:model-value="updateProp('cornerRadius', $event)"
-          @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
+          binding-path="opacity"
+          @update:model-value="updateProp('opacity', $event / 100)"
+          @commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
         >
           <template #icon>
-            <icon-lucide-square-round-corner class="size-3" />
+            <icon-lucide-blend class="size-3" />
           </template>
         </VariableScrubInput>
         <ScrubInput
-          v-else-if="!showIndependentCorners"
-          data-test-id="corner-radius-input"
-          :model-value="cornerRadiusValue"
+          v-else
+          suffix="%"
+          :model-value="opacityPercent"
           :min="0"
-          @update:model-value="updateProp('cornerRadius', $event)"
-          @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
+          :max="100"
+          @update:model-value="updateProp('opacity', $event / 100)"
+          @commit="(v: number, p: number) => commitProp('opacity', v / 100, p / 100)"
         >
           <template #icon>
-            <icon-lucide-square-round-corner class="size-3" />
+            <icon-lucide-blend class="size-3" />
           </template>
         </ScrubInput>
+      </div>
 
-        <Tip :label="panels.independentCornerRadii">
-          <button
-            data-test-id="independent-corners-toggle"
-            class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
-            :class="{ '!border-accent !text-accent': showIndependentCorners }"
-            @click="onToggleCorners"
-          >
-            <svg
-              class="size-3"
-              viewBox="0 0 12 12"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
+      <template v-if="hasCornerRadius">
+        <div class="flex flex-col gap-0.5 flex-1">
+          <span class="text-[9px] text-muted uppercase font-semibold">Radius</span>
+          <div class="flex gap-1">
+            <VariableScrubInput
+              v-if="!showIndependentCorners && node"
+              data-test-id="corner-radius-input"
+              :model-value="cornerRadiusValue"
+              :min="0"
+              :node-id="node.id"
+              binding-path="cornerRadius"
+              @update:model-value="updateProp('cornerRadius', $event)"
+              @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
             >
-              <path d="M1 4V2.5A1.5 1.5 0 0 1 2.5 1H4" />
-              <path d="M8 1h1.5A2.5 2.5 0 0 1 11 3.5V5" />
-              <path d="M11 8v1a2 2 0 0 1-2 2H8" />
-              <path d="M4 11H3a2 2 0 0 1-2-2V8" />
-            </svg>
-          </button>
-        </Tip>
+              <template #icon>
+                <icon-lucide-square-round-corner class="size-3" />
+              </template>
+            </VariableScrubInput>
+            <ScrubInput
+              v-else-if="!showIndependentCorners"
+              data-test-id="corner-radius-input"
+              :model-value="cornerRadiusValue"
+              :min="0"
+              @update:model-value="updateProp('cornerRadius', $event)"
+              @commit="(v: number, p: number) => commitProp('cornerRadius', v, p)"
+            >
+              <template #icon>
+                <icon-lucide-square-round-corner class="size-3" />
+              </template>
+            </ScrubInput>
+
+            <Tip :label="panels.independentCornerRadii">
+              <button
+                data-test-id="independent-corners-toggle"
+                class="flex size-[26px] shrink-0 cursor-pointer items-center justify-center rounded border border-border bg-input text-muted hover:bg-hover hover:text-surface"
+                :class="{ '!border-accent !text-accent': showIndependentCorners }"
+                @click="onToggleCorners"
+              >
+                <svg
+                  class="size-3"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M1 4V2.5A1.5 1.5 0 0 1 2.5 1H4" />
+                  <path d="M8 1h1.5A2.5 2.5 0 0 1 11 3.5V5" />
+                  <path d="M11 8v1a2 2 0 0 1-2 2H8" />
+                  <path d="M4 11H3a2 2 0 0 1-2-2V8" />
+                </svg>
+              </button>
+            </Tip>
+          </div>
+        </div>
       </template>
     </div>
 
@@ -152,90 +160,105 @@ function onToggleCorners() {
       data-test-id="independent-corners-grid"
       class="mt-1.5 grid grid-cols-2 gap-1.5"
     >
-      <VariableScrubInput
-        data-test-id="corner-tl-input"
-        :model-value="node.topLeftRadius"
-        :min="0"
-        :node-id="node.id"
-        binding-path="topLeftRadius"
-        @update:model-value="updateCornerProp('topLeftRadius', $event)"
-        @commit="(v: number, p: number) => commitCornerProp('topLeftRadius', v, p)"
-      >
-        <template #icon>
-          <svg
-            class="size-3"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M1 11V4a3 3 0 0 1 3-3h7" />
-          </svg>
-        </template>
-      </VariableScrubInput>
-      <VariableScrubInput
-        data-test-id="corner-tr-input"
-        :model-value="node.topRightRadius"
-        :min="0"
-        :node-id="node.id"
-        binding-path="topRightRadius"
-        @update:model-value="updateCornerProp('topRightRadius', $event)"
-        @commit="(v: number, p: number) => commitCornerProp('topRightRadius', v, p)"
-      >
-        <template #icon>
-          <svg
-            class="size-3"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M11 11V4a3 3 0 0 0-3-3H1" />
-          </svg>
-        </template>
-      </VariableScrubInput>
-      <VariableScrubInput
-        data-test-id="corner-bl-input"
-        :model-value="node.bottomLeftRadius"
-        :min="0"
-        :node-id="node.id"
-        binding-path="bottomLeftRadius"
-        @update:model-value="updateCornerProp('bottomLeftRadius', $event)"
-        @commit="(v: number, p: number) => commitCornerProp('bottomLeftRadius', v, p)"
-      >
-        <template #icon>
-          <svg
-            class="size-3"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M1 1v7a3 3 0 0 0 3 3h7" />
-          </svg>
-        </template>
-      </VariableScrubInput>
-      <VariableScrubInput
-        data-test-id="corner-br-input"
-        :model-value="node.bottomRightRadius"
-        :min="0"
-        :node-id="node.id"
-        binding-path="bottomRightRadius"
-        @update:model-value="updateCornerProp('bottomRightRadius', $event)"
-        @commit="(v: number, p: number) => commitCornerProp('bottomRightRadius', v, p)"
-      >
-        <template #icon>
-          <svg
-            class="size-3"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path d="M11 1v7a3 3 0 0 1-3 3H1" />
-          </svg>
-        </template>
-      </VariableScrubInput>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[9px] text-muted uppercase font-semibold">Top Left</span>
+        <VariableScrubInput
+          data-test-id="corner-tl-input"
+          :model-value="node.topLeftRadius"
+          :min="0"
+          :node-id="node.id"
+          binding-path="topLeftRadius"
+          @update:model-value="updateCornerProp('topLeftRadius', $event)"
+          @commit="(v: number, p: number) => commitCornerProp('topLeftRadius', v, p)"
+        >
+          <template #icon>
+            <svg
+              class="size-3"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M1 11V4a3 3 0 0 1 3-3h7" />
+            </svg>
+          </template>
+        </VariableScrubInput>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[9px] text-muted uppercase font-semibold">Top Right</span>
+        <VariableScrubInput
+          data-test-id="corner-tr-input"
+          :model-value="node.topRightRadius"
+          :min="0"
+          :node-id="node.id"
+          binding-path="topRightRadius"
+          @update:model-value="updateCornerProp('topRightRadius', $event)"
+          @commit="(v: number, p: number) => commitCornerProp('topRightRadius', v, p)"
+        >
+          <template #icon>
+            <svg
+              class="size-3"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M11 11V4a3 3 0 0 0-3-3H1" />
+            </svg>
+          </template>
+        </VariableScrubInput>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[9px] text-muted uppercase font-semibold">Bottom Left</span>
+        <VariableScrubInput
+          data-test-id="corner-bl-input"
+          :model-value="node.bottomLeftRadius"
+          :min="0"
+          :node-id="node.id"
+          binding-path="bottomLeftRadius"
+          @update:model-value="updateCornerProp('bottomLeftRadius', $event)"
+          @commit="(v: number, p: number) => commitCornerProp('bottomLeftRadius', v, p)"
+        >
+          <template #icon>
+            <svg
+              class="size-3"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M1 1v7a3 3 0 0 0 3 3h7" />
+            </svg>
+          </template>
+        </VariableScrubInput>
+      </div>
+
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[9px] text-muted uppercase font-semibold">Bottom Right</span>
+        <VariableScrubInput
+          data-test-id="corner-br-input"
+          :model-value="node.bottomRightRadius"
+          :min="0"
+          :node-id="node.id"
+          binding-path="bottomRightRadius"
+          @update:model-value="updateCornerProp('bottomRightRadius', $event)"
+          @commit="(v: number, p: number) => commitCornerProp('bottomRightRadius', v, p)"
+        >
+          <template #icon>
+            <svg
+              class="size-3"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path d="M11 1v7a3 3 0 0 1-3 3H1" />
+            </svg>
+          </template>
+        </VariableScrubInput>
+      </div>
     </div>
   </div>
 </template>

@@ -107,3 +107,35 @@ export function drawLayoutInsertIndicator(
     canvas.drawLine(x, y1, x, y2, r.auxStroke)
   }
 }
+
+export function drawGuides(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  guides?: import('#core/editor/types').Guide[],
+  selectedGuideId?: string | null,
+  visible?: boolean
+): void {
+  if (visible === false || !guides || guides.length === 0) return
+
+  const R = 24
+  const vw = r.viewportWidth
+  const vh = r.viewportHeight
+
+  for (const guide of guides) {
+    const isSelected = guide.id === selectedGuideId
+    const color = isSelected ? r.ck.Color4f(0, 0.53, 1.0, 1.0) : r.ck.Color4f(0, 0.76, 1.0, 0.7)
+
+    r.guidePaint.setColor(color)
+    r.guidePaint.setStrokeWidth(isSelected ? 1.5 : 1)
+
+    if (guide.type === 'horizontal') {
+      const sy = guide.value * r.zoom + r.panY
+      if (sy < R || sy > vh) continue
+      canvas.drawLine(R, sy, vw, sy, r.guidePaint)
+    } else {
+      const sx = guide.value * r.zoom + r.panX
+      if (sx < R || sx > vw) continue
+      canvas.drawLine(sx, R, sx, vh, r.guidePaint)
+    }
+  }
+}

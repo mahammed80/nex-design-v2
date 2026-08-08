@@ -1,9 +1,12 @@
-import {
-  importClipboardNodes,
-  parseFigmaClipboard,
-  parseNexDesignClipboard
-} from '#core/clipboard'
+import { importClipboardNodes, parseFigmaClipboard, parseNexDesignClipboard } from '#core/clipboard'
 import { computeAllLayouts } from '#core/layout'
+import {
+  isConnectionId,
+  removeNavigationReaction,
+  syncConnectionsFromReactions,
+  snapshotPrototypeState,
+  restorePrototypeState
+} from '#core/prototype'
 import type { SceneNode } from '#core/scene-graph'
 import type { Vector } from '#core/types'
 
@@ -165,30 +168,80 @@ export function createClipboardActions(ctx: EditorContext) {
   }
 
   function deleteSelected() {
+    if (ctx.state.selectedGuideId) {
+      const guideId = ctx.state.selectedGuideId
+      const guide = ctx.state.guides.find((g) => g.id === guideId)
+      if (guide) {
+        const prevSelected = ctx.state.selectedGuideId
+        ctx.state.guides = ctx.state.guides.filter((g) => g.id !== guideId)
+        ctx.state.selectedGuideId = null
+        ctx.requestRender()
+
+        ctx.undo.push({
+          label: 'Delete guide',
+          forward: () => {
+            ctx.state.guides = ctx.state.guides.filter((g) => g.id !== guideId)
+            ctx.state.selectedGuideId = null
+            ctx.requestRender()
+          },
+          inverse: () => {
+            ctx.state.guides = [...ctx.state.guides, guide]
+            ctx.state.selectedGuideId = prevSelected
+            ctx.requestRender()
+          }
+        })
+      }
+      return
+    }
+
+    const pageId = ctx.state.currentPageId
     const entries: Array<{
       id: string
       parentId: string
       index: number
       subtree: Map<string, SceneNode>
     }> = []
+    const connectionIds: string[] = []
+
     for (const id of ctx.state.selectedIds) {
+      if (isConnectionId(id)) {
+        connectionIds.push(id)
+        continue
+      }
       const node = ctx.graph.getNode(id)
       if (!node || node.locked) continue
-      const parentId = node.parentId ?? ctx.state.currentPageId
+      const parentId = node.parentId ?? pageId
       const parent = ctx.graph.getNode(parentId)
       const index = parent?.childIds.indexOf(id) ?? -1
       entries.push({ id, parentId, index, subtree: snapshotSubtree(ctx.graph, id) })
     }
-    if (entries.length === 0) return
+    if (entries.length === 0 && connectionIds.length === 0) return
 
     const prevSelection = new Set(ctx.state.selectedIds)
+    const beforeProto = snapshotPrototypeState(ctx.graph, pageId)
+
     for (const { id } of entries) ctx.graph.deleteNode(id)
+
+    const page = ctx.graph.getNode(pageId)
+    if (page?.type === 'CANVAS') {
+      for (const connId of connectionIds) {
+        const conn = (page.prototypeConnections ?? []).find((c) => c.id === connId)
+        if (conn) {
+          removeNavigationReaction(ctx.graph, conn.sourceNodeId, conn.triggerType)
+        }
+      }
+    }
+
+    syncConnectionsFromReactions(ctx.graph, pageId)
+    const afterProto = snapshotPrototypeState(ctx.graph, pageId)
 
     ctx.undo.push({
       label: 'Delete',
       forward: () => {
         for (const { id } of entries) ctx.graph.deleteNode(id)
+        restorePrototypeState(ctx.graph, pageId, afterProto)
         ctx.setSelectedIds(new Set())
+        ctx.requestRender()
       },
       inverse: () => {
         for (const { id, parentId, index, subtree } of [...entries].reverse()) {
@@ -196,10 +249,13 @@ export function createClipboardActions(ctx: EditorContext) {
           if (rootSnap) restoreSubtree(ctx.graph, rootSnap, parentId, subtree)
           if (index >= 0) ctx.graph.reorderChild(id, parentId, index)
         }
+        restorePrototypeState(ctx.graph, pageId, beforeProto)
         ctx.setSelectedIds(prevSelection)
+        ctx.requestRender()
       }
     })
     ctx.setSelectedIds(new Set())
+    ctx.requestRender()
   }
 
   const copyActions = createClipboardCopyActions(ctx)
