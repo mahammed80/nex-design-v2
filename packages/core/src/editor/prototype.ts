@@ -241,13 +241,19 @@ export function createPrototypeActions(ctx: EditorContext) {
     reaction: Reaction
     index: number
   } | null {
-    const found = findConnection(ctx, connectionId)
-    if (!found) return null
-    const { connection } = found
-    const source = ctx.graph.getNode(connection.sourceNodeId)
-    const index =
-      source?.reactions?.findIndex((r) => r.trigger.type === connection.triggerType) ?? -1
-    if (!source || index < 0 || !source.reactions) return null
+    const pageId = ctx.state.currentPageId
+    const pageNode = ctx.graph.getNode(pageId)
+    if (pageNode?.type !== 'CANVAS') return null
+    const conn = (pageNode.prototypeConnections ?? []).find((c) => c.id === connectionId)
+    if (!conn) return null
+    const source = ctx.graph.getNode(conn.sourceNodeId)
+    if (!source?.reactions) return null
+    const index = source.reactions.findIndex(
+      (r) =>
+        r.trigger.type === conn.triggerType &&
+        r.actions.some((a) => a.destinationId === conn.targetNodeId)
+    )
+    if (index === -1) return null
     return { node: source, reaction: source.reactions[index], index }
   }
 

@@ -30,7 +30,7 @@ export function syncConnectionsFromReactions(graph: SceneGraph, pageId: string):
     if (!node) return
     if (node.reactions) {
       for (const reaction of node.reactions) {
-        const action = reaction.actions.find((a) => a.type === 'NAVIGATE' && a.destinationId)
+        const action = reaction.actions.find((a) => !!a.destinationId)
         if (!action?.destinationId) continue
         const key = connectionKey({
           sourceNodeId: node.id,
@@ -58,7 +58,7 @@ export function syncConnectionsFromReactions(graph: SceneGraph, pageId: string):
   graph.updateNode(pageId, { prototypeConnections: next })
 }
 
-/** Update the destination of a source node's NAVIGATE reaction. */
+/** Update the destination of a source node's reaction. */
 export function setReactionDestination(
   graph: SceneGraph,
   sourceNodeId: string,
@@ -71,13 +71,13 @@ export function setReactionDestination(
     if (r.trigger.type !== triggerType) return r
     return {
       ...r,
-      actions: r.actions.map((a) => (a.type === 'NAVIGATE' ? { ...a, destinationId } : a))
+      actions: r.actions.map((a) => (a.destinationId ? { ...a, destinationId } : a))
     }
   })
   graph.updateNode(sourceNodeId, { reactions })
 }
 
-/** Move a source node's NAVIGATE reaction to a different node. */
+/** Move a source node's reaction to a different node. */
 export function moveNavigationReaction(
   graph: SceneGraph,
   fromNodeId: string,
@@ -97,7 +97,7 @@ export function moveNavigationReaction(
   })
 }
 
-/** Remove a source node's NAVIGATE reaction entirely. */
+/** Remove a source node's reaction entirely. */
 export function removeNavigationReaction(
   graph: SceneGraph,
   sourceNodeId: string,
@@ -107,7 +107,7 @@ export function removeNavigationReaction(
   if (!source?.reactions) return
   const reactions = source.reactions.filter((r) => {
     if (r.trigger.type !== triggerType) return true
-    return !r.actions.some((a) => a.type === 'NAVIGATE' && a.destinationId)
+    return !r.actions.some((a) => !!a.destinationId)
   })
   graph.updateNode(sourceNodeId, { reactions })
 }

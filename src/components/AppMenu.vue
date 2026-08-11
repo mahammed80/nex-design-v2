@@ -60,7 +60,14 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
 <template>
   <div class="shrink-0 border-b border-border">
     <div class="flex items-center gap-2 px-2 py-1.5">
-      <img data-test-id="app-logo" src="/favicon-32.png" class="size-4" alt="NexDesign" />
+      <router-link
+        to="/"
+        class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
+        title="Back to Home Page"
+      >
+        <icon-lucide-home class="size-3.5" />
+      </router-link>
+      <img data-test-id="app-logo" src="/logo.png" class="h-6 w-auto invert object-contain opacity-90" alt="NexDesign" />
       <input
         v-if="editingName"
         ref="nameInput"

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { TooltipProvider } from 'reka-ui'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import Tip from '@/components/ui/Tip.vue'
 import { useButtonUI } from '@/components/ui/button'
 import { useInputUI } from '@/components/ui/input'
 import { POOLSIDE_MODEL_NAME } from '@/app/ai/poolside'
 import { useI18n } from '@nex-design/vue'
+import { useAIChat } from '@/app/ai/chat/use'
 
 const { dialogs } = useI18n()
 
@@ -19,15 +20,45 @@ const emit = defineEmits<{
   stop: []
 }>()
 
-const input = ref('')
+const aiChat = useAIChat()
+const activeTab = aiChat.activeTab
+const chatInputText = aiChat.chatInputText ?? ref('')
+const chatReferenceNodeImage = aiChat.chatReferenceNodeImage ?? ref('')
+const chatReferenceNodeName = aiChat.chatReferenceNodeName ?? ref('')
+const inputEl = ref<HTMLInputElement>()
+
+watch(chatInputText, (newVal) => {
+  if (newVal && document.activeElement !== inputEl.value) {
+    nextTick(() => {
+      inputEl.value?.focus()
+    })
+  }
+})
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'ai') {
+    nextTick(() => {
+      inputEl.value?.focus()
+    })
+  }
+})
+
+function clearReference() {
+  if (chatReferenceNodeImage.value && chatReferenceNodeImage.value.startsWith('blob:')) {
+    URL.revokeObjectURL(chatReferenceNodeImage.value)
+  }
+  chatReferenceNodeImage.value = ''
+  chatReferenceNodeName.value = ''
+}
 
 const isStreaming = computed(() => status === 'streaming' || status === 'submitted')
 function handleSubmit(e: Event) {
   e.preventDefault()
-  const text = input.value.trim()
+  const text = chatInputText.value.trim()
   if (!text) return
   emit('submit', text)
-  input.value = ''
+  chatInputText.value = ''
+  clearReference()
 }
 </script>
 
@@ -44,10 +75,32 @@ function handleSubmit(e: Event) {
         </div>
       </div>
 
+      <!-- Component visual reference preview card -->
+      <div
+        v-if="chatReferenceNodeImage"
+        class="mb-2 relative flex items-center gap-3 p-2 rounded-xl bg-hover border border-border/80 shadow-inner animate-in slide-in-from-bottom-2 duration-200"
+      >
+        <div class="relative size-12 shrink-0 rounded-lg border border-border/60 bg-canvas overflow-hidden flex items-center justify-center">
+          <img :src="chatReferenceNodeImage" class="max-h-full max-w-full object-contain" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold text-surface truncate">{{ chatReferenceNodeName }}</p>
+          <p class="text-[10px] text-muted truncate">Component reference in context</p>
+        </div>
+        <button
+          type="button"
+          class="size-6 rounded-full flex items-center justify-center hover:bg-muted/20 text-muted hover:text-surface transition-colors shrink-0"
+          @click="clearReference"
+        >
+          <icon-lucide-x class="size-3.5" />
+        </button>
+      </div>
+
       <!-- Input form -->
       <form class="flex gap-1.5" @submit="handleSubmit">
         <input
-          v-model="input"
+          ref="inputEl"
+          v-model="chatInputText"
           type="text"
           data-test-id="chat-input"
           :placeholder="dialogs.describeChange"
@@ -86,7 +139,7 @@ function handleSubmit(e: Event) {
                 ui: { base: 'shrink-0 px-2.5 py-1.5 font-medium' }
               }).base
             "
-            :disabled="!input.trim()"
+            :disabled="!chatInputText.trim()"
           >
             <icon-lucide-send class="size-3" />
           </button>

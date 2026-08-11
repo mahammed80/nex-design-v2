@@ -429,6 +429,8 @@ export type TriggerType =
   | 'MOUSE_DOWN'
   | 'MOUSE_UP'
   | 'AFTER_DELAY'
+  | 'ON_DRAG'
+
 
 export type ActionType =
   | 'BACK'
@@ -481,6 +483,7 @@ export interface Action {
 export interface Trigger {
   type: TriggerType
   delay?: number // delay in ms for AFTER_DELAY
+  direction?: 'left' | 'right' | 'up' | 'down'
 }
 
 export interface Reaction {

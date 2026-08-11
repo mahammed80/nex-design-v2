@@ -56,6 +56,52 @@ export function connectionKey(conn: {
   return `${conn.sourceNodeId}|${conn.targetNodeId}|${conn.triggerType}`
 }
 
+import type { SceneNode } from '#core/scene-graph'
+
+export function canConnect(
+  source: SceneNode | null | undefined,
+  destination: SceneNode | null | undefined,
+  actionType: string
+): boolean {
+  if (!source) return false
+
+  switch (actionType) {
+    case 'NAVIGATE':
+    case 'OPEN_OVERLAY':
+    case 'SWAP_OVERLAY':
+      return !!(
+        destination &&
+        (destination.type === 'FRAME' ||
+          destination.type === 'SECTION' ||
+          destination.type === 'COMPONENT' ||
+          destination.type === 'INSTANCE')
+      )
+
+    case 'SCROLL_TO':
+      return !!destination
+
+    case 'CHANGE_TO':
+      if (!destination || destination.type !== 'COMPONENT') return false
+      if (source.type === 'COMPONENT') {
+        return !!(source.parentId && source.parentId === destination.parentId)
+      }
+      if (source.type === 'INSTANCE' && source.componentId) {
+        return true
+      }
+      return false
+
+    case 'BACK':
+    case 'CLOSE':
+      return true
+
+    case 'URL':
+      return true
+
+    default:
+      return true
+  }
+}
+
 export function createConnection(
   sourceNodeId: string,
   targetNodeId: string,

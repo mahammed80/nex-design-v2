@@ -3,9 +3,51 @@ import { randomHex } from '#core/random'
 import type {
   ComponentPropertyDefinition,
   ComponentPropertyType,
-  SceneNode
+  SceneNode,
+  SceneGraph
 } from '#core/scene-graph'
 import { copyFills, copyStrokes, copyEffects } from '#core/scene-graph/copy'
+
+export function fitComponentSetBounds(graph: SceneGraph, componentSetId: string): void {
+  const compSet = graph.getNode(componentSetId)
+  if (!compSet || compSet.type !== 'COMPONENT_SET') return
+
+  const variants = compSet.childIds
+    .map((id) => graph.getNode(id))
+    .filter((n): n is SceneNode => !!n && n.type === 'COMPONENT')
+
+  if (variants.length === 0) {
+    graph.updateNode(componentSetId, {
+      width: 100,
+      height: 100
+    })
+    return
+  }
+
+  variants.sort((a, b) => a.x - b.x)
+
+  const padding = 20
+  const gap = 20
+  let currentX = padding
+  let maxHeight = 0
+
+  for (const v of variants) {
+    graph.updateNode(v.id, {
+      x: currentX,
+      y: padding
+    })
+    currentX += v.width + gap
+    maxHeight = Math.max(maxHeight, v.height)
+  }
+
+  const finalWidth = currentX - gap + padding
+  const finalHeight = maxHeight + padding * 2
+
+  graph.updateNode(componentSetId, {
+    width: finalWidth,
+    height: finalHeight
+  })
+}
 
 export function createVariantActions(ctx: EditorContext) {
   function getComponentSetPropertyDefs(componentSetId: string): ComponentPropertyDefinition[] {
@@ -211,19 +253,55 @@ export function createVariantActions(ctx: EditorContext) {
 
     const currentValues = { ...component.componentPropertyValues }
     currentValues[propertyName] = newValue
-    const target = findVariantByValues(componentSetId, currentValues)
+    let target = findVariantByValues(componentSetId, currentValues)
+
+    if (!target) {
+      let bestScore = -1
+      let bestTarget: SceneNode | undefined
+      for (const childId of componentSet.childIds) {
+        const child = ctx.graph.getNode(childId)
+        if (child?.type !== 'COMPONENT') continue
+
+        let score = 0
+        const childValues = child.componentPropertyValues
+        for (const [k, v] of Object.entries(currentValues)) {
+          if (childValues[k] === v) {
+            score += (k === propertyName) ? 10 : 1
+          }
+        }
+        if (score > bestScore) {
+          bestScore = score
+          bestTarget = child
+        }
+      }
+      target = bestTarget
+    }
+
     if (!target || target.id === instance.componentId) return
 
     const prevComponentId = instance.componentId
-    ctx.graph.updateNode(instanceId, { componentId: target.id })
+
+    const runSwitch = (_fromId: string, toId: string) => {
+      const inst = ctx.graph.getNode(instanceId)
+      if (inst) {
+        for (const cid of [...inst.childIds]) {
+          ctx.graph.deleteNode(cid)
+        }
+      }
+      ctx.graph.updateNode(instanceId, { componentId: toId })
+      ctx.graph.populateInstanceChildren(instanceId, toId)
+    }
+
+    runSwitch(prevComponentId, target.id)
+
     ctx.undo.push({
       label: 'Switch variant',
       forward: () => {
-        ctx.graph.updateNode(instanceId, { componentId: target.id })
+        runSwitch(prevComponentId, target.id)
         ctx.requestRender()
       },
       inverse: () => {
-        ctx.graph.updateNode(instanceId, { componentId: prevComponentId })
+        runSwitch(target.id, prevComponentId)
         ctx.requestRender()
       }
     })
@@ -249,7 +327,10 @@ export function createVariantActions(ctx: EditorContext) {
     return values
   }
 
-  function addVariantToComponentSet(componentSetId: string): string | undefined {
+  function addVariantToComponentSet(
+    componentSetId: string,
+    customValues?: Record<string, string>
+  ): string | undefined {
     const componentSet = ctx.graph.getNode(componentSetId)
     if (componentSet?.type !== 'COMPONENT_SET') return undefined
 
@@ -257,28 +338,359 @@ export function createVariantActions(ctx: EditorContext) {
     const refChild = refChildId ? ctx.graph.getNode(refChildId) : undefined
     const childCount = componentSet.childIds.length + 1
 
-    const propValues = generateVariantProps(componentSet.componentPropertyDefinitions, childCount)
+    const propValues = customValues || generateVariantProps(componentSet.componentPropertyDefinitions, childCount)
     const name = buildVariantName(propValues) || `Variant ${childCount}`
 
-    const newComponent = ctx.graph.createNode('COMPONENT', componentSetId, {
-      name,
-      x: refChild ? refChild.x + refChild.width + 20 : 20,
-      y: refChild?.y ?? 20,
-      width: refChild?.width ?? 100,
-      height: refChild?.height ?? 40,
-      fills: refChild?.fills
-        ? copyFills(refChild.fills)
-        : [
-            { type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.98, a: 1 }, opacity: 1, visible: true }
-          ],
-      strokes: refChild?.strokes ? copyStrokes(refChild.strokes) : [],
-      effects: refChild?.effects ? copyEffects(refChild.effects) : [],
-      componentPropertyValues: propValues
+    let createdId: string | undefined
+
+    const runCreate = () => {
+      const newComponent = ctx.graph.createNode('COMPONENT', componentSetId, {
+        name,
+        x: refChild ? refChild.x + refChild.width + 20 : 20,
+        y: refChild?.y ?? 20,
+        width: refChild?.width ?? 100,
+        height: refChild?.height ?? 40,
+        fills: refChild?.fills
+          ? copyFills(refChild.fills)
+          : [
+              { type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.98, a: 1 }, opacity: 1, visible: true }
+            ],
+        strokes: refChild?.strokes ? copyStrokes(refChild.strokes) : [],
+        effects: refChild?.effects ? copyEffects(refChild.effects) : [],
+        componentPropertyValues: propValues
+      })
+      createdId = newComponent.id
+      if (refChild) {
+        const cloneSubtree = (sourceId: string, parentId: string) => {
+          const srcNode = ctx.graph.getNode(sourceId)
+          if (!srcNode) return
+          for (const childId of srcNode.childIds) {
+            const childNode = ctx.graph.getNode(childId)
+            if (!childNode) continue
+            const { id: _, parentId: _p, childIds: _c, fills, strokes, effects, ...rest } = childNode
+            const clonedChild = ctx.graph.createNode(childNode.type, parentId, {
+              ...rest,
+              fills: fills ? copyFills(fills) : [],
+              strokes: strokes ? copyStrokes(strokes) : [],
+              effects: effects ? copyEffects(effects) : [],
+              parentId,
+              childIds: []
+            })
+            cloneSubtree(childId, clonedChild.id)
+          }
+        }
+        cloneSubtree(refChild.id, newComponent.id)
+      }
+      fitComponentSetBounds(ctx.graph, componentSetId)
+      return newComponent.id
+    }
+
+    const newId = runCreate()
+
+    ctx.undo.push({
+      label: 'Add variant',
+      forward: () => {
+        runCreate()
+        if (createdId) ctx.setSelectedIds(new Set([createdId]))
+        ctx.requestRender()
+      },
+      inverse: () => {
+        if (createdId) {
+          ctx.graph.deleteNode(createdId)
+        }
+        fitComponentSetBounds(ctx.graph, componentSetId)
+        ctx.setSelectedIds(new Set([componentSetId]))
+        ctx.requestRender()
+      }
     })
 
-    ctx.setSelectedIds(new Set([newComponent.id]))
+    ctx.setSelectedIds(new Set([newId]))
     ctx.requestRender()
-    return newComponent.id
+    return newId
+  }
+
+  function addVariantToStandaloneComponent(
+    componentId: string,
+    customValues?: Record<string, string>
+  ): string | undefined {
+    const component = ctx.graph.getNode(componentId)
+    if (!component || component.type !== 'COMPONENT') return undefined
+
+    const pageId = component.parentId ?? ctx.state.currentPageId
+    const page = ctx.graph.getNode(pageId)
+    if (!page) return undefined
+
+    const padding = 20
+    const componentSetWidth = component.width * 2 + 60
+    const componentSetHeight = component.height + 40
+
+    let createdSetId: string | undefined
+    let createdVariantId: string | undefined
+    const prevParentId = component.parentId
+    const prevX = component.x
+    const prevY = component.y
+    const prevName = component.name
+    const prevPropertyValues = component.componentPropertyValues
+
+    const runWrap = () => {
+      const compSet = ctx.graph.createNode('COMPONENT_SET', pageId, {
+        name: component.name,
+        x: component.x - padding,
+        y: component.y - padding,
+        width: componentSetWidth,
+        height: componentSetHeight,
+        componentPropertyDefinitions: [
+          {
+            id: `prop:${randomHex(8)}`,
+            name: 'State',
+            type: 'VARIANT',
+            defaultValue: 'Default',
+            variantOptions: ['Default', 'Variant 2']
+          }
+        ]
+      })
+      createdSetId = compSet.id
+
+      ctx.graph.reparentNode(componentId, compSet.id)
+      
+      ctx.graph.updateNode(componentId, {
+        x: padding,
+        y: padding,
+        componentPropertyValues: { State: 'Default' },
+        name: 'State=Default'
+      })
+
+      const secondPropValues = customValues || { State: 'Variant 2' }
+      const secondName = buildVariantName(secondPropValues) || 'State=Variant 2'
+
+      const newVar = ctx.graph.createNode('COMPONENT', compSet.id, {
+        name: secondName,
+        x: padding + component.width + 20,
+        y: padding,
+        width: component.width,
+        height: component.height,
+        fills: component.fills ? copyFills(component.fills) : [],
+        strokes: component.strokes ? copyStrokes(component.strokes) : [],
+        effects: component.effects ? copyEffects(component.effects) : [],
+        componentPropertyValues: secondPropValues
+      })
+      createdVariantId = newVar.id
+
+      const cloneSubtree = (sourceId: string, parentId: string) => {
+        const srcNode = ctx.graph.getNode(sourceId)
+        if (!srcNode) return
+        for (const childId of srcNode.childIds) {
+          const childNode = ctx.graph.getNode(childId)
+          if (!childNode) continue
+          const { id: _, parentId: _p, childIds: _c, fills, strokes, effects, ...rest } = childNode
+          const clonedChild = ctx.graph.createNode(childNode.type, parentId, {
+            ...rest,
+            fills: fills ? copyFills(fills) : [],
+            strokes: strokes ? copyStrokes(strokes) : [],
+            effects: effects ? copyEffects(effects) : [],
+            parentId,
+            childIds: []
+          })
+          cloneSubtree(childId, clonedChild.id)
+        }
+      }
+      cloneSubtree(componentId, newVar.id)
+
+      fitComponentSetBounds(ctx.graph, compSet.id)
+    }
+
+    runWrap()
+
+    ctx.undo.push({
+      label: 'Create variant set',
+      forward: () => {
+        runWrap()
+        if (createdVariantId) ctx.setSelectedIds(new Set([createdVariantId]))
+        ctx.requestRender()
+      },
+      inverse: () => {
+        if (createdVariantId) {
+          ctx.graph.deleteNode(createdVariantId)
+        }
+        if (createdSetId) {
+          if (prevParentId) {
+            ctx.graph.reparentNode(componentId, prevParentId)
+          }
+          ctx.graph.updateNode(componentId, {
+            x: prevX,
+            y: prevY,
+            name: prevName,
+            componentPropertyValues: prevPropertyValues
+          })
+          ctx.graph.deleteNode(createdSetId)
+        }
+        ctx.setSelectedIds(new Set([componentId]))
+        ctx.requestRender()
+      }
+    })
+
+    if (createdVariantId) ctx.setSelectedIds(new Set([createdVariantId]))
+    ctx.requestRender()
+    return createdVariantId
+  }
+
+  function renameVariantValue(
+    componentSetId: string,
+    propertyName: string,
+    oldValue: string,
+    newValue: string
+  ) {
+    if (!newValue || newValue.trim() === '') return
+    const compSet = ctx.graph.getNode(componentSetId)
+    if (compSet?.type !== 'COMPONENT_SET') return
+
+    ctx.undo.push({
+      label: 'Rename variant value',
+      forward: () => {
+        for (const childId of compSet.childIds) {
+          const child = ctx.graph.getNode(childId)
+          if (child?.type === 'COMPONENT' && child.componentPropertyValues) {
+            if (child.componentPropertyValues[propertyName] === oldValue) {
+              const nextValues = { ...child.componentPropertyValues, [propertyName]: newValue }
+              ctx.graph.updateNode(childId, {
+                componentPropertyValues: nextValues,
+                name: buildVariantName(nextValues)
+              })
+            }
+          }
+        }
+        ctx.requestRender()
+      },
+      inverse: () => {
+        for (const childId of compSet.childIds) {
+          const child = ctx.graph.getNode(childId)
+          if (child?.type === 'COMPONENT' && child.componentPropertyValues) {
+            if (child.componentPropertyValues[propertyName] === newValue) {
+              const prevValues = { ...child.componentPropertyValues, [propertyName]: oldValue }
+              ctx.graph.updateNode(childId, {
+                componentPropertyValues: prevValues,
+                name: buildVariantName(prevValues)
+              })
+            }
+          }
+        }
+        ctx.requestRender()
+      }
+    })
+
+    for (const childId of compSet.childIds) {
+      const child = ctx.graph.getNode(childId)
+      if (child?.type === 'COMPONENT' && child.componentPropertyValues) {
+        if (child.componentPropertyValues[propertyName] === oldValue) {
+          const nextValues = { ...child.componentPropertyValues, [propertyName]: newValue }
+          ctx.graph.updateNode(childId, {
+            componentPropertyValues: nextValues,
+            name: buildVariantName(nextValues)
+          })
+        }
+      }
+    }
+    ctx.requestRender()
+  }
+
+  function deleteVariantValue(
+    componentSetId: string,
+    propertyName: string,
+    valueToDelete: string
+  ) {
+    const compSet = ctx.graph.getNode(componentSetId)
+    if (compSet?.type !== 'COMPONENT_SET') return
+
+    const def = compSet.componentPropertyDefinitions.find((d) => d.name === propertyName)
+    const defaultValue = def?.defaultValue ?? 'Default'
+
+    ctx.undo.push({
+      label: 'Delete variant value',
+      forward: () => {
+        for (const childId of compSet.childIds) {
+          const child = ctx.graph.getNode(childId)
+          if (child?.type === 'COMPONENT' && child.componentPropertyValues) {
+            if (child.componentPropertyValues[propertyName] === valueToDelete) {
+              const nextValues = { ...child.componentPropertyValues, [propertyName]: defaultValue }
+              ctx.graph.updateNode(childId, {
+                componentPropertyValues: nextValues,
+                name: buildVariantName(nextValues)
+              })
+            }
+          }
+        }
+        ctx.requestRender()
+      },
+      inverse: () => {
+        for (const childId of compSet.childIds) {
+          const child = ctx.graph.getNode(childId)
+          if (child?.type === 'COMPONENT' && child.componentPropertyValues) {
+            if (child.componentPropertyValues[propertyName] === defaultValue) {
+              const prevValues = { ...child.componentPropertyValues, [propertyName]: valueToDelete }
+              ctx.graph.updateNode(childId, {
+                componentPropertyValues: prevValues,
+                name: buildVariantName(prevValues)
+              })
+            }
+          }
+        }
+        ctx.requestRender()
+      }
+    })
+
+    for (const childId of compSet.childIds) {
+      const child = ctx.graph.getNode(childId)
+      if (child?.type === 'COMPONENT' && child.componentPropertyValues) {
+        if (child.componentPropertyValues[propertyName] === valueToDelete) {
+          const nextValues = { ...child.componentPropertyValues, [propertyName]: defaultValue }
+          ctx.graph.updateNode(childId, {
+            componentPropertyValues: nextValues,
+            name: buildVariantName(nextValues)
+          })
+        }
+      }
+    }
+    ctx.requestRender()
+  }
+
+  function insertComponentSetInstance(componentSetId: string): string | undefined {
+    const compSet = ctx.graph.getNode(componentSetId)
+    if (compSet?.type !== 'COMPONENT_SET') return undefined
+
+    let defaultVariant = compSet.childIds
+      .map((id) => ctx.graph.getNode(id))
+      .find((n) => n?.type === 'COMPONENT' && n.componentPropertyValues?.State === 'Default')
+
+    if (!defaultVariant) {
+      const firstId = compSet.childIds[0]
+      defaultVariant = firstId ? ctx.graph.getNode(firstId) : undefined
+    }
+
+    if (!defaultVariant) return undefined
+
+    const pageId = compSet.parentId ?? ctx.state.currentPageId
+    const x = compSet.x + compSet.width + 50
+    const y = compSet.y
+
+    const instance = ctx.graph.createInstance(defaultVariant.id, pageId, { x, y })
+    if (!instance) return undefined
+
+    const instanceId = instance.id
+    ctx.setSelectedIds(new Set([instanceId]))
+
+    ctx.undo.push({
+      label: 'Insert instance',
+      forward: () => {
+        ctx.graph.createInstance(defaultVariant!.id, pageId, { ...instance })
+        ctx.setSelectedIds(new Set([instanceId]))
+      },
+      inverse: () => {
+        ctx.graph.deleteNode(instanceId)
+        ctx.setSelectedIds(new Set([componentSetId]))
+      }
+    })
+    ctx.requestRender()
+    return instanceId
   }
 
   return {
@@ -291,6 +703,10 @@ export function createVariantActions(ctx: EditorContext) {
     collectVariantOptions,
     findVariantByValues,
     switchInstanceVariant,
-    addVariantToComponentSet
+    addVariantToComponentSet,
+    addVariantToStandaloneComponent,
+    renameVariantValue,
+    deleteVariantValue,
+    insertComponentSetInstance
   }
 }

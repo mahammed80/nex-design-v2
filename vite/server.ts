@@ -14,7 +14,7 @@ export const WATCH_IGNORED = [
 export function createDevServerOptions(host: string | undefined): ServerOptions {
   return {
     port: 1420,
-    strictPort: true,
+    strictPort: false,
     host: host || false,
     hmr: host
       ? {

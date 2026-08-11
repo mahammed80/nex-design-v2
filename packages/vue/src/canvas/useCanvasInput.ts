@@ -4,7 +4,7 @@ import { ref, type Ref } from 'vue'
 import { RULER_SIZE } from '@nex-design/core/constants'
 import type { Editor } from '@nex-design/core/editor'
 import type { ConnectionSide } from '@nex-design/core/prototype'
-import { getAncestorStack, type SceneNode } from '@nex-design/core/scene-graph'
+import { getAncestorStack, type SceneNode, type ActionType } from '@nex-design/core/scene-graph'
 import type { Rect, Vector } from '@nex-design/core/types'
 
 import { useCanvasInteraction } from '#vue/canvas/interaction/use'
@@ -190,45 +190,73 @@ export function useCanvasInput(
     e: MouseEvent
   ) {
     const { cx, cy } = getCoords(e)
-    let targetScreen = editor.graph.hitTest(cx, cy, editor.state.currentPageId)
-    if (!targetScreen) {
-      targetScreen =
+    let hitNode = editor.graph.hitTest(cx, cy, editor.state.currentPageId)
+    if (!hitNode) {
+      hitNode =
         hitFns.hitTestFrameTitle(cx, cy) ??
         hitFns.hitTestSectionTitle(cx, cy) ??
         hitFns.hitTestComponentLabel(cx, cy)
     }
-    if (!targetScreen) {
+    if (!hitNode) {
       const hit = editor.graph.hitTestDeep(cx, cy, editor.state.currentPageId)
-      if (hit) targetScreen = findTargetScreenNode(editor.graph, hit.id)
+      if (hit) hitNode = hit
     }
-    if (
-      targetScreen &&
-      (targetScreen.type === 'FRAME' ||
-        targetScreen.type === 'SECTION' ||
-        targetScreen.type === 'COMPONENT') &&
-      targetScreen.id !== d.nodeId
-    ) {
-      editor.addReaction(d.nodeId, {
-        trigger: { type: 'ON_CLICK' },
-        actions: [{ type: 'NAVIGATE', destinationId: targetScreen.id }]
-      })
 
-      const pageId = editor.state.currentPageId
-      const pageNode = editor.graph.getNode(pageId)
-      if (pageNode?.type === 'CANVAS') {
-        const conn = (pageNode.prototypeConnections ?? []).find(
-          (c) =>
-            c.sourceNodeId === d.nodeId &&
-            c.targetNodeId === targetScreen.id &&
-            c.triggerType === 'ON_CLICK'
-        )
-        if (conn) {
-          const targetBounds = editor.graph.getAbsoluteBounds(targetScreen.id)
-          const closest = closestSideOfRect(targetBounds, { x: cx, y: cy })
-          editor.updateConnectionGeometry(conn.id, {
-            sourceAnchor: { side: d.side, offset: 0.5 },
-            targetAnchor: { side: closest.side, offset: closest.offset }
-          })
+    if (hitNode && hitNode.id !== d.nodeId) {
+      const targetNode = resolveDragTarget(editor.graph, hitNode.id, d.nodeId)
+      if (targetNode) {
+        let actionType: ActionType = 'NAVIGATE'
+        const sourceNode = editor.graph.getNode(d.nodeId)
+        
+        if (targetNode.type === 'COMPONENT' && targetNode.parentId) {
+          const parent = editor.graph.getNode(targetNode.parentId)
+          if (parent?.type === 'COMPONENT_SET') {
+            if (
+              sourceNode &&
+              ((sourceNode.type === 'COMPONENT' && sourceNode.parentId === targetNode.parentId) ||
+               (sourceNode.type === 'INSTANCE' && sourceNode.componentId &&
+                editor.graph.getNode(sourceNode.componentId)?.parentId === targetNode.parentId))
+            ) {
+              actionType = 'CHANGE_TO'
+            }
+          }
+        } else if (
+          targetNode.type !== 'FRAME' &&
+          targetNode.type !== 'SECTION' &&
+          targetNode.type !== 'COMPONENT' &&
+          targetNode.type !== 'INSTANCE'
+        ) {
+          actionType = 'SCROLL_TO'
+        }
+
+        editor.addReaction(d.nodeId, {
+          trigger: { type: 'ON_CLICK' },
+          actions: [
+            {
+              type: actionType,
+              destinationId: targetNode.id,
+              transition: { type: 'INSTANT', duration: 300, easing: 'EASE_IN_AND_OUT' }
+            }
+          ]
+        })
+
+        const pageId = editor.state.currentPageId
+        const pageNode = editor.graph.getNode(pageId)
+        if (pageNode?.type === 'CANVAS') {
+          const conn = (pageNode.prototypeConnections ?? []).find(
+            (c) =>
+              c.sourceNodeId === d.nodeId &&
+              c.targetNodeId === targetNode.id &&
+              c.triggerType === 'ON_CLICK'
+          )
+          if (conn) {
+            const targetBounds = editor.graph.getAbsoluteBounds(targetNode.id)
+            const closest = closestSideOfRect(targetBounds, { x: cx, y: cy })
+            editor.updateConnectionGeometry(conn.id, {
+              sourceAnchor: { side: d.side, offset: 0.5 },
+              targetAnchor: { side: closest.side, offset: closest.offset }
+            })
+          }
         }
       }
     }
@@ -419,18 +447,40 @@ function closestSideOfRect(rect: Rect, p: Vector): { side: ConnectionSide; offse
   }
 }
 
-function findTargetScreenNode(
+function resolveDragTarget(
   graph: { getNode: (id: string) => SceneNode | undefined },
-  nodeId: string
+  nodeId: string,
+  sourceNodeId: string
 ): SceneNode | null {
-  let current = graph.getNode(nodeId)
+  const hitNode = graph.getNode(nodeId)
+  if (!hitNode) return null
+
+  const sourceNode = graph.getNode(sourceNodeId)
+  if (sourceNode && hitNode.type === 'COMPONENT') {
+    const parent = hitNode.parentId ? graph.getNode(hitNode.parentId) : null
+    if (parent?.type === 'COMPONENT_SET') {
+      if (
+        (sourceNode.type === 'COMPONENT' && sourceNode.parentId === hitNode.parentId) ||
+        (sourceNode.type === 'INSTANCE' && sourceNode.componentId && 
+         graph.getNode(sourceNode.componentId)?.parentId === hitNode.parentId)
+      ) {
+        return hitNode
+      }
+    }
+  }
+
+  let current: SceneNode | undefined = hitNode
   while (current) {
-    if (current.type === 'FRAME' || current.type === 'SECTION' || current.type === 'COMPONENT') {
+    if (
+      current.type === 'FRAME' ||
+      current.type === 'SECTION' ||
+      current.type === 'COMPONENT'
+    ) {
       return current
     }
     current = current.parentId ? graph.getNode(current.parentId) : undefined
   }
-  return null
+  return hitNode
 }
 
 function tryHandleGuideMouseDown(

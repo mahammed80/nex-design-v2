@@ -6,7 +6,10 @@ import { chooseBrowserFigSaveHandle, chooseTauriFigSavePath } from '@/app/docume
 import { createDocumentWriter } from '@/app/document/io/write'
 import { IS_TAURI } from '@/constants'
 
-type SaveDocumentState = EditorState & { documentName: string }
+type SaveDocumentState = EditorState & {
+  documentName: string
+  activeProjectId?: string | null
+}
 
 type SaveActionsOptions = {
   state: SaveDocumentState
@@ -20,6 +23,7 @@ type SaveActionsOptions = {
   setSavedVersion: (version: number) => void
   setLastWriteTime: (time: number) => void
   startWatchingFile: () => void
+  saveProjectToDb?: (projectId: string, data: Uint8Array) => Promise<void>
 }
 
 export function createSaveActions({
@@ -33,7 +37,8 @@ export function createSaveActions({
   setDownloadName,
   setSavedVersion,
   setLastWriteTime,
-  startWatchingFile
+  startWatchingFile,
+  saveProjectToDb
 }: SaveActionsOptions) {
   const writeFile = createDocumentWriter({
     state,
@@ -44,6 +49,11 @@ export function createSaveActions({
   })
 
   async function saveFigFile() {
+    if (state.activeProjectId && saveProjectToDb) {
+      await saveProjectToDb(state.activeProjectId, await buildFigFile())
+      setSavedVersion(state.sceneVersion)
+      return
+    }
     const filePath = getFilePath()
     const fileHandle = getFileHandle()
     const downloadName = getDownloadName()

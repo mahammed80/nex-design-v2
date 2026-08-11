@@ -7,10 +7,13 @@ import { IS_TAURI } from '@/constants'
 
 import App from './App.vue'
 import router from './router'
+import { vReveal } from '@/directives/reveal'
 
 preloadFonts()
 const head = createHead()
-createApp(App).use(router).use(head).mount('#app')
+const app = createApp(App)
+app.directive('reveal', vReveal)
+app.use(router).use(head).mount('#app')
 
 if (!IS_TAURI) {
   void import('virtual:pwa-register').then(({ registerSW }) => {

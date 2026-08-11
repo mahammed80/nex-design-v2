@@ -71,7 +71,7 @@ export function useEditorFontPicker() {
 
     editor.state.fontPreviewActive = true
     invalidateRenderers()
-    editor.requestRepaint()
+    editor.requestRender()
   }
 
   function restoreFont() {
@@ -95,7 +95,7 @@ export function useEditorFontPicker() {
     originalFonts.clear()
     editor.state.fontPreviewActive = false
     invalidateRenderers()
-    editor.requestRepaint()
+    editor.requestRender()
   }
 
   async function applyFont(family: string) {

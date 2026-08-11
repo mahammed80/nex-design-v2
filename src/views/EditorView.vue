@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, provide, ref } from 'vue'
+import { onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
@@ -16,6 +16,8 @@ import { isTauri } from '@/app/tauri/env'
 import { createDemoShapes } from '@/app/demo/document'
 import { useEditorStore } from '@/app/editor/active-store'
 import { createTab, activeTab, getActiveStore, tabCount } from '@/app/tabs'
+import { openDb, getProjectFromDb, updateProjectInDb } from '@/app/dashboard/db'
+import { readFigFile } from '@nex-design/core/io/formats/fig'
 
 import CollabPanel from '@/components/CollabPanel/CollabPanel.vue'
 import EditorCanvas from '@/components/EditorCanvas.vue'
@@ -60,7 +62,50 @@ const automationCleanup = ref<(() => void) | null>(null)
 const mcpCleanup = ref<(() => void) | null>(null)
 const initialEditorLayout = loadEditorLayout()
 
+watch(
+  () => store.state.documentName,
+  async (newName) => {
+    if (store.state.activeProjectId && newName) {
+      const db = await openDb()
+      await updateProjectInDb(db, store.state.activeProjectId, {
+        name: newName,
+        updatedAt: Date.now()
+      })
+    }
+  }
+)
+
 onMounted(async () => {
+  const projectId = route.query.id as string
+  if (projectId) {
+    store.state.loading = true
+    try {
+      const db = await openDb()
+      const project = await getProjectFromDb(db, projectId)
+      if (project) {
+        store.state.activeProjectId = project.id
+        store.state.documentName = project.name
+        
+        // Load the document using readFigFile
+        const file = new File([project.document], `${project.name}.fig`)
+        const graph = await readFigFile(file, { populate: 'first-page' })
+        
+        store.replaceGraph(graph)
+        store.undo.clear()
+        store.clearSelection()
+        const pageId = store.graph.getPages()[0]?.id ?? store.graph.rootId
+        await store.switchPage(pageId)
+        await store.fitCurrentPageToViewport()
+      } else {
+        console.error('Project not found in DB:', projectId)
+      }
+    } catch (err) {
+      console.error('Failed to load project from DB:', err)
+    } finally {
+      store.state.loading = false
+    }
+  }
+
   try {
     const mcp = await spawnMCPIfNeeded()
     mcpCleanup.value = mcp?.disconnect ?? null
@@ -162,7 +207,14 @@ onUnmounted(() => {
           v-if="!isMobile"
           class="absolute top-7 left-7 z-10 flex items-center gap-2 rounded-lg border border-border bg-panel px-2 py-1 shadow-sm"
         >
-          <img src="/favicon-32.png" class="size-4" alt="NexDesign" />
+          <router-link
+            to="/"
+            class="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted transition-colors hover:bg-hover hover:text-surface"
+            title="Back to Home Page"
+          >
+            <icon-lucide-home class="size-3.5" />
+          </router-link>
+          <img src="/logo.png" class="h-5 w-auto invert object-contain opacity-90" alt="NexDesign" />
           <span data-test-id="editor-document-name" class="text-xs text-surface">{{
             store.state.documentName
           }}</span>

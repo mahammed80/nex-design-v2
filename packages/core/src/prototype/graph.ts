@@ -18,7 +18,7 @@ export function navigationReactionFor(
     node.reactions.find(
       (r) =>
         r.trigger.type === triggerType &&
-        r.actions.some((a) => a.type === 'NAVIGATE' && a.destinationId)
+        r.actions.some((a) => !!a.destinationId)
     ) ?? null
   )
 }
@@ -27,7 +27,7 @@ function navigationDestination(
   reaction: NonNullable<SceneNode['reactions']>[number]
 ): string | null {
   return (
-    reaction.actions.find((a) => a.type === 'NAVIGATE' && a.destinationId)?.destinationId ?? null
+    reaction.actions.find((a) => !!a.destinationId)?.destinationId ?? null
   )
 }
 

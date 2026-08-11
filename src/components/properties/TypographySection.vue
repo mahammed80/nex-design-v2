@@ -232,6 +232,17 @@ const fontLoader = { load: loadFont }
           </Tip>
         </div>
       </div>
+
+      <!-- Arabic Text Warning -->
+      <div
+        v-if="ctx.node.value.text && /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(ctx.node.value.text)"
+        class="mt-3 p-2.5 rounded border border-[#d97706]/20 bg-[#d97706]/5 text-[#d97706] flex items-start gap-2 text-[10px] leading-snug"
+      >
+        <icon-lucide-alert-triangle class="size-3.5 shrink-0 mt-0.5" />
+        <div>
+          <span class="font-bold">Arabic Text Warning:</span> Arabic character shaping is not supported by the current design canvas.
+        </div>
+      </div>
     </div>
   </TypographyControlsRoot>
 </template>

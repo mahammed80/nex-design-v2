@@ -33,10 +33,15 @@ export function createComponentBridge(
     addPropertyDefinition: components.addPropertyDefinition,
     removePropertyDefinition: components.removePropertyDefinition,
     renamePropertyDefinition: components.renamePropertyDefinition,
+    buildVariantName: components.buildVariantName,
     collectVariantOptions: components.collectVariantOptions,
     findVariantByValues: components.findVariantByValues,
     switchInstanceVariant: components.switchInstanceVariant,
     resetInstanceOverrides: components.resetInstanceOverrides,
-    addVariantToComponentSet: components.addVariantToComponentSet
+    addVariantToComponentSet: components.addVariantToComponentSet,
+    addVariantToStandaloneComponent: components.addVariantToStandaloneComponent,
+    renameVariantValue: components.renameVariantValue,
+    deleteVariantValue: components.deleteVariantValue,
+    insertComponentSetInstance: components.insertComponentSetInstance
   }
 }

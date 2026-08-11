@@ -10,6 +10,7 @@ import {
 } from 'reka-ui'
 import { useEditorCommands, useI18n, useMenuModel, useSelectionState } from '@nex-design/vue'
 
+import { useAIChat } from '@/app/ai/chat/use'
 import { useEditorStore } from '@/app/editor/active-store'
 import { createCanvasMenuActions } from '@/app/editor/canvas/menu-actions'
 import { canvasMenuItemClass, canvasMenuShortcutClass } from '@/app/editor/canvas/menu-model'
@@ -49,6 +50,50 @@ const contextCommandTestIds: Record<string, string> = {
   'selection.createComponent': 'context-create-component',
   'selection.toggleVisibility': 'context-toggle-visibility',
   'selection.toggleLock': 'context-toggle-lock'
+}
+
+const { activeTab, chatInputText, chatReferenceNodeImage, chatReferenceNodeName } = useAIChat()
+
+function toArrayBuffer(data: Uint8Array): ArrayBuffer {
+  const bytes = new Uint8Array(data.length)
+  bytes.set(data)
+  return bytes.buffer
+}
+
+async function addToChat() {
+  const nodeIds = ids()
+  if (nodeIds.length === 0) return
+
+  const selectedNodes = nodeIds
+    .map((id) => store.graph.getNode(id))
+    .filter((node): node is NonNullable<typeof node> => !!node)
+
+  if (selectedNodes.length === 0) return
+
+  if (selectedNodes.length === 1) {
+    const node = selectedNodes[0]
+    const typeLabel = node.type === 'COMPONENT' || node.type === 'INSTANCE' ? 'component' : 'layer'
+    chatInputText.value = `Modify the ${typeLabel} "${node.name}": `
+  } else {
+    const names = selectedNodes.map((n) => `"${n.name}"`).join(', ')
+    chatInputText.value = `Modify the selected layers (${names}): `
+  }
+
+  try {
+    const data = await store.renderExportImage(nodeIds, 2, 'PNG')
+    if (data) {
+      const blob = new Blob([toArrayBuffer(data)], { type: 'image/png' })
+      if (chatReferenceNodeImage.value && chatReferenceNodeImage.value.startsWith('blob:')) {
+        URL.revokeObjectURL(chatReferenceNodeImage.value)
+      }
+      chatReferenceNodeImage.value = URL.createObjectURL(blob)
+      chatReferenceNodeName.value = selectedNodes.map((n) => n.name).join(', ')
+    }
+  } catch (error) {
+    console.error('Failed to render component preview for chat:', error)
+  }
+
+  activeTab.value = 'ai'
 }
 </script>
 
@@ -175,6 +220,15 @@ const contextCommandTestIds: Record<string, string> = {
           </ContextMenuSubContent>
         </ContextMenuPortal>
       </ContextMenuSub>
+
+      <ContextMenuItem
+        data-test-id="context-add-to-chat"
+        :class="cls.item"
+        @select="addToChat"
+      >
+        <span>Add to Chat</span>
+        <icon-lucide-sparkles class="size-3 text-accent" />
+      </ContextMenuItem>
     </template>
   </ContextMenuContent>
 </template>

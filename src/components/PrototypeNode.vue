@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import { colorToCSS } from '@nex-design/core/color'
 import type { SceneNode } from '@nex-design/core/scene-graph'
 
@@ -109,22 +109,81 @@ const children = computed(() => {
     .filter((n): n is SceneNode => n !== undefined && n.visible)
 })
 
-function handleTrigger(triggerType: string) {
-  if (node.reactions?.some((r) => r.trigger.type === triggerType)) {
-    emit('interaction', { nodeId: node.id, triggerType })
+// Drag and press gesture state tracking
+let dragStartX = 0
+let dragStartY = 0
+let isDragging = false
+
+function onMouseDown(e: MouseEvent) {
+  dragStartX = e.clientX
+  dragStartY = e.clientY
+  isDragging = true
+  
+  emit('interaction', { nodeId: node.id, triggerType: 'ON_PRESS' })
+  emit('interaction', { nodeId: node.id, triggerType: 'MOUSE_DOWN' })
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
+}
+
+function onMouseMove(e: MouseEvent) {
+  if (!isDragging) return
+  const dx = e.clientX - dragStartX
+  const dy = e.clientY - dragStartY
+  if (Math.hypot(dx, dy) > 30) {
+    isDragging = false
+    let direction = ''
+    if (Math.abs(dx) > Math.abs(dy)) {
+      direction = dx > 0 ? 'RIGHT' : 'LEFT'
+    } else {
+      direction = dy > 0 ? 'DOWN' : 'UP'
+    }
+    emit('interaction', { nodeId: node.id, triggerType: `ON_DRAG_${direction}` })
+
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
   }
 }
+
+function onMouseUp(_e: MouseEvent) {
+  if (!isDragging) return
+  isDragging = false
+  emit('interaction', { nodeId: node.id, triggerType: 'press-end' })
+  emit('interaction', { nodeId: node.id, triggerType: 'MOUSE_UP' })
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
+}
+
+function onMouseEnter() {
+  emit('interaction', { nodeId: node.id, triggerType: 'ON_HOVER' })
+  emit('interaction', { nodeId: node.id, triggerType: 'MOUSE_ENTER' })
+}
+
+function onMouseLeave() {
+  emit('interaction', { nodeId: node.id, triggerType: 'hover-end' })
+  emit('interaction', { nodeId: node.id, triggerType: 'MOUSE_LEAVE' })
+  if (isDragging) {
+    isDragging = false
+    emit('interaction', { nodeId: node.id, triggerType: 'press-end' })
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+}
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseup', onMouseUp)
+})
 </script>
 
 <template>
   <div
     :data-prototype-node-id="node.id"
     :style="style"
-    @click.stop="handleTrigger('ON_CLICK')"
-    @mouseenter="handleTrigger('MOUSE_ENTER')"
-    @mouseleave="handleTrigger('MOUSE_LEAVE')"
-    @mousedown="handleTrigger('MOUSE_DOWN')"
-    @mouseup="handleTrigger('MOUSE_UP')"
+    @click.stop="emit('interaction', { nodeId: node.id, triggerType: 'ON_CLICK' })"
+    @mouseenter="onMouseEnter"
+    @mouseleave="onMouseLeave"
+    @mousedown.stop="onMouseDown"
   >
     <!-- Vector network SVG rendering -->
     <svg
@@ -154,3 +213,4 @@ function handleTrigger(triggerType: string) {
     />
   </div>
 </template>
+

@@ -23,6 +23,9 @@ import { exposeChatTransportOverride } from '@/app/browser-bridge'
 import { getActiveEditorStore } from '@/app/editor/active-store'
 
 const activeTab = ref<'design' | 'code' | 'ai' | 'prototype'>('design')
+const chatInputText = ref('')
+const chatReferenceNodeImage = ref('')
+const chatReferenceNodeName = ref('')
 
 const chatSession = createChatSessionManager({
   isConfigured,
@@ -59,6 +62,9 @@ export function useAIChat() {
     pexelsApiKey,
     unsplashAccessKey,
     activeTab,
+    chatInputText,
+    chatReferenceNodeImage,
+    chatReferenceNodeName,
     isConfigured,
     ensureChat: chatSession.ensureChat,
     resetChat: chatSession.resetChat

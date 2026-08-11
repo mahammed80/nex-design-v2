@@ -5,7 +5,7 @@ import type { OverlaySettings, SceneNode } from '@nex-design/core/scene-graph'
 import type { EditorStore } from '@/app/editor/active-store'
 
 import { HistoryManager } from './history-manager'
-import { InteractionEngine } from './interaction-engine'
+import { PrototypeEngine } from './prototype-engine'
 import { NavigationController } from './navigation-controller'
 import { TransitionEngine } from './transition-engine'
 import type { PresentationState } from './types'
@@ -22,7 +22,8 @@ export class PresentationManager {
     showDeviceFrame: false,
     isFullscreen: false,
     transitionName: 'instant',
-    transitionDuration: 300
+    transitionDuration: 300,
+    transitionEasing: 'EASE_IN_AND_OUT'
   })
 
   public history = new HistoryManager()
@@ -30,7 +31,7 @@ export class PresentationManager {
   public viewportManager = new ViewportManager()
   public transitionEngine = new TransitionEngine()
   public navigationController!: NavigationController
-  public interactionEngine!: InteractionEngine
+  public prototypeEngine!: PrototypeEngine
 
   private delayTimeouts: ReturnType<typeof setTimeout>[] = []
 
@@ -41,7 +42,7 @@ export class PresentationManager {
       this.transitionEngine,
       this.state
     )
-    this.interactionEngine = new InteractionEngine(editor, this.navigationController)
+    this.prototypeEngine = new PrototypeEngine(editor, this)
 
     // Watch active screen ID changes to set up delay timers
     watch(
@@ -73,6 +74,9 @@ export class PresentationManager {
     this.state.zoomMode = 'FIT'
     this.state.customZoom = 1.0
     this.state.isOpen = true
+
+    // Initialize state sandbox
+    this.prototypeEngine.stateManager.initialize()
 
     const pageId = this.editor.state.currentPageId
     const page = this.editor.graph.getNode(pageId)
@@ -125,6 +129,9 @@ export class PresentationManager {
     this.history.clear()
     this.clearDelayTriggers()
 
+    // Re-initialize state sandbox
+    this.prototypeEngine.stateManager.initialize()
+
     const pageId = this.editor.state.currentPageId
     const page = this.editor.graph.getNode(pageId)
 
@@ -156,19 +163,35 @@ export class PresentationManager {
   })
 
   handleInteraction(nodeId: string, triggerType: string) {
-    const res = this.interactionEngine.handleInteraction(nodeId, triggerType)
-    if (res === 'CLOSE') {
-      if (this.activeOverlay.isOpen) {
-        this.activeOverlay.isOpen = false
-      } else {
-        this.stopPresentation()
-      }
-    } else if (typeof res === 'object' && res.handled && res.overlayId) {
-      this.activeOverlay.isOpen = true
-      this.activeOverlay.nodeId = res.overlayId
-      this.activeOverlay.settings = res.overlaySettings as OverlaySettings
+    this.state.scrollTargetId = undefined
+
+    // Map triggerType string to TriggerManager events
+    let event = 'click'
+    if (triggerType === 'ON_CLICK') event = 'click'
+    else if (triggerType === 'ON_HOVER') event = 'hover-start'
+    else if (triggerType === 'ON_PRESS') event = 'press-start'
+    else if (triggerType === 'MOUSE_ENTER') event = 'mouse-enter'
+    else if (triggerType === 'MOUSE_LEAVE') event = 'mouse-leave'
+    else if (triggerType === 'AFTER_DELAY') event = 'after-delay'
+    else if (triggerType.startsWith('ON_DRAG_')) {
+      event = 'drag-' + triggerType.split('_')[2].toLowerCase()
+    } else if (triggerType.startsWith('drag-')) {
+      event = triggerType
+    } else if (triggerType === 'hover-end') {
+      event = 'hover-end'
+    } else if (triggerType === 'press-end') {
+      event = 'press-end'
     }
-    return typeof res === 'object' ? res : undefined
+
+    this.prototypeEngine.triggerManager.handleEvent(nodeId, event)
+
+    if (this.state.scrollTargetId) {
+      const scrollTargetId = this.state.scrollTargetId
+      this.state.scrollTargetId = undefined
+      return { handled: true, scrollTargetId }
+    }
+
+    return undefined
   }
 
   private clearDelayTriggers() {
@@ -180,7 +203,7 @@ export class PresentationManager {
     this.clearDelayTriggers()
     if (!this.state.activeFrameId) return
 
-    const frame = this.editor.graph.getNode(this.state.activeFrameId)
+    const frame = this.prototypeEngine.stateManager.getNode(this.state.activeFrameId)
     if (!frame) return
 
     const walk = (node: SceneNode) => {
@@ -196,7 +219,7 @@ export class PresentationManager {
         }
       }
       for (const childId of node.childIds) {
-        const child = this.editor.graph.getNode(childId)
+        const child = this.prototypeEngine.stateManager.getNode(childId)
         if (child?.visible) walk(child)
       }
     }
@@ -204,3 +227,4 @@ export class PresentationManager {
     walk(frame)
   }
 }
+

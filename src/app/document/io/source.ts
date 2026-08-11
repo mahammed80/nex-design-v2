@@ -9,10 +9,12 @@ import {
 } from '@/app/document/io/names'
 import { createSaveActions } from '@/app/document/io/save'
 import { createDocumentSourceState } from '@/app/document/io/source-state'
+import { openDb, updateProjectInDb, uint8ArrayToBase64 } from '@/app/dashboard/db'
 
 type DocumentSourceState = EditorState & {
   documentName: string
   autosaveEnabled: boolean
+  activeProjectId?: string | null
 }
 
 export { createDocumentSourceState }
@@ -54,6 +56,31 @@ export function createDocumentSourceActions({
     return exportFigFile(editor.graph, undefined, getRenderer() ?? undefined, state.currentPageId)
   }
 
+  async function saveProjectToDb(projectId: string, data: Uint8Array) {
+    let thumbnail = ''
+    try {
+      const renderer = editor.renderer
+      if (renderer) {
+        const ids = editor.graph.getChildren(state.currentPageId).map((n) => n.id)
+        if (ids.length > 0) {
+          const renderData = await (editor as any).renderExportImage([], 0.5, 'PNG')
+          if (renderData) {
+            thumbnail = uint8ArrayToBase64(renderData)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to generate thumbnail', e)
+    }
+
+    const db = await openDb()
+    await updateProjectInDb(db, projectId, {
+      document: data,
+      thumbnail,
+      updatedAt: Date.now()
+    })
+  }
+
   const { saveFigFile, saveFigFileAs, writeFile } = createSaveActions({
     state,
     buildFigFile,
@@ -67,14 +94,21 @@ export function createDocumentSourceActions({
     setLastWriteTime,
     startWatchingFile: () => {
       void startWatchingFile()
-    }
+    },
+    saveProjectToDb
   })
 
   const { disposeAutosave } = createAutosave({
     state,
     getSavedVersion,
-    hasWritableSource: () => !!getFileHandle() || !!getFilePath(),
-    saveCurrentDocument: async () => writeFile(await buildFigFile())
+    hasWritableSource: () => !!getFileHandle() || !!getFilePath() || !!state.activeProjectId,
+    saveCurrentDocument: async () => {
+      if (state.activeProjectId) {
+        await saveProjectToDb(state.activeProjectId, await buildFigFile())
+      } else {
+        await writeFile(await buildFigFile())
+      }
+    }
   })
 
   function setDocumentSource(

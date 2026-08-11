@@ -27,4 +27,6 @@ export interface PresentationState {
   isFullscreen: boolean
   transitionName: string // CSS transition name (e.g. 'dissolve', 'push-left')
   transitionDuration: number // in ms
+  transitionEasing?: string
+  scrollTargetId?: string
 }

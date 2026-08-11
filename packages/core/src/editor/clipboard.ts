@@ -13,6 +13,7 @@ import type { Vector } from '#core/types'
 import { createClipboardCopyActions } from './clipboard/copy'
 import { createClipboardExportActions } from './clipboard/export'
 import { createClipboardFontActions } from './clipboard/fonts'
+import { fitComponentSetBounds } from './components/variants'
 import { createClipboardImageActions } from './clipboard/images'
 import { resolvePasteTarget } from './clipboard/paste-target'
 import { createClipboardPlacementActions } from './clipboard/placement'
@@ -220,7 +221,49 @@ export function createClipboardActions(ctx: EditorContext) {
     const prevSelection = new Set(ctx.state.selectedIds)
     const beforeProto = snapshotPrototypeState(ctx.graph, pageId)
 
+    const parentSetsToFit = new Set<string>()
+    for (const { id } of entries) {
+      const node = ctx.graph.getNode(id)
+      if (node?.parentId) {
+        const parent = ctx.graph.getNode(node.parentId)
+        if (parent?.type === 'COMPONENT_SET') {
+          parentSetsToFit.add(parent.id)
+        }
+      }
+    }
+
+    const affectedNodeIds = new Set<string>()
+    for (const parentId of parentSetsToFit) {
+      affectedNodeIds.add(parentId)
+      const parent = ctx.graph.getNode(parentId)
+      if (parent) {
+        for (const cid of parent.childIds) {
+          affectedNodeIds.add(cid)
+        }
+      }
+    }
+
+    const previousLayouts = Array.from(affectedNodeIds).map((nid) => {
+      const n = ctx.graph.getNode(nid)
+      return {
+        id: nid,
+        state: n ? { x: n.x, y: n.y, width: n.width, height: n.height } : null
+      }
+    })
+
     for (const { id } of entries) ctx.graph.deleteNode(id)
+
+    for (const parentId of parentSetsToFit) {
+      fitComponentSetBounds(ctx.graph, parentId)
+    }
+
+    const finalLayouts = Array.from(affectedNodeIds).map((nid) => {
+      const n = ctx.graph.getNode(nid)
+      return {
+        id: nid,
+        state: n ? { x: n.x, y: n.y, width: n.width, height: n.height } : null
+      }
+    })
 
     const page = ctx.graph.getNode(pageId)
     if (page?.type === 'CANVAS') {
@@ -239,6 +282,9 @@ export function createClipboardActions(ctx: EditorContext) {
       label: 'Delete',
       forward: () => {
         for (const { id } of entries) ctx.graph.deleteNode(id)
+        for (const fl of finalLayouts) {
+          if (fl.state) ctx.graph.updateNode(fl.id, fl.state)
+        }
         restorePrototypeState(ctx.graph, pageId, afterProto)
         ctx.setSelectedIds(new Set())
         ctx.requestRender()
@@ -248,6 +294,9 @@ export function createClipboardActions(ctx: EditorContext) {
           const rootSnap = subtree.get(id)
           if (rootSnap) restoreSubtree(ctx.graph, rootSnap, parentId, subtree)
           if (index >= 0) ctx.graph.reorderChild(id, parentId, index)
+        }
+        for (const pl of previousLayouts) {
+          if (pl.state) ctx.graph.updateNode(pl.id, pl.state)
         }
         restorePrototypeState(ctx.graph, pageId, beforeProto)
         ctx.setSelectedIds(prevSelection)
