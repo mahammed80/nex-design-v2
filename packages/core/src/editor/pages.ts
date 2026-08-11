@@ -65,10 +65,25 @@ export function createPageActions(ctx: EditorContext) {
     ctx.requestRender()
   }
 
+  function duplicatePage(pageId: string): string | null {
+    const page = ctx.graph.getNode(pageId)
+    if (page?.type !== 'CANVAS') return null
+
+    const newPage = ctx.graph.addPage(`${page.name} Copy`)
+    const children = ctx.graph.getChildren(pageId)
+    for (const child of children) {
+      ctx.graph.cloneTree(child.id, newPage.id)
+    }
+
+    void switchPage(newPage.id)
+    return newPage.id
+  }
+
   return {
     switchPage,
     addPage,
     deletePage,
+    duplicatePage,
     renamePage,
     setPageColor,
     clearPageViewports: pageViewportStore.clearPageViewports

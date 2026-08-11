@@ -65,14 +65,28 @@ const triggerOptions = [
 
 const actionOptions = [
   { value: 'NAVIGATE', label: 'Navigate to' },
+  { value: 'OPEN_OVERLAY', label: 'Open overlay' },
+  { value: 'SWAP_OVERLAY', label: 'Swap overlay' },
+  { value: 'CHANGE_TO', label: 'Change to (Component State)' },
+  { value: 'SET_VARIABLE', label: 'Set variable' },
+  { value: 'SCROLL_TO', label: 'Scroll to' },
   { value: 'BACK', label: 'Back' },
   { value: 'CLOSE', label: 'Close overlay' }
+]
+
+const overlayPositionOptions = [
+  { value: 'CENTER', label: 'Centered' },
+  { value: 'TOP_CENTER', label: 'Top Center' },
+  { value: 'BOTTOM_CENTER', label: 'Bottom Center' },
+  { value: 'MANUAL', label: 'Manual' }
 ]
 
 const transitionOptions = [
   { value: 'INSTANT', label: 'Instant' },
   { value: 'DISSOLVE', label: 'Dissolve' },
-  { value: 'SMART', label: 'Smart Animate' }
+  { value: 'SMART', label: 'Smart Animate' },
+  { value: 'SLIDE_IN', label: 'Slide In' },
+  { value: 'SLIDE_OUT', label: 'Slide Out' }
 ]
 
 const easingOptions = [
@@ -117,14 +131,44 @@ function updateAction(idx: number, type: ActionType) {
   if (!editor || !node.value) return
   const r = reactions.value[idx]
   const updatedActions = [...r.actions]
+  const needsDest = ['NAVIGATE', 'OPEN_OVERLAY', 'SWAP_OVERLAY', 'SCROLL_TO'].includes(type)
   updatedActions[0] = {
     ...updatedActions[0],
     type,
-    destinationId: type === 'NAVIGATE' ? (targetFrameOptions.value[0]?.value ?? '') : undefined,
-    transition:
-      type === 'NAVIGATE'
-        ? { type: 'INSTANT', duration: 300, easing: 'EASE_IN_AND_OUT' }
-        : undefined
+    destinationId: needsDest ? (targetFrameOptions.value[0]?.value ?? '') : undefined,
+    overlay: ['OPEN_OVERLAY', 'SWAP_OVERLAY'].includes(type)
+      ? { position: 'CENTER', backdrop: true, backdropOpacity: 0.5, closeOnOutsideClick: true }
+      : undefined,
+    transition: needsDest
+      ? { type: 'INSTANT', duration: 300, easing: 'EASE_IN_AND_OUT' }
+      : undefined
+  }
+  editor.updateReaction(node.value.id, idx, { actions: updatedActions })
+}
+
+function updateOverlayPosition(
+  idx: number,
+  position: 'CENTER' | 'TOP_CENTER' | 'BOTTOM_CENTER' | 'MANUAL'
+) {
+  if (!editor || !node.value) return
+  const r = reactions.value[idx]
+  const updatedActions = [...r.actions]
+  const overlay = updatedActions[0].overlay ?? {}
+  updatedActions[0] = {
+    ...updatedActions[0],
+    overlay: { ...overlay, position }
+  }
+  editor.updateReaction(node.value.id, idx, { actions: updatedActions })
+}
+
+function updateOverlayBackdrop(idx: number, backdrop: boolean) {
+  if (!editor || !node.value) return
+  const r = reactions.value[idx]
+  const updatedActions = [...r.actions]
+  const overlay = updatedActions[0].overlay ?? {}
+  updatedActions[0] = {
+    ...updatedActions[0],
+    overlay: { ...overlay, backdrop }
   }
   editor.updateReaction(node.value.id, idx, { actions: updatedActions })
 }
@@ -305,8 +349,13 @@ function removeInteraction(idx: number) {
             />
           </div>
 
-          <!-- Destination selection if NAVIGATE -->
-          <div v-if="r.actions[0].type === 'NAVIGATE'" class="flex flex-col gap-1">
+          <!-- Destination selection if NAVIGATE, OPEN_OVERLAY, SWAP_OVERLAY, SCROLL_TO -->
+          <div
+            v-if="
+              ['NAVIGATE', 'OPEN_OVERLAY', 'SWAP_OVERLAY', 'SCROLL_TO'].includes(r.actions[0].type)
+            "
+            class="flex flex-col gap-1"
+          >
             <span class="text-muted text-[10px]">Target Frame</span>
             <AppSelect
               v-if="targetFrameOptions.length > 0"
@@ -315,8 +364,34 @@ function removeInteraction(idx: number) {
               @update:model-value="updateDestination(idx, $event)"
               class="w-full"
             />
-            <div v-else class="text-muted text-[10px] italic">
-              Create another frame to navigate to
+            <div v-else class="text-muted text-[10px] italic">Create another frame to target</div>
+          </div>
+
+          <!-- Overlay settings if OPEN_OVERLAY / SWAP_OVERLAY -->
+          <div
+            v-if="['OPEN_OVERLAY', 'SWAP_OVERLAY'].includes(r.actions[0].type)"
+            class="flex flex-col gap-2 border-t border-border/50 pt-2"
+          >
+            <div class="flex flex-col gap-1">
+              <span class="text-muted text-[10px]">Overlay Position</span>
+              <AppSelect
+                :options="overlayPositionOptions"
+                :modelValue="r.actions[0].overlay?.position ?? 'CENTER'"
+                @update:modelValue="updateOverlayPosition(idx, $event as any)"
+                class="w-full"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                type="checkbox"
+                :id="`backdrop-chk-${idx}`"
+                :checked="r.actions[0].overlay?.backdrop ?? true"
+                @change="updateOverlayBackdrop(idx, ($event.target as HTMLInputElement).checked)"
+                class="accent-accent size-3"
+              />
+              <label :for="`backdrop-chk-${idx}`" class="text-muted text-[10px] cursor-pointer"
+                >Add background dimming backdrop</label
+              >
             </div>
           </div>
 

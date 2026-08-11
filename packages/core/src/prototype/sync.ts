@@ -19,7 +19,7 @@ export interface PrototypeStateSnapshot {
  */
 export function syncConnectionsFromReactions(graph: SceneGraph, pageId: string): void {
   const page = graph.getNode(pageId)
-  if (!page || page.type !== 'CANVAS') return
+  if (page?.type !== 'CANVAS') return
 
   const existing = page.prototypeConnections ?? []
   const existingByKey = new Map(existing.map((c) => [connectionKey(c), c]))
@@ -66,7 +66,7 @@ export function setReactionDestination(
   destinationId: string
 ): void {
   const source = graph.getNode(sourceNodeId)
-  if (!source || !source.reactions) return
+  if (!source?.reactions) return
   const reactions = source.reactions.map((r) => {
     if (r.trigger.type !== triggerType) return r
     return {
@@ -104,7 +104,7 @@ export function removeNavigationReaction(
   triggerType: string
 ): void {
   const source = graph.getNode(sourceNodeId)
-  if (!source || !source.reactions) return
+  if (!source?.reactions) return
   const reactions = source.reactions.filter((r) => {
     if (r.trigger.type !== triggerType) return true
     return !r.actions.some((a) => a.type === 'NAVIGATE' && a.destinationId)
@@ -138,7 +138,7 @@ export function restorePrototypeState(
   snapshot: PrototypeStateSnapshot
 ): void {
   const page = graph.getNode(pageId)
-  if (!page || page.type !== 'CANVAS') return
+  if (page?.type !== 'CANVAS') return
   graph.updateNode(pageId, {
     prototypeConnections: snapshot.connections.map((c) => structuredClone(c))
   })

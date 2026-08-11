@@ -2,6 +2,7 @@
 import { ref, computed, watch, onScopeDispose } from 'vue'
 
 import AppSelect from '@/components/ui/AppSelect.vue'
+import BatchExportDialog from '@/components/Export/BatchExportDialog.vue'
 import { useIconButtonUI } from '@/components/ui/icon-button'
 import { useSectionUI } from '@/components/ui/section'
 import { useEditorStore } from '@/app/editor/active-store'
@@ -39,6 +40,7 @@ const FORMAT_OPTIONS: { value: ExportFormatId; label: string }[] = [
 const previewUrl = ref<string | null>(null)
 const showPreview = ref(false)
 const exporting = ref(false)
+const batchExportOpen = ref(false)
 
 const PREVIEW_WIDTH = 480
 
@@ -213,5 +215,15 @@ onScopeDispose(() => {
     >
       {{ panels.exportRenderingPreview }}
     </div>
+    <button
+      data-test-id="batch-export-btn"
+      class="mt-2.5 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-input py-1.5 text-xs text-surface hover:bg-hover transition-colors font-medium"
+      @click="batchExportOpen = true"
+    >
+      <icon-lucide-archive class="size-3.5 text-accent" />
+      <span>Batch Export Assets...</span>
+    </button>
+
+    <BatchExportDialog v-model:open="batchExportOpen" />
   </div>
 </template>

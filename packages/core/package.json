@@ -328,6 +328,16 @@
         "types": "./dist/geometry.d.ts",
         "import": "./dist/geometry.js",
         "default": "./dist/geometry.js"
+      },
+      "./orchestrator": {
+        "types": "./dist/orchestrator/index.d.ts",
+        "import": "./dist/orchestrator/index.js",
+        "default": "./dist/orchestrator/index.js"
+      },
+      "./skills": {
+        "types": "./dist/skills/index.d.ts",
+        "import": "./dist/skills/index.js",
+        "default": "./dist/skills/index.js"
       }
     },
     "main": "./dist/index.js",

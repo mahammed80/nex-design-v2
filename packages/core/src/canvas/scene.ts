@@ -263,6 +263,9 @@ export function renderShape(
     r.renderShapeUncached(recCanvas, node, graph)
     const picture = recorder.finishRecordingAsPicture()
     recorder.delete()
+    r.evictLru(r.nodePictureCache, (old) => {
+      if (old) old.delete()
+    })
     r.nodePictureCache.set(node.id, picture)
     canvas.drawPicture(picture)
   } else {

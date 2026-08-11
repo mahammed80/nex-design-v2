@@ -65,7 +65,7 @@ export function createInteractionDispatcher(getGraph: () => SceneGraph): Interac
     if (set.size === 0) {
       const byType = listeners.get(nodeId)
       byType?.delete(type)
-      if (byType && byType.size === 0) listeners.delete(nodeId)
+      if (byType?.size === 0) listeners.delete(nodeId)
     }
   }
 
@@ -108,7 +108,6 @@ export function createInteractionDispatcher(getGraph: () => SceneGraph): Interac
     for (let i = stack.length - 2; i >= 0; i--) {
       if (!getGraph().getNode(stack[i].id)) continue
       invokeAt(stack[i], type, 'bubble', event)
-      if (event.immediateStopped || event.propagationStopped) return event
     }
 
     return event

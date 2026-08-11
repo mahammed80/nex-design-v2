@@ -6,9 +6,12 @@ import type { ComputedRef, Ref } from 'vue'
 import { ACP_AGENTS } from '@nex-design/core/constants'
 import type { ACPAgentID, AIProviderID } from '@nex-design/core/constants'
 
+import { buildAgentInstructions, getLatestUserRequest } from '@/app/ai/chat/agent-instructions'
 import { createLanguageModel } from '@/app/ai/chat/model'
-import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
-import { MAX_AGENT_STEPS, createAITools, recordStepUsage, resetRunSteps } from '@/app/ai/tools'
+import { setAgentMemoryRequest } from '@/app/ai/memory/storage'
+import { startAgentRun } from '@/app/ai/orchestration/progress'
+import { authorizeReferencesFromRequest } from '@/app/ai/reference/authorization'
+import { createAITools, recordStepUsage, resetRunSteps } from '@/app/ai/tools'
 import type { getActiveEditorStore } from '@/app/editor/active-store'
 
 type EditorStore = ReturnType<typeof getActiveEditorStore>
@@ -83,15 +86,20 @@ export function createToolLoopTransport({
       customBaseURL,
       customAPIType
     }),
-    instructions: SYSTEM_PROMPT,
+    instructions: buildAgentInstructions({ store, request: '' }),
     tools,
-    stopWhen: stepCountIs(MAX_AGENT_STEPS),
+    stopWhen: stepCountIs(50),
     maxOutputTokens,
     providerOptions: cacheProviderOptions,
     prepareCall: (options) => {
       resetRunSteps(store)
+      startAgentRun(store)
+      const request = getLatestUserRequest(options.messages)
+      setAgentMemoryRequest(store, request)
+      authorizeReferencesFromRequest(request)
       return {
         ...options,
+        instructions: buildAgentInstructions({ store, request }),
         maxOutputTokens,
         providerOptions: cacheProviderOptions
       }

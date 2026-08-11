@@ -25,6 +25,7 @@ export type CollabRuntime = {
   suppressYjsEvents: boolean
   unbindGraphEvents: (() => void) | null
   stopZoomWatch: (() => void) | null
+  ynodeIndex: Map<Y.Map<unknown>, string> | null
 }
 
 type ConnectCollabSessionOptions = {
@@ -75,7 +76,8 @@ export function createCollabRuntime(): CollabRuntime {
     suppressGraphSync: false,
     suppressYjsEvents: false,
     unbindGraphEvents: null,
-    stopZoomWatch: null
+    stopZoomWatch: null,
+    ynodeIndex: null
   }
 }
 
@@ -168,6 +170,7 @@ export function connectCollabSession({
   runtime.ynodes = runtime.ydoc.getMap('nodes')
   runtime.yimages = runtime.ydoc.getMap('images')
   runtime.persistence = new IndexeddbPersistence(`op-room-${roomId}`, runtime.ydoc)
+  runtime.ynodeIndex = new Map()
 
   runtime.awareness.on('change', () => {
     updatePeersList()
@@ -222,6 +225,7 @@ export function resetCollabRuntime(runtime: CollabRuntime) {
   runtime.ynodes = null
   runtime.yimages = null
   runtime.connectedStore = null
+  runtime.ynodeIndex = null
 }
 
 export function resetCollabConnectionState(state: Ref<CollabState>) {

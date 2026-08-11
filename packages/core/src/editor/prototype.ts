@@ -1,5 +1,5 @@
-import { PrototypeGraph } from '#core/prototype'
 import {
+  PrototypeGraph,
   moveNavigationReaction,
   removeNavigationReaction,
   restorePrototypeState,
@@ -7,7 +7,12 @@ import {
   snapshotPrototypeState,
   syncConnectionsFromReactions
 } from '#core/prototype'
-import type { ConnectionEndpoint, PrototypeConnection } from '#core/prototype'
+import type {
+  ConnectionAnchor,
+  ConnectionEndpoint,
+  PrototypeConnection,
+  PrototypeStateSnapshot
+} from '#core/prototype'
 import type { Reaction, SceneNode } from '#core/scene-graph'
 
 import type { EditorContext } from './types'
@@ -64,7 +69,7 @@ function updateConnectionObject(
   changes: Partial<PrototypeConnection>
 ): PrototypeConnection | null {
   const page = ctx.graph.getNode(pageId)
-  if (!page || page.type !== 'CANVAS') return null
+  if (page?.type !== 'CANVAS') return null
   const connections = page.prototypeConnections ?? []
   const index = connections.findIndex((c) => c.id === connectionId)
   if (index === -1) return null
@@ -86,7 +91,7 @@ export function createPrototypeActions(ctx: EditorContext) {
 
   function removeReaction(nodeId: string, index: number) {
     const node = ctx.graph.getNode(nodeId)
-    if (!node || !node.reactions || index < 0 || index >= node.reactions.length) return
+    if (!node?.reactions || index < 0 || index >= node.reactions.length) return
     const reactions = [...node.reactions]
     reactions.splice(index, 1)
     ctx.graph.updateNode(nodeId, { reactions })
@@ -96,7 +101,7 @@ export function createPrototypeActions(ctx: EditorContext) {
 
   function updateReaction(nodeId: string, index: number, updates: Partial<Reaction>) {
     const node = ctx.graph.getNode(nodeId)
-    if (!node || !node.reactions || index < 0 || index >= node.reactions.length) return
+    if (!node?.reactions || index < 0 || index >= node.reactions.length) return
     const reactions = node.reactions.map((r, i) => {
       if (i === index) {
         return {
@@ -118,7 +123,7 @@ export function createPrototypeActions(ctx: EditorContext) {
 
   function setPrototypeStartNode(pageId: string, nodeId: string | null) {
     const page = ctx.graph.getNode(pageId)
-    if (!page || page.type !== 'CANVAS') return
+    if (page?.type !== 'CANVAS') return
     ctx.graph.updateNode(pageId, { prototypeStartNodeId: nodeId })
     ctx.requestRender()
   }
@@ -169,7 +174,7 @@ export function createPrototypeActions(ctx: EditorContext) {
     connectionId: string,
     endpoint: ConnectionEndpoint,
     nodeId: string,
-    anchor: import('#core/prototype').ConnectionAnchor | null = null
+    anchor: ConnectionAnchor | null = null
   ) {
     const found = findConnection(ctx, connectionId)
     if (!found) return
@@ -211,10 +216,7 @@ export function createPrototypeActions(ctx: EditorContext) {
     ctx.requestRender()
   }
 
-  function commitConnectionGeometry(
-    connectionId: string,
-    before: import('#core/prototype').PrototypeStateSnapshot
-  ) {
+  function commitConnectionGeometry(connectionId: string, before: PrototypeStateSnapshot) {
     const found = findConnection(ctx, connectionId)
     if (!found) return
     const { pageId } = found

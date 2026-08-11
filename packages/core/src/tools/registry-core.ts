@@ -2,6 +2,7 @@ import { evalCode } from './analyze'
 import { calc } from './calc'
 import { render } from './create'
 import { describe } from './describe'
+import { designAudit } from './design-audit'
 import {
   setFill,
   setLayout,
@@ -48,6 +49,7 @@ export const CORE_TOOLS: ToolDef[] = [
   stockPhoto,
   // Inspect & utility
   describe,
+  designAudit,
   calc,
   evalCode,
   viewportZoomToFit

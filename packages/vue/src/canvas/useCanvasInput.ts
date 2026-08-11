@@ -1,10 +1,10 @@
 import { useEventListener } from '@vueuse/core'
 import { ref, type Ref } from 'vue'
 
-import { RULER_SIZE } from '@nex-design/core'
+import { RULER_SIZE } from '@nex-design/core/constants'
 import type { Editor } from '@nex-design/core/editor'
 import type { ConnectionSide } from '@nex-design/core/prototype'
-import { getAncestorStack, type SceneNode, type SceneGraph } from '@nex-design/core/scene-graph'
+import { getAncestorStack, type SceneNode } from '@nex-design/core/scene-graph'
 import type { Rect, Vector } from '@nex-design/core/types'
 
 import { useCanvasInteraction } from '#vue/canvas/interaction/use'
@@ -85,124 +85,16 @@ export function useCanvasInput(
     const { sx, sy, cx, cy } = getCoords(e)
 
     recordClick(sx, sy)
-
     editor.setSelectedGuideId(null)
 
-    if (editor.state.guidesVisible) {
-      const zoom = editor.state.zoom
-      const panX = editor.state.panX
-      const panY = editor.state.panY
-
-      if (!editor.state.guidesLocked) {
-        if (sy <= RULER_SIZE && sx > RULER_SIZE) {
-          const val = Math.round(cy)
-          const guideId = editor.addGuide('horizontal', val, 'Drag horizontal guide')
-          editor.setSelectedGuideId(guideId)
-          setDrag({
-            type: 'guide-drag',
-            guideId,
-            axis: 'horizontal',
-            startValue: val,
-            isNew: true
-          })
-          return
-        }
-        if (sx <= RULER_SIZE && sy > RULER_SIZE) {
-          const val = Math.round(cx)
-          const guideId = editor.addGuide('vertical', val, 'Drag vertical guide')
-          editor.setSelectedGuideId(guideId)
-          setDrag({
-            type: 'guide-drag',
-            guideId,
-            axis: 'vertical',
-            startValue: val,
-            isNew: true
-          })
-          return
-        }
-      }
-
-      let hitGuideId: string | null = null
-      let hitGuideAxis: 'horizontal' | 'vertical' | null = null
-      let hitGuideVal = 0
-
-      for (const g of editor.state.guides) {
-        if (g.type === 'horizontal') {
-          const guideSy = g.value * zoom + panY
-          if (Math.abs(sy - guideSy) <= 6 && sx > RULER_SIZE) {
-            hitGuideId = g.id
-            hitGuideAxis = 'horizontal'
-            hitGuideVal = g.value
-            break
-          }
-        } else {
-          const guideSx = g.value * zoom + panX
-          if (Math.abs(sx - guideSx) <= 6 && sy > RULER_SIZE) {
-            hitGuideId = g.id
-            hitGuideAxis = 'vertical'
-            hitGuideVal = g.value
-            break
-          }
-        }
-      }
-
-      if (hitGuideId && hitGuideAxis) {
-        editor.setSelectedGuideId(hitGuideId)
-        if (!editor.state.guidesLocked) {
-          setDrag({
-            type: 'guide-drag',
-            guideId: hitGuideId,
-            axis: hitGuideAxis,
-            startValue: hitGuideVal,
-            isNew: false
-          })
-        }
-        return
-      }
-    }
+    if (tryHandleGuideMouseDown(sx, sy, cx, cy, editor, setDrag)) return
 
     const pointerDown = interaction.dispatch('pointerdown', e, cx, cy, sx, sy, {
       clickCount: getClickCount()
     })
     if (pointerDown.defaultPrevented) return
 
-    if (editor.state.mode === 'PROTOTYPE') {
-      const zoom = editor.state.zoom
-      const panX = editor.state.panX
-      const panY = editor.state.panY
-      for (const id of editor.state.selectedIds) {
-        const bounds = editor.graph.getAbsoluteBounds(id)
-        if (!bounds) continue
-
-        // Check Right Handle
-        const rx = (bounds.x + bounds.width) * zoom + panX + 8
-        const ry = (bounds.y + bounds.height / 2) * zoom + panY
-        if (Math.hypot(sx - rx, sy - ry) <= 12) {
-          setDrag({
-            type: 'prototype-drag',
-            startX: rx,
-            startY: ry,
-            nodeId: id,
-            side: 'RIGHT'
-          })
-          return
-        }
-
-        // Check Left Handle
-        const lx = bounds.x * zoom + panX - 8
-        const ly = (bounds.y + bounds.height / 2) * zoom + panY
-        if (Math.hypot(sx - lx, sy - ly) <= 12) {
-          setDrag({
-            type: 'prototype-drag',
-            startX: lx,
-            startY: ly,
-            nodeId: id,
-            side: 'LEFT'
-          })
-          return
-        }
-      }
-    }
+    if (tryHandlePrototypeMouseDown(sx, sy, editor, setDrag)) return
 
     handleToolMouseDown({
       event: e,
@@ -217,11 +109,179 @@ export function useCanvasInput(
     })
   }
 
+  function handleDragMouseMove(d: DragState, e: MouseEvent, cx: number, cy: number) {
+    switch (d.type) {
+      case 'pan':
+        handlePanMove(d, e)
+        break
+      case 'guide-drag':
+        editor.updateGuideValue(
+          d.guideId,
+          d.axis === 'horizontal' ? Math.round(cy) : Math.round(cx)
+        )
+        break
+      case 'prototype-drag': {
+        const rect = canvasRef.value?.getBoundingClientRect()
+        const endX = rect ? e.clientX - rect.left : d.startX
+        const endY = rect ? e.clientY - rect.top : d.startY
+        editor.state.prototypeDragLine = { startX: d.startX, startY: d.startY, endX, endY }
+        editor.requestRepaint()
+        break
+      }
+      case 'rotate':
+        handleRotateMove(d, cx, cy, e.shiftKey)
+        break
+      case 'move':
+        handleMoveMove(d, cx, cy, editor)
+        break
+      case 'text-select':
+        handleTextSelectMove(cx, cy)
+        break
+      case 'resize':
+        applyResize(d, cx, cy, e.shiftKey, editor)
+        break
+      case 'pen-drag':
+        handlePenDragMove(d, cx, cy, spaceHeld.value, e, editor)
+        break
+      case 'edit-node':
+      case 'edit-handle':
+        handleNodeEditMove(d, cx, cy, editor, e.altKey, e.metaKey || e.ctrlKey, e.shiftKey)
+        break
+      case 'bend-handle':
+        handleBendHandleMove(d, cx, cy, e, editor)
+        break
+      case 'draw':
+        handleDrawMove(d, cx, cy, e.shiftKey, editor)
+        break
+      case 'marquee':
+        handleMarqueeMove(d, cx, cy)
+        break
+    }
+  }
+
+  function handleGuideDragMouseUp(
+    d: Extract<DragState, { type: 'guide-drag' }>,
+    e: MouseEvent | undefined
+  ) {
+    if (e) {
+      const { sx, sy } = getCoords(e)
+      if (d.axis === 'horizontal' && sy <= RULER_SIZE) {
+        editor.removeGuide(d.guideId, 'Delete guide')
+      } else if (d.axis === 'vertical' && sx <= RULER_SIZE) {
+        editor.removeGuide(d.guideId, 'Delete guide')
+      } else if (!d.isNew) {
+        const finalVal = d.axis === 'horizontal' ? Math.round(sy) : Math.round(sx)
+        const startVal = d.startValue
+        const guideId = d.guideId
+        if (finalVal !== startVal) {
+          editor.undo.push({
+            label: 'Move guide',
+            forward: () => editor.updateGuideValue(guideId, finalVal),
+            inverse: () => editor.updateGuideValue(guideId, startVal)
+          })
+        }
+      }
+    }
+    setDrag(null)
+  }
+
+  function handlePrototypeDragMouseUp(
+    d: Extract<DragState, { type: 'prototype-drag' }>,
+    e: MouseEvent
+  ) {
+    const { cx, cy } = getCoords(e)
+    let targetScreen = editor.graph.hitTest(cx, cy, editor.state.currentPageId)
+    if (!targetScreen) {
+      targetScreen =
+        hitFns.hitTestFrameTitle(cx, cy) ??
+        hitFns.hitTestSectionTitle(cx, cy) ??
+        hitFns.hitTestComponentLabel(cx, cy)
+    }
+    if (!targetScreen) {
+      const hit = editor.graph.hitTestDeep(cx, cy, editor.state.currentPageId)
+      if (hit) targetScreen = findTargetScreenNode(editor.graph, hit.id)
+    }
+    if (
+      targetScreen &&
+      (targetScreen.type === 'FRAME' ||
+        targetScreen.type === 'SECTION' ||
+        targetScreen.type === 'COMPONENT') &&
+      targetScreen.id !== d.nodeId
+    ) {
+      editor.addReaction(d.nodeId, {
+        trigger: { type: 'ON_CLICK' },
+        actions: [{ type: 'NAVIGATE', destinationId: targetScreen.id }]
+      })
+
+      const pageId = editor.state.currentPageId
+      const pageNode = editor.graph.getNode(pageId)
+      if (pageNode?.type === 'CANVAS') {
+        const conn = (pageNode.prototypeConnections ?? []).find(
+          (c) =>
+            c.sourceNodeId === d.nodeId &&
+            c.targetNodeId === targetScreen.id &&
+            c.triggerType === 'ON_CLICK'
+        )
+        if (conn) {
+          const targetBounds = editor.graph.getAbsoluteBounds(targetScreen.id)
+          const closest = closestSideOfRect(targetBounds, { x: cx, y: cy })
+          editor.updateConnectionGeometry(conn.id, {
+            sourceAnchor: { side: d.side, offset: 0.5 },
+            targetAnchor: { side: closest.side, offset: closest.offset }
+          })
+        }
+      }
+    }
+  }
+
+  function handleDragMouseUp(d: DragState, e: MouseEvent | undefined) {
+    switch (d.type) {
+      case 'move':
+        handleMoveUp(d, editor)
+        break
+      case 'guide-drag':
+        handleGuideDragMouseUp(d, e)
+        break
+      case 'prototype-drag':
+        editor.state.prototypeDragLine = null
+        if (e) handlePrototypeDragMouseUp(d, e)
+        editor.requestRender()
+        break
+      case 'text-select':
+        setDrag(null)
+        break
+      case 'resize':
+        editor.commitResize(d.nodeId, d.origSubtree)
+        break
+      case 'pen-drag': {
+        const penState = editor.state.penState as
+          | (typeof editor.state.penState & { pendingClose?: boolean })
+          | null
+        if (penState?.pendingClose) editor.penCommit(true)
+        setDrag(null)
+        break
+      }
+      case 'rotate': {
+        const preview = editor.state.rotationPreview
+        if (preview) {
+          editor.updateNode(d.nodeId, { rotation: preview.angle })
+          editor.commitRotation(d.nodeId, d.origRotation)
+        }
+        editor.setRotationPreview(null)
+        break
+      }
+      case 'draw':
+        handleDrawUp(d, editor)
+        break
+      case 'marquee':
+        editor.setMarquee(null)
+        break
+    }
+  }
+
   function onMouseMove(e: MouseEvent) {
     const { sx, sy, cx, cy } = getCoords(e)
-    if (onCursorMove) {
-      onCursorMove(cx, cy)
-    }
+    if (onCursorMove) onCursorMove(cx, cy)
 
     if (!drag.value) {
       interaction.dispatch('pointermove', e, cx, cy, sx, sy, {
@@ -237,72 +297,7 @@ export function useCanvasInput(
     }
 
     if (!drag.value) return
-    const d = drag.value
-
-    if (d.type === 'pan') {
-      handlePanMove(d, e)
-      return
-    }
-
-    if (d.type === 'guide-drag') {
-      const val = d.axis === 'horizontal' ? Math.round(cy) : Math.round(cx)
-      editor.updateGuideValue(d.guideId, val)
-      return
-    }
-
-    if (d.type === 'prototype-drag') {
-      const rect = canvasRef.value?.getBoundingClientRect()
-      const endX = rect ? e.clientX - rect.left : d.startX
-      const endY = rect ? e.clientY - rect.top : d.startY
-      editor.state.prototypeDragLine = {
-        startX: d.startX,
-        startY: d.startY,
-        endX,
-        endY
-      }
-      editor.requestRepaint()
-      return
-    }
-    if (d.type === 'rotate') {
-      handleRotateMove(d, cx, cy, e.shiftKey)
-      return
-    }
-    if (d.type === 'move') {
-      handleMoveMove(d, cx, cy, editor)
-      return
-    }
-    if (d.type === 'text-select') {
-      handleTextSelectMove(cx, cy)
-      return
-    }
-    if (d.type === 'resize') {
-      applyResize(d, cx, cy, e.shiftKey, editor)
-      return
-    }
-
-    if (d.type === 'pen-drag') {
-      handlePenDragMove(d, cx, cy, spaceHeld.value, e, editor)
-      return
-    }
-
-    if (d.type === 'edit-node' || d.type === 'edit-handle') {
-      handleNodeEditMove(d, cx, cy, editor, e.altKey, e.metaKey || e.ctrlKey, e.shiftKey)
-      return
-    }
-
-    if (d.type === 'bend-handle') {
-      handleBendHandleMove(d, cx, cy, e, editor)
-      return
-    }
-
-    if (d.type === 'draw') {
-      handleDrawMove(d, cx, cy, e.shiftKey, editor)
-      return
-    }
-
-    if (d.type === 'marquee') {
-      handleMarqueeMove(d, cx, cy)
-    }
+    handleDragMouseMove(drag.value, e, cx, cy)
   }
 
   function onMouseUp(e?: MouseEvent) {
@@ -318,114 +313,7 @@ export function useCanvasInput(
 
     if (handleNodeEditMouseUp(drag, editor)) return
 
-    if (d.type === 'move') handleMoveUp(d, editor)
-    else if (d.type === 'guide-drag') {
-      const { sx, sy, cx, cy } = getCoords(e!)
-      if (d.axis === 'horizontal' && sy <= RULER_SIZE) {
-        editor.removeGuide(d.guideId, 'Delete guide')
-      } else if (d.axis === 'vertical' && sx <= RULER_SIZE) {
-        editor.removeGuide(d.guideId, 'Delete guide')
-      } else if (d.isNew) {
-        // new guide, addition already registered
-      } else {
-        const finalVal = d.axis === 'horizontal' ? Math.round(cy) : Math.round(cx)
-        const startVal = d.startValue
-        const guideId = d.guideId
-        if (finalVal !== startVal) {
-          editor.undo.push({
-            label: 'Move guide',
-            forward: () => {
-              editor.updateGuideValue(guideId, finalVal)
-            },
-            inverse: () => {
-              editor.updateGuideValue(guideId, startVal)
-            }
-          })
-        }
-      }
-      setDrag(null)
-      return
-    } else if (d.type === 'prototype-drag') {
-      editor.state.prototypeDragLine = null
-      if (e) {
-        const { cx, cy } = getCoords(e)
-        let targetScreen = editor.graph.hitTest(cx, cy, editor.state.currentPageId)
-        if (!targetScreen) {
-          targetScreen =
-            hitFns.hitTestFrameTitle(cx, cy) ??
-            hitFns.hitTestSectionTitle(cx, cy) ??
-            hitFns.hitTestComponentLabel(cx, cy)
-        }
-        if (!targetScreen) {
-          const hit = editor.graph.hitTestDeep(cx, cy, editor.state.currentPageId)
-          if (hit) {
-            targetScreen = findTargetScreenNode(editor.graph, hit.id)
-          }
-        }
-        if (
-          targetScreen &&
-          (targetScreen.type === 'FRAME' ||
-            targetScreen.type === 'SECTION' ||
-            targetScreen.type === 'COMPONENT') &&
-          targetScreen.id !== d.nodeId
-        ) {
-          editor.addReaction(d.nodeId, {
-            trigger: { type: 'ON_CLICK' },
-            actions: [{ type: 'NAVIGATE', destinationId: targetScreen.id }]
-          })
-
-          // Set source and target anchor sides based on starting handle and dropping side
-          const pageId = editor.state.currentPageId
-          const pageNode = editor.graph.getNode(pageId)
-          if (pageNode?.type === 'CANVAS') {
-            const conn = (pageNode.prototypeConnections ?? []).find(
-              (c) =>
-                c.sourceNodeId === d.nodeId &&
-                c.targetNodeId === targetScreen.id &&
-                c.triggerType === 'ON_CLICK'
-            )
-            if (conn) {
-              const targetBounds = editor.graph.getAbsoluteBounds(targetScreen.id)
-              let targetSide: ConnectionSide = 'LEFT'
-              let targetOffset = 0.5
-              if (targetBounds) {
-                const closest = closestSideOfRect(targetBounds, { x: cx, y: cy })
-                targetSide = closest.side
-                targetOffset = closest.offset
-              }
-              editor.updateConnectionGeometry(conn.id, {
-                sourceAnchor: { side: d.side, offset: 0.5 },
-                targetAnchor: { side: targetSide, offset: targetOffset }
-              })
-            }
-          }
-        }
-      }
-      editor.requestRender()
-    } else if (d.type === 'text-select') {
-      drag.value = null
-      return
-    } else if (d.type === 'resize') editor.commitResize(d.nodeId, d.origSubtree)
-    else if (d.type === 'pen-drag') {
-      const penState = editor.state.penState as
-        | (typeof editor.state.penState & {
-            pendingClose?: boolean
-          })
-        | null
-      if (penState?.pendingClose) {
-        editor.penCommit(true)
-      }
-      drag.value = null
-      return
-    } else if (d.type === 'rotate') {
-      const preview = editor.state.rotationPreview
-      if (preview) {
-        editor.updateNode(d.nodeId, { rotation: preview.angle })
-        editor.commitRotation(d.nodeId, d.origRotation)
-      }
-      editor.setRotationPreview(null)
-    } else if (d.type === 'draw') handleDrawUp(d, editor)
-    else if (d.type === 'marquee') editor.setMarquee(null)
+    handleDragMouseUp(d, e)
 
     drag.value = null
     cursorOverride.value = null
@@ -510,7 +398,6 @@ function closestSideOfRect(rect: Rect, p: Vector): { side: ConnectionSide; offse
   const rightDist = Math.abs(p.x - (rect.x + rect.width))
   const topDist = Math.abs(p.y - rect.y)
   const bottomDist = Math.abs(p.y - (rect.y + rect.height))
-
   const minDist = Math.min(leftDist, rightDist, topDist, bottomDist)
 
   if (minDist === leftDist) {
@@ -532,7 +419,10 @@ function closestSideOfRect(rect: Rect, p: Vector): { side: ConnectionSide; offse
   }
 }
 
-function findTargetScreenNode(graph: SceneGraph, nodeId: string): SceneNode | null {
+function findTargetScreenNode(
+  graph: { getNode: (id: string) => SceneNode | undefined },
+  nodeId: string
+): SceneNode | null {
   let current = graph.getNode(nodeId)
   while (current) {
     if (current.type === 'FRAME' || current.type === 'SECTION' || current.type === 'COMPONENT') {
@@ -541,4 +431,132 @@ function findTargetScreenNode(graph: SceneGraph, nodeId: string): SceneNode | nu
     current = current.parentId ? graph.getNode(current.parentId) : undefined
   }
   return null
+}
+
+function tryHandleGuideMouseDown(
+  sx: number,
+  sy: number,
+  cx: number,
+  cy: number,
+  editor: Editor,
+  setDrag: (val: DragState | null) => void
+): boolean {
+  if (!editor.state.guidesVisible) return false
+
+  const zoom = editor.state.zoom
+  const panX = editor.state.panX
+  const panY = editor.state.panY
+
+  if (!editor.state.guidesLocked) {
+    if (sy <= RULER_SIZE && sx > RULER_SIZE) {
+      const val = Math.round(cy)
+      const guideId = editor.addGuide('horizontal', val, 'Drag horizontal guide')
+      editor.setSelectedGuideId(guideId)
+      setDrag({
+        type: 'guide-drag',
+        guideId,
+        axis: 'horizontal',
+        startValue: val,
+        isNew: true
+      })
+      return true
+    }
+    if (sx <= RULER_SIZE && sy > RULER_SIZE) {
+      const val = Math.round(cx)
+      const guideId = editor.addGuide('vertical', val, 'Drag vertical guide')
+      editor.setSelectedGuideId(guideId)
+      setDrag({
+        type: 'guide-drag',
+        guideId,
+        axis: 'vertical',
+        startValue: val,
+        isNew: true
+      })
+      return true
+    }
+  }
+
+  let hitGuideId: string | null = null
+  let hitGuideAxis: 'horizontal' | 'vertical' | null = null
+  let hitGuideVal = 0
+
+  for (const g of editor.state.guides) {
+    if (g.type === 'horizontal') {
+      const guideSy = g.value * zoom + panY
+      if (Math.abs(sy - guideSy) <= 6 && sx > RULER_SIZE) {
+        hitGuideId = g.id
+        hitGuideAxis = 'horizontal'
+        hitGuideVal = g.value
+        break
+      }
+    } else {
+      const guideSx = g.value * zoom + panX
+      if (Math.abs(sx - guideSx) <= 6 && sy > RULER_SIZE) {
+        hitGuideId = g.id
+        hitGuideAxis = 'vertical'
+        hitGuideVal = g.value
+        break
+      }
+    }
+  }
+
+  if (hitGuideId && hitGuideAxis) {
+    editor.setSelectedGuideId(hitGuideId)
+    if (!editor.state.guidesLocked) {
+      setDrag({
+        type: 'guide-drag',
+        guideId: hitGuideId,
+        axis: hitGuideAxis,
+        startValue: hitGuideVal,
+        isNew: false
+      })
+    }
+    return true
+  }
+
+  return false
+}
+
+function tryHandlePrototypeMouseDown(
+  sx: number,
+  sy: number,
+  editor: Editor,
+  setDrag: (val: DragState | null) => void
+): boolean {
+  if (editor.state.mode !== 'PROTOTYPE') return false
+
+  const zoom = editor.state.zoom
+  const panX = editor.state.panX
+  const panY = editor.state.panY
+
+  for (const id of editor.state.selectedIds) {
+    const bounds = editor.graph.getAbsoluteBounds(id)
+    const rx = (bounds.x + bounds.width) * zoom + panX + 8
+    const ry = (bounds.y + bounds.height / 2) * zoom + panY
+    if (Math.hypot(sx - rx, sy - ry) <= 12) {
+      setDrag({
+        type: 'prototype-drag',
+        startX: rx,
+        startY: ry,
+        nodeId: id,
+        side: 'RIGHT'
+      })
+      return true
+    }
+
+    const lx = bounds.x * zoom + panX - 8
+    const ly = (bounds.y + bounds.height / 2) * zoom + panY
+    if (Math.hypot(sx - lx, sy - ly) <= 12) {
+      setDrag({
+        type: 'prototype-drag',
+        startX: lx,
+        startY: ly,
+        nodeId: id,
+        side: 'LEFT'
+      })
+      return true
+    }
+  }
+
+  return false
 }

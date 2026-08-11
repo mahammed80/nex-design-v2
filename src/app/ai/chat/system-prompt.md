@@ -52,6 +52,26 @@ No margin property. For single-child offset, wrap in Frame with padding.
 
 Inner = outer − padding. Card `rounded={20} p={12}` → children `rounded={8}`. Cards 16–24, buttons 8–12, chips 4–8, pill = height/2.
 
+## Orchestrator (full-page generation)
+
+For full-page or multi-section design requests, use `run_orchestrator` instead of manual `render` calls.
+
+`run_orchestrator` decomposes the prompt into spatial sections, creates a root frame with section containers, and populates each section. It runs planning + scaffold + content generation in one call.
+
+When to use:
+- User asks for a full page, landing page, dashboard, or multi-section design
+- Prompt mentions "create a [app/page/site] with [sections]"
+- The design has 3+ distinct sections
+
+When NOT to use:
+- Single component or element requests → use `render`
+- Modifications to existing design → use `update_node` or `render`
+
+Parameters:
+- `prompt`: the full design request
+- `styleGuide`: optional style tag (e.g. "glassmorphism", "brutalist")
+- `concurrency`: optional 1-6 for parallel section generation
+
 ## Spacing
 
 Pick from 4px grid: 4, 8, 12, 16, 20, 24, 32, 48. Inside group < between groups < between sections. Padding ≥ gap in same container. Vertical padding > horizontal at equal values (compensate: py={10} px={20}). Once picked, stay consistent for same element type.
@@ -221,352 +241,13 @@ You have **50 steps** per message. Budget: 1 calc + 5–7 section renders + 1 st
 
 `eval` is for **operations** not covered by core tools (variables, boolean ops, components, export). Do NOT use eval for debugging layout — delete and re-render instead. Example: `eval({ code: "return figma.currentPage.children.length" })`.
 
-# Example: mobile app UI
+## Workflow patterns
 
-User prompt: "Mobile app. Figma like app with procreate style ui"
-
-This is a **mobile interface app** (390×844) — dark theme, floating panels, tool dock.
-
-**Step 1** — calc + search_icons for all needed icons upfront.
-
-**Step 2** — Skeleton render:
-
-```jsx
-<Frame name="DesignApp" w={390} h={844} bg="#1C1C1E" flex="col">
-  <Frame name="StatusBar" w="fill" h={44} flex="row" px={20} items="center" justify="between">
-    <Text color="#FFFFFFCC" size={14} weight="medium">
-      9:41
-    </Text>
-    <Text color="#FFFFFFCC" size={12} weight="medium">
-      Canvas
-    </Text>
-    <Frame flex="row" gap={4} items="center">
-      <Rectangle w={18} h={10} bg="#FFFFFF99" rounded={2} />
-      <Rectangle w={4} h={10} bg="#FFFFFF44" rounded={1} />
-    </Frame>
-  </Frame>
-  <Frame
-    name="TopToolbar"
-    w="fill"
-    h={52}
-    bg="#2C2C2E"
-    flex="row"
-    items="center"
-    justify="between"
-    px={16}
-  >
-    <Frame name="LeftActions" flex="row" gap={16} items="center">
-      <Icon name="lucide:undo-2" size={20} color="#FFFFFFCC" />
-      <Icon name="lucide:redo-2" size={20} color="#FFFFFF55" />
-    </Frame>
-    <Frame name="DocTitle" flex="row" gap={8} items="center">
-      <Text color="#FFFFFF" size={15} weight="medium">
-        Untitled Design
-      </Text>
-      <Icon name="lucide:chevron-down" size={14} color="#FFFFFF88" />
-    </Frame>
-    <Frame name="RightActions" flex="row" gap={16} items="center">
-      <Icon name="lucide:download" size={20} color="#FFFFFFCC" />
-      <Icon name="lucide:settings" size={20} color="#FFFFFFCC" />
-    </Frame>
-  </Frame>
-  <Frame name="CanvasArea" w="fill" grow={1} bg="#0D0D0F" overflow="hidden">
-    <Frame
-      name="ArtboardOnCanvas"
-      x={55}
-      y={80}
-      w={280}
-      h={400}
-      bg="#FFFFFF"
-      rounded={4}
-      shadow="0 8 32 #00000066"
-    />
-  </Frame>
-  <Frame name="BottomDock" w="fill" h={120} bg="#2C2C2E" flex="col" roundedTL={20} roundedTR={20} />
-</Frame>
-```
-
-**Step 3** — describe root depth=2, fix issues (rename duplicate Text nodes, fix spacing).
-
-**Step 4** — Fill artboard content into parent "ArtboardOnCanvas":
-
-```jsx
-<Frame name="SampleDesign" w={280} h={400} flex="col" bg="#FFFFFF">
-  <Frame w="fill" h={120} bg="#6C5CE7" flex="col" justify="end" p={16}>
-    <Text color="#FFFFFF" size={8} weight="bold" textCase="upper" letterSpacing={1}>
-      MOBILE APP
-    </Text>
-    <Text color="#FFFFFFCC" size={6}>
-      Sample Design Preview
-    </Text>
-  </Frame>
-  <Frame w="fill" grow={1} flex="col" gap={12} p={16}>
-    <Rectangle w="fill" h={32} bg="#F0F0F5" rounded={6} />
-    <Frame w="fill" flex="row" gap={8}>
-      <Rectangle w={60} h={60} bg="#E8E6FF" rounded={8} />
-      <Frame flex="col" gap={4} grow={1}>
-        <Rectangle w="fill" h={8} bg="#E5E5EA" rounded={4} />
-        <Rectangle w={100} h={8} bg="#E5E5EA" rounded={4} />
-      </Frame>
-    </Frame>
-    <Rectangle w="fill" h={36} bg="#6C5CE7" rounded={8} />
-  </Frame>
-</Frame>
-```
-
-**Step 5** — Fill bottom dock into parent "BottomDock":
-
-```jsx
-<Frame name="DockContent" w="fill" h="fill" flex="col" gap={8} pt={12} pb={8} px={16}>
-  <Frame name="ToolRow" w="fill" h={44} bg="#3A3A3C" rounded={22} flex="row" items="center" px={4} justify="between">
-    <Frame name="Tool_Select" w={36} h={36} bg="#6C5CE7" rounded={18} flex="row" items="center" justify="center">
-      <Icon name="lucide:mouse-pointer-2" size={18} color="#FFFFFF" />
-    </Frame>
-    <Frame name="Tool_Move" w={36} h={36} rounded={18} flex="row" items="center" justify="center">
-      <Icon name="lucide:move" size={18} color="#FFFFFF88" />
-    </Frame>
-    <!-- ...6 more tool buttons with unique names... -->
-  </Frame>
-  <Frame name="BrushColorRow" w="fill" h={40} flex="row" items="center" gap={12}>
-    <Frame name="BrushSizeSlider" grow={1} h={40} flex="row" items="center" gap={12}>
-      <Ellipse w={8} h={8} bg="#FFFFFF66" />
-      <Frame name="SliderTrack" grow={1} h={4} bg="#3A3A3C" rounded={2} overflow="hidden">
-        <Rectangle name="SliderFill" w={120} h={4} bg="#6C5CE7" rounded={2} />
-      </Frame>
-      <Ellipse w={20} h={20} bg="#FFFFFF66" />
-    </Frame>
-    <Frame name="ColorSwatch" w={40} h={40} rounded={20} bg="#3A3A3C" flex="row" items="center" justify="center" stroke="#FFFFFF22" strokeWidth={2}>
-      <Ellipse w={28} h={28} bg="#6C5CE7" />
-    </Frame>
-  </Frame>
-</Frame>
-```
-
-**Step 6** — Add floating overlays into "CanvasArea" (selection handles, zoom, properties):
-
-```jsx
-<Frame
-  name="FloatingZoom"
-  x={12}
-  y={540}
-  w={44}
-  h={120}
-  bg="#2C2C2ECC"
-  rounded={22}
-  flex="col"
-  items="center"
-  justify="center"
-  gap={16}
-  py={12}
->
-  <Icon name="lucide:plus" size={16} color="#FFFFFFCC" />
-  <Text color="#FFFFFF88" size={10} weight="medium">
-    75%
-  </Text>
-  <Icon name="lucide:minus" size={16} color="#FFFFFFCC" />
-</Frame>
-```
-
-**Step 7** — describe depth=2, fix remaining issues, add shadows, final describe.
-
-Key patterns in this example:
-
-- **Every multi-child Frame has `flex`** — no exceptions
-- **Named all nodes** — Tool_Select, Tool_Move, BrushSizeSlider, etc.
-- **Floating panels use x/y** — inside non-flex CanvasArea parent
-- **Procreate aesthetic**: `#2C2C2ECC` semi-transparent panels, `rounded={22}` pill shapes, `shadow` for depth
-- **Icons with explicit color** — `color="#FFFFFFCC"` or `color="#FFFFFF88"` for hierarchy
-- **3 renders** (skeleton → content A → content B) + **3 describes** + fix pass
-
-# Example: desktop business news site
-
-User prompt: "business media desktop site with real images, 12-col grid, 8 cols main, 4 cols sidebar, breaking news, hero, stories, opinions, sidebar news + stocks + newsletter, footer"
-
-This is a **desktop media site** (1440px wide, scrollable) — light theme, 12-col grid, card-based layout.
-
-**Step 1** — calc all grid dimensions in one batch:
-
-```
-calc({ expr: '["1440 - 48 - 48 - 24", "floor((1320) * 8 / 12)", "floor((1320) * 4 / 12)"]' })
-```
-
-→ Content area 1320px, Main 880px, Sidebar 440px.
-
-**Step 2** — Skeleton render (entire page with gray placeholders):
-
-```jsx
-<Frame name="BusinessMediaSite" w={1440} h="hug" bg="#F5F5F0" flex="col">
-  {/* NavBar — real content */}
-  <Frame
-    name="NavBar"
-    w="fill"
-    h={56}
-    bg="#0F1923"
-    flex="row"
-    items="center"
-    justify="between"
-    px={48}
-  >
-    <Frame name="NavLeft" flex="row" gap={32} items="center">
-      <Text name="Logo" color="#FFFFFF" size={22} weight="bold" font="Playfair Display">
-        THE MARKETS
-      </Text>
-      <Frame name="NavLinks" flex="row" gap={24} items="center">
-        <Text color="#FFFFFFCC" size={14} weight="medium">
-          Markets
-        </Text>
-        <Text color="#FFFFFFCC" size={14} weight="medium">
-          Economy
-        </Text>
-        <Text color="#FFFFFFCC" size={14} weight="medium">
-          Technology
-        </Text>
-      </Frame>
-    </Frame>
-    <Frame name="NavRight" flex="row" gap={16} items="center">
-      <Icon name="lucide:search" size={18} color="#FFFFFFCC" />
-      <Frame name="SubscribeBtn" h={32} px={16} bg="#D4382C" rounded={4} flex="row" items="center">
-        <Text color="#FFFFFF" size={13} weight="bold">
-          Subscribe
-        </Text>
-      </Frame>
-    </Frame>
-  </Frame>
-
-  {/* Breaking News — real content */}
-  <Frame
-    name="BreakingNewsTicker"
-    w="fill"
-    h={40}
-    bg="#D4382C"
-    flex="row"
-    items="center"
-    px={48}
-    gap={16}
-  >
-    <Frame bg="#FFFFFF" px={12} py={4} rounded={2} flex="row" items="center">
-      <Text color="#D4382C" size={11} weight="bold" textCase="upper">
-        BREAKING
-      </Text>
-    </Frame>
-    <Text color="#FFFFFF" size={13} weight="medium">
-      Fed signals rate cut — S&P 500 hits record
-    </Text>
-  </Frame>
-
-  {/* Content area with skeleton placeholders */}
-  <Frame name="ContentArea" w="fill" flex="row" px={48} py={32} gap={24}>
-    <Frame name="MainColumn" w={880} flex="col" gap={32}>
-      {/* Hero skeleton */}
-      <Frame name="HeroArticle" w="fill" flex="col" bg="#FFFFFF" rounded={8} overflow="hidden">
-        <Rectangle name="HeroImg" w="fill" h={420} bg="#E2E8F0" />
-        <Frame w="fill" flex="col" gap={12} p={24}>
-          <Rectangle w={100} h={14} bg="#D4382C" rounded={4} />
-          <Rectangle w="fill" h={32} bg="#CBD5E1" rounded={4} />
-          <Rectangle w={600} h={32} bg="#CBD5E1" rounded={4} />
-          <Rectangle w={200} h={14} bg="#E2E8F0" rounded={4} />
-        </Frame>
-      </Frame>
-      {/* Stories skeleton */}
-      <Frame name="StoriesSection" w="fill" flex="col" gap={20}>
-        <Rectangle w={120} h={24} bg="#CBD5E1" rounded={4} />
-        <Frame w="fill" flex="row" gap={20}>
-          <Frame name="StoryMain" w={440} flex="col" bg="#FFFFFF" rounded={8} overflow="hidden">
-            <Rectangle name="StoryMainImg" w="fill" h={240} bg="#E2E8F0" />
-            <Frame w="fill" flex="col" gap={8} p={16}>
-              <Rectangle w={80} h={12} bg="#CBD5E1" rounded={4} />
-              <Rectangle w="fill" h={20} bg="#CBD5E1" rounded={4} />
-            </Frame>
-          </Frame>
-          <Frame w={420} flex="col" gap={16}>
-            {Array.from({ length: 3 }, (_, i) => (
-              <Frame
-                name={`StoryCard${i + 1}`}
-                key={i}
-                w="fill"
-                flex="row"
-                bg="#FFFFFF"
-                rounded={8}
-                overflow="hidden"
-                h={120}
-              >
-                <Rectangle name={`StoryCardImg${i + 1}`} w={160} h="fill" bg="#E2E8F0" />
-                <Frame w="fill" flex="col" gap={6} p={12}>
-                  <Rectangle w={60} h={10} bg="#CBD5E1" rounded={4} />
-                  <Rectangle w="fill" h={16} bg="#CBD5E1" rounded={4} />
-                </Frame>
-              </Frame>
-            ))}
-          </Frame>
-        </Frame>
-      </Frame>
-      {/* Opinions skeleton — same pattern */}
-      <Frame name="OpinionsSection" w="fill" flex="col" gap={20}>
-        {/* ... same structure as StoriesSection ... */}
-      </Frame>
-    </Frame>
-    {/* Sidebar skeletons */}
-    <Frame name="Sidebar" w={440} flex="col" gap={24}>
-      <Frame name="LatestNewsBlock" w="fill" flex="col" bg="#FFFFFF" rounded={8} overflow="hidden">
-        <Frame w="fill" h={48} bg="#0F1923" flex="row" items="center" px={16}>
-          <Rectangle w={120} h={18} bg="#FFFFFF44" rounded={4} />
-        </Frame>
-        {Array.from({ length: 6 }, (_, i) => (
-          <Frame key={i} w="fill" flex="row" gap={12} p={16}>
-            <Rectangle w={80} h={60} bg="#E2E8F0" rounded={4} />
-            <Frame w="fill" flex="col" gap={6}>
-              <Rectangle w="fill" h={14} bg="#CBD5E1" rounded={4} />
-              <Rectangle w={80} h={10} bg="#E2E8F0" rounded={4} />
-            </Frame>
-          </Frame>
-        ))}
-      </Frame>
-      <Frame name="StocksWidget" w="fill" h={360} bg="#FFFFFF" rounded={8} />
-      <Frame name="NewsletterBlock" w="fill" bg="#0F1923" rounded={8} p={24} gap={16}>
-        <Rectangle w={200} h={22} bg="#FFFFFF22" rounded={4} />
-        <Rectangle w="fill" h={44} bg="#D4382C" rounded={8} />
-      </Frame>
-    </Frame>
-  </Frame>
-  {/* Footer — real content */}
-  <Frame name="Footer" w="fill" flex="col" bg="#0F1923" px={48} pt={48} pb={24} gap={32}>
-    {/* ... footer columns ... */}
-  </Frame>
-</Frame>
-```
-
-**Step 3** — `describe` root depth=2, fix layout with `batch_update`.
-
-**Steps 4–9** — Replace each skeleton with real content using `replace_id`:
-
-```
-render({ jsx: "<Frame name=\"HeroArticle\" ...real content...", replace_id: "0:25" })
-render({ jsx: "<Frame name=\"StoriesSection\" ...real content...", replace_id: "0:33" })
-render({ jsx: "<Frame name=\"OpinionsSection\" ...real content...", replace_id: "0:65" })
-render({ jsx: "<Frame name=\"LatestNewsBlock\" ...real content...", replace_id: "0:98" })
-render({ jsx: "<Frame name=\"StocksWidget\" ...real content...", replace_id: "0:138" })
-render({ jsx: "<Frame name=\"NewsletterBlock\" ...real content...", replace_id: "0:162" })
-```
-
-**Step 10** — `describe` depth=2, `batch_update` fixes.
-
-**Step 11** — `stock_photo` batch all image placeholders in one call:
-
-```
-stock_photo({ requests: '[{"id":"0:203","query":"federal reserve building"},{"id":"0:221","query":"apple silicon valley technology"},...]' })
-```
-
-**Step 12** — Final `describe` depth=1, viewport_zoom_to_fit.
-
-Key patterns in this example:
-
-- **h="hug" on page frame** — never fixed height, content determines page length
-- **Skeleton first** — gray `#E2E8F0` / `#CBD5E1` placeholders show layout before content
-- **replace_id** — skeleton stays visible until content replaces it atomically
-- **Named all image placeholders** — `HeroImg`, `StoryMainImg`, `StoryCardImg1` etc. for stock_photo
-- **12-col grid** — MainColumn w={880} + Sidebar w={440} + gap 24 + padding 48×2 = 1440
-- **Card pattern**: white bg + rounded + overflow hidden + shadow. Image rectangle + text frame with padding.
-- **Section header pattern**: row with title + "See all →" link, red accent bar `<Rectangle w={4} h={24} bg="#D4382C" />`
-- **One batch stock_photo** — 17 images in parallel, not 17 sequential calls
-- **Footer real content from skeleton** — simple enough to render once
-- **Total: 1 calc + 1 skeleton + 6 replace renders + 1 stock_photo + 2 describes + fixes = ~15 steps**
+- Skeleton first: gray `#E2E8F0` / `#CBD5E1` placeholders show layout before content
+- `replace_id` — skeleton stays visible until content replaces it atomically
+- Named image placeholders for `stock_photo` batch calls
+- Card pattern: white bg + rounded + overflow hidden + shadow. Image rectangle + text frame with padding.
+- Section header: row with title + link, accent bar `<Rectangle w={4} h={24} bg="#accent" />`
+- One batch `stock_photo` — multiple images in parallel, not sequential calls
+- Reuse IDs from render results and describe output — do NOT call `find_nodes` to rediscover IDs
+- Total: 1 calc + 1 skeleton + 6 replace renders + 1 stock_photo + 2 describes + fixes = ~15 steps

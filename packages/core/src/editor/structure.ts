@@ -34,7 +34,7 @@ export function createStructureActions(ctx: EditorContext) {
   }
 
   function wrapSelectionInContainer(
-    containerType: 'GROUP' | 'FRAME' | 'COMPONENT' | 'COMPONENT_SET',
+    containerType: 'GROUP' | 'FRAME' | 'COMPONENT' | 'COMPONENT_SET' | 'BOOLEAN_OPERATION',
     selectedNodes: SceneNode[],
     extraProps?: Partial<SceneNode>
   ) {
@@ -47,6 +47,19 @@ export function createStructureActions(ctx: EditorContext) {
 
   function groupSelected(selectedNodes: SceneNode[]) {
     return wrapSelectionInContainer('GROUP', selectedNodes)
+  }
+
+  function createBooleanOperation(
+    selectedNodes: SceneNode[],
+    operation: NonNullable<SceneNode['booleanOperation']>
+  ) {
+    if (selectedNodes.length < 2) return null
+    const id = wrapSelectionInContainer('BOOLEAN_OPERATION', selectedNodes, {
+      name: `Boolean ${operation.toLowerCase()}`,
+      booleanOperation: operation
+    })
+    if (id) ctx.requestRender()
+    return id
   }
 
   function ungroupSelected(selectedNode: SceneNode | undefined) {
@@ -77,6 +90,7 @@ export function createStructureActions(ctx: EditorContext) {
     wrapSelectionInContainer,
     wrapInAutoLayout,
     groupSelected,
+    createBooleanOperation,
     ungroupSelected,
     ...stateActions,
     moveToPage,

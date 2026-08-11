@@ -5,6 +5,7 @@ import type {
   ComponentPropertyType,
   SceneNode
 } from '#core/scene-graph'
+import { copyFills, copyStrokes, copyEffects } from '#core/scene-graph/copy'
 
 export function createVariantActions(ctx: EditorContext) {
   function getComponentSetPropertyDefs(componentSetId: string): ComponentPropertyDefinition[] {
@@ -229,6 +230,57 @@ export function createVariantActions(ctx: EditorContext) {
     ctx.requestRender()
   }
 
+  function generateVariantProps(
+    defs: ComponentPropertyDefinition[],
+    count: number
+  ): Record<string, string> {
+    const values: Record<string, string> = {}
+    for (const def of defs) {
+      if (def.type === 'VARIANT') {
+        const nextVal = `Variant ${count}`
+        values[def.name] = nextVal
+        if (def.variantOptions && !def.variantOptions.includes(nextVal)) {
+          def.variantOptions.push(nextVal)
+        }
+      } else {
+        values[def.name] = def.defaultValue
+      }
+    }
+    return values
+  }
+
+  function addVariantToComponentSet(componentSetId: string): string | undefined {
+    const componentSet = ctx.graph.getNode(componentSetId)
+    if (componentSet?.type !== 'COMPONENT_SET') return undefined
+
+    const refChildId = componentSet.childIds[componentSet.childIds.length - 1]
+    const refChild = refChildId ? ctx.graph.getNode(refChildId) : undefined
+    const childCount = componentSet.childIds.length + 1
+
+    const propValues = generateVariantProps(componentSet.componentPropertyDefinitions, childCount)
+    const name = buildVariantName(propValues) || `Variant ${childCount}`
+
+    const newComponent = ctx.graph.createNode('COMPONENT', componentSetId, {
+      name,
+      x: refChild ? refChild.x + refChild.width + 20 : 20,
+      y: refChild?.y ?? 20,
+      width: refChild?.width ?? 100,
+      height: refChild?.height ?? 40,
+      fills: refChild?.fills
+        ? copyFills(refChild.fills)
+        : [
+            { type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.98, a: 1 }, opacity: 1, visible: true }
+          ],
+      strokes: refChild?.strokes ? copyStrokes(refChild.strokes) : [],
+      effects: refChild?.effects ? copyEffects(refChild.effects) : [],
+      componentPropertyValues: propValues
+    })
+
+    ctx.setSelectedIds(new Set([newComponent.id]))
+    ctx.requestRender()
+    return newComponent.id
+  }
+
   return {
     getComponentSetPropertyDefs,
     addPropertyDefinition,
@@ -238,6 +290,7 @@ export function createVariantActions(ctx: EditorContext) {
     buildVariantName,
     collectVariantOptions,
     findVariantByValues,
-    switchInstanceVariant
+    switchInstanceVariant,
+    addVariantToComponentSet
   }
 }

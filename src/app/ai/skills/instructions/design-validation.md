@@ -1,0 +1,1 @@
+Validate the affected root after building. Inspect layout, overflow, clipping, contrast, typography hierarchy, repeated spacing, touch-target size, unnecessary wrappers, and visual sameness. Report evidence from the document. Correct errors and high-impact warnings; do not churn intentional stylistic choices merely to maximize a score.

@@ -4,7 +4,16 @@
 
 ### Added
 
+- Add an agentic design workflow with progressive model-budgeted skills, live document context, DESIGN.md import/export, deterministic design audits, local generation memory, scoped planner/builder/critic phases, authorized URL reference studies, progress visibility, and onboarding.
 - Add first-class prototype connection support with interactive connection handles, endpoint dragging to reconnect or delete, custom control-point editing for Bezier curves, edge-snapping on candidate target nodes, and a graph-driven preview presentation player.
+- Add Component Set & Component Variant property inspector panel with inline property definition management, variant property value selection, and 1-click variant creation.
+- Add Instance management controls to property inspector — Go to Main Component, Detach Instance, override count badge, and 1-click Reset Overrides.
+- Add Path Boolean Operations dropdown to top toolbar and inspector panel with Union, Subtract, Intersect, Exclude operations and single-path flattening.
+- Add Corner Smoothing (iOS Squircle) scrub control in appearance inspector driving `cornerSmoothing` parameters.
+- Add Vector Network property panel with vertex/segment statistics and handle mirroring controls (`Straight`, `Symmetric`, `Smooth`).
+- Add Advanced Prototyping actions — `OPEN_OVERLAY` and `SWAP_OVERLAY` with modal background dimming backdrop, `CHANGE_TO` component state transitions, `SET_VARIABLE`, and `SCROLL_TO`.
+- Add Batch Export modal dialog (`BatchExportDialog.vue`) supporting multi-resolution scaling, multi-format export, and multi-asset `.zip` archive packaging via `fflate`.
+- Add Page Duplication action (`duplicatePage`) in core and page list panel context controls.
 - Add variable mode management — create, rename, duplicate, delete modes and set the default mode per collection. Modes appear as interactive table column headers (double-click to rename, right-click for context menu).
 - Add collection deletion from the variables dialog.
 - Bind variables to line height, letter spacing, font weight, paragraph spacing, and paragraph indent in the typography inspector.
@@ -14,6 +23,7 @@
 
 ### Changed
 
+- Fix the built-in design agent to Poolside Laguna S 2.1, remove user-facing provider/model/endpoint selection, and route inference through a server-only, rate-limited credential proxy.
 - Refactor the editor architecture across core, app, Vue SDK, CLI, MCP, docs, and desktop into smaller domain modules with structural lint rules to keep package boundaries explicit.
 - Add targeted core subpath exports and package-local import aliases for cleaner app, Vue SDK, CLI, and MCP imports.
 - Split the canvas into separate scene and overlay render layers so rulers, labels, selections, and input overlays are isolated from scene rendering.
@@ -28,6 +38,8 @@
 
 ### Fixes
 
+- Prevent long Poolside response streams from crashing the Vite development server when the proxy timeout is reached.
+- Request local-font permission only from the explicit user action, prefer bundled fonts, and back off Google Fonts metadata requests after rate limiting.
 - Fix inner shadow rendering for text nodes to be more in line with Figma's behavior
 - Fix bug causing exponential (decompressed) .fig growth triggered by repeated save / load cycles
 - Fix `@nex-design/vue` failing to import from npm — `getAbsolutePositionFull` was imported from `@nex-design/core/canvas/coordinate`, an unexported subpath. Re-exported the function from `@nex-design/core/canvas` and updated the vue import.
@@ -326,13 +338,11 @@
 - Fix text typography lost on Figma clipboard import — preserve fontFamily, fontWeight, fontSize, lineHeight
 - Fix `copyFill` missing `gradientTransform` and `imageTransform` — gradient fills now round-trip correctly
 
-
 ### Performance
 
 - Event-driven rendering and component sync — `SceneGraph` emits typed events on mutations; `requestRender()` calls reduced from 94 to 22, component instance sync uses microtask batching with deduplication
 - Replace `structuredClone` with typed copy helpers for fills, strokes, effects, and style runs (~24× faster in hot paths)
 - Filter .fig unzip to only decompress canvas and image entries, skipping metadata cruft
-
 
 ### Improvements
 
@@ -461,7 +471,6 @@
 
 - Apple code signing and notarization for macOS builds
 - Git LFS storage moved from GitHub to Cloudflare R2
-
 
 ### Fixes
 

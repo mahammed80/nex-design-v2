@@ -44,6 +44,10 @@ export function useCollab(storeOrGetter: EditorStore | (() => EditorStore)) {
     getYimages: () => runtime.yimages,
     setSuppressYjsEvents: (value) => {
       runtime.suppressYjsEvents = value
+    },
+    ynodeIndex: () => runtime.ynodeIndex ?? undefined,
+    setYnodeIndex: (index) => {
+      runtime.ynodeIndex = index
     }
   })
   const { connect, disconnect } = createCollabConnectionActions({

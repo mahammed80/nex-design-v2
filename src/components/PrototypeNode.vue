@@ -1,29 +1,83 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { colorToCSS } from '@nex-design/core/color'
 import type { SceneNode } from '@nex-design/core/scene-graph'
 
-const props = withDefaults(
-  defineProps<{
-    node: SceneNode
-    nodesMap: Map<string, SceneNode>
-    isRoot?: boolean
-  }>(),
-  {
-    isRoot: false
-  }
-)
+const {
+  node,
+  nodesMap,
+  isRoot = false
+} = defineProps<{
+  node: SceneNode
+  nodesMap: Map<string, SceneNode>
+  isRoot?: boolean
+}>()
 
 const emit = defineEmits<{
   (e: 'interaction', payload: { nodeId: string; triggerType: string }): void
 }>()
 
+function getBorderRadiusStyle(n: SceneNode): string | undefined {
+  if (n.type === 'ELLIPSE') return '50%'
+  if (n.cornerRadius) return `${n.cornerRadius}px`
+  if (n.independentCorners) {
+    return `${n.topLeftRadius}px ${n.topRightRadius}px ${n.bottomRightRadius}px ${n.bottomLeftRadius}px`
+  }
+  return undefined
+}
+
+function applyFillAndStroke(n: SceneNode, s: Record<string, string>) {
+  const solidFill = n.fills?.find((f) => f.type === 'SOLID' && f.visible)
+  if (solidFill) {
+    s.backgroundColor = colorToCSS({
+      ...solidFill.color,
+      a: solidFill.opacity ?? solidFill.color.a
+    })
+  } else if (n.type === 'FRAME' || n.type === 'COMPONENT' || n.type === 'INSTANCE') {
+    s.backgroundColor = 'transparent'
+  }
+
+  const stroke = n.strokes?.[0]
+  if (stroke && stroke.visible) {
+    s.border = `${stroke.weight}px solid ${colorToCSS({ ...stroke.color, a: stroke.opacity ?? stroke.color.a })}`
+  }
+}
+
+function applyTextStyle(n: SceneNode, s: Record<string, string>) {
+  if (n.type !== 'TEXT') return
+  s.fontSize = `${n.fontSize}px`
+  s.fontFamily = n.fontFamily
+  s.fontWeight = String(n.fontWeight)
+  s.textAlign = n.textAlignHorizontal.toLowerCase()
+  s.display = 'flex'
+  s.alignItems =
+    n.textAlignVertical === 'CENTER'
+      ? 'center'
+      : n.textAlignVertical === 'BOTTOM'
+        ? 'flex-end'
+        : 'flex-start'
+  s.justifyContent =
+    n.textAlignHorizontal === 'CENTER'
+      ? 'center'
+      : n.textAlignHorizontal === 'RIGHT'
+        ? 'flex-end'
+        : 'flex-start'
+  s.whiteSpace = 'pre-wrap'
+  s.wordBreak = 'break-word'
+
+  const textFill = n.fills?.find((f) => f.type === 'SOLID' && f.visible)
+  s.color = textFill
+    ? colorToCSS({ ...textFill.color, a: textFill.opacity ?? textFill.color.a })
+    : 'black'
+}
+
 // Style mapping
 const style = computed(() => {
-  const n = props.node
+  const n = node
   const s: Record<string, string> = {
     position: 'absolute',
-    left: props.isRoot ? '0px' : `${n.x}px`,
-    top: props.isRoot ? '0px' : `${n.y}px`,
+    left: isRoot ? '0px' : `${n.x}px`,
+    top: isRoot ? '0px' : `${n.y}px`,
     width: `${n.width}px`,
     height: `${n.height}px`,
     opacity: String(n.opacity ?? 1),
@@ -31,95 +85,40 @@ const style = computed(() => {
     transformOrigin: 'center'
   }
 
-  if (n.type === 'ELLIPSE') {
-    s.borderRadius = '50%'
-  } else if (n.cornerRadius) {
-    s.borderRadius = `${n.cornerRadius}px`
-  } else if (n.independentCorners) {
-    s.borderRadius = `${n.topLeftRadius}px ${n.topRightRadius}px ${n.bottomRightRadius}px ${n.bottomLeftRadius}px`
-  }
+  const borderRadius = getBorderRadiusStyle(n)
+  if (borderRadius) s.borderRadius = borderRadius
 
-  // Background color (fills)
-  const solidFill = n.fills?.find((f) => f.type === 'SOLID' && f.visible)
-  if (solidFill) {
-    const c = solidFill.color
-    s.backgroundColor = `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, ${solidFill.opacity ?? 1})`
-  } else if (n.type === 'FRAME' || n.type === 'COMPONENT' || n.type === 'INSTANCE') {
-    s.backgroundColor = 'transparent'
-  }
+  applyFillAndStroke(n, s)
+  applyTextStyle(n, s)
 
-  // Borders (strokes)
-  const stroke = n.strokes?.[0]
-  if (stroke && stroke.visible) {
-    const c = stroke.color
-    s.border = `${stroke.weight}px solid rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, ${stroke.opacity ?? 1})`
-  }
-
-  // Typography
-  if (n.type === 'TEXT') {
-    s.fontSize = `${n.fontSize}px`
-    s.fontFamily = n.fontFamily
-    s.fontWeight = String(n.fontWeight)
-    s.textAlign = n.textAlignHorizontal.toLowerCase()
-    s.display = 'flex'
-    s.alignItems =
-      n.textAlignVertical === 'CENTER'
-        ? 'center'
-        : n.textAlignVertical === 'BOTTOM'
-          ? 'flex-end'
-          : 'flex-start'
-    s.justifyContent =
-      n.textAlignHorizontal === 'CENTER'
-        ? 'center'
-        : n.textAlignHorizontal === 'RIGHT'
-          ? 'flex-end'
-          : 'flex-start'
-    s.whiteSpace = 'pre-wrap'
-    s.wordBreak = 'break-word'
-
-    // Add text color
-    const textFill = n.fills?.find((f) => f.type === 'SOLID' && f.visible)
-    if (textFill) {
-      const tc = textFill.color
-      s.color = `rgba(${tc.r * 255}, ${tc.g * 255}, ${tc.b * 255}, ${textFill.opacity ?? 1})`
-    } else {
-      s.color = 'black'
-    }
-  }
-
-  // Box Shadow (effects)
   const shadow = n.effects?.find((e) => e.type === 'DROP_SHADOW' && e.visible)
   if (shadow) {
-    const c = shadow.color
-    s.boxShadow = `${shadow.offset.x}px ${shadow.offset.y}px ${shadow.radius}px ${shadow.spread}px rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, ${c.a})`
+    s.boxShadow = `${shadow.offset.x}px ${shadow.offset.y}px ${shadow.radius}px ${shadow.spread}px ${colorToCSS(shadow.color)}`
   }
 
-  // Pointer events - only interact if there are reactions configured
-  if (n.reactions && n.reactions.length > 0) {
-    s.cursor = 'pointer'
-    s.pointerEvents = 'auto'
-  } else {
-    s.pointerEvents = 'none'
-  }
+  const hasReactions = Boolean(n.reactions && n.reactions.length > 0)
+  s.cursor = hasReactions ? 'pointer' : 'default'
+  s.pointerEvents = hasReactions ? 'auto' : 'none'
 
   return s
 })
 
 const children = computed(() => {
-  return props.node.childIds
-    .map((id) => props.nodesMap.get(id))
+  return node.childIds
+    .map((id) => nodesMap.get(id))
     .filter((n): n is SceneNode => n !== undefined && n.visible)
 })
 
 function handleTrigger(triggerType: string) {
-  if (props.node.reactions?.some((r) => r.trigger.type === triggerType)) {
-    emit('interaction', { nodeId: props.node.id, triggerType })
+  if (node.reactions?.some((r) => r.trigger.type === triggerType)) {
+    emit('interaction', { nodeId: node.id, triggerType })
   }
 }
 </script>
 
 <template>
   <div
+    :data-prototype-node-id="node.id"
     :style="style"
     @click.stop="handleTrigger('ON_CLICK')"
     @mouseenter="handleTrigger('MOUSE_ENTER')"

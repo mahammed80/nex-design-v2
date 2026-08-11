@@ -21,25 +21,25 @@ The root app (`src/`) is the Tauri/Vite desktop editor. App-specific editor, doc
 
 `@nex-design/core` exposes domain-specific subpath exports for targeted imports. The main `"."` entry re-exports everything for backward compatibility.
 
-| Subpath | What | Heavy dep isolated |
-|---|---|---|
-| `@nex-design/core` | everything (barrel) | all |
-| `@nex-design/core/scene-graph` | SceneGraph, node types, hit-test, copy, snap, undo | — |
-| `@nex-design/core/color` | parseColor, colorToHex, color management, OkHCL | culori |
-| `@nex-design/core/text` | fonts, text editor, style runs, direction | — |
-| `@nex-design/core/vector` | vector network encode/decode, bezier math | — |
-| `@nex-design/core/figma-api` | FigmaAPI, FigmaNodeProxy | — |
-| `@nex-design/core/icons` | Iconify API client, icon rendering | @iconify/utils |
-| `@nex-design/core/canvas` | SkiaRenderer (Skia/CanvasKit painting engine) | — |
-| `@nex-design/core/design-jsx` | JSX-to-design renderer | sucrase |
-| `@nex-design/core/editor` | createEditor, Editor, EditorState | — |
-| `@nex-design/core/tools` | ToolDef, ALL_TOOLS, AI adapter | diff |
-| `@nex-design/core/kiwi` | .fig parse/serialize, codec, protocol | fflate, fzstd |
-| `@nex-design/core/rpc` | RPC commands for CLI | — |
-| `@nex-design/core/lint` | design linter rules and presets | — |
-| `@nex-design/core/profiler` | render profiling | — |
-| `@nex-design/core/canvaskit` | getCanvasKit loader | canvaskit-wasm |
-| `@nex-design/core/layout` | computeLayout | yoga-layout |
+| Subpath                        | What                                               | Heavy dep isolated |
+| ------------------------------ | -------------------------------------------------- | ------------------ |
+| `@nex-design/core`             | everything (barrel)                                | all                |
+| `@nex-design/core/scene-graph` | SceneGraph, node types, hit-test, copy, snap, undo | —                  |
+| `@nex-design/core/color`       | parseColor, colorToHex, color management, OkHCL    | culori             |
+| `@nex-design/core/text`        | fonts, text editor, style runs, direction          | —                  |
+| `@nex-design/core/vector`      | vector network encode/decode, bezier math          | —                  |
+| `@nex-design/core/figma-api`   | FigmaAPI, FigmaNodeProxy                           | —                  |
+| `@nex-design/core/icons`       | Iconify API client, icon rendering                 | @iconify/utils     |
+| `@nex-design/core/canvas`      | SkiaRenderer (Skia/CanvasKit painting engine)      | —                  |
+| `@nex-design/core/design-jsx`  | JSX-to-design renderer                             | sucrase            |
+| `@nex-design/core/editor`      | createEditor, Editor, EditorState                  | —                  |
+| `@nex-design/core/tools`       | ToolDef, ALL_TOOLS, AI adapter                     | diff               |
+| `@nex-design/core/kiwi`        | .fig parse/serialize, codec, protocol              | fflate, fzstd      |
+| `@nex-design/core/rpc`         | RPC commands for CLI                               | —                  |
+| `@nex-design/core/lint`        | design linter rules and presets                    | —                  |
+| `@nex-design/core/profiler`    | render profiling                                   | —                  |
+| `@nex-design/core/canvaskit`   | getCanvasKit loader                                | canvaskit-wasm     |
+| `@nex-design/core/layout`      | computeLayout                                      | yoga-layout        |
 
 Runtime `canvaskit-wasm` import exists only in `canvaskit.ts` — all other files use `import type`. CanvasKit instance is passed as a parameter everywhere.
 
@@ -47,20 +47,20 @@ Runtime `canvaskit-wasm` import exists only in `canvaskit.ts` — all other file
 
 `packages/core/src/editor/` is the framework-agnostic editor core — 13 modules sharing an `EditorContext` interface:
 
-| Module | What |
-|---|---|
-| `types.ts` | EditorState, EditorOptions, EditorEvents, Tool, EditorToolDef, EditorContext |
-| `create.ts` | `createEditor()` assembler — wires context, event bus + all modules |
-| `viewport.ts` | screenToCanvas, applyZoom, pan, zoomToFit/100/Selection |
-| `selection.ts` | select, clearSelection, marquee, snap, hover, entered container |
-| `pages.ts` | switchPage, addPage, deletePage, renamePage |
-| `shapes.ts` | createShape, pen tool, adoptNodesIntoSection |
-| `structure.ts` | group, ungroup, wrapInAutoLayout, reorder, reparent, z-order |
-| `components.ts` | component/instance/detach/componentSet |
-| `clipboard.ts` | duplicate, copy, paste, delete, storeImage |
-| `undo.ts` | commitMove/Resize/Rotation, snapshot/restore |
-| `text.ts` | startTextEditing, commitTextEdit |
-| `nodes.ts` | updateNode, updateNodeWithUndo, setLayoutMode |
+| Module          | What                                                                         |
+| --------------- | ---------------------------------------------------------------------------- |
+| `types.ts`      | EditorState, EditorOptions, EditorEvents, Tool, EditorToolDef, EditorContext |
+| `create.ts`     | `createEditor()` assembler — wires context, event bus + all modules          |
+| `viewport.ts`   | screenToCanvas, applyZoom, pan, zoomToFit/100/Selection                      |
+| `selection.ts`  | select, clearSelection, marquee, snap, hover, entered container              |
+| `pages.ts`      | switchPage, addPage, deletePage, renamePage                                  |
+| `shapes.ts`     | createShape, pen tool, adoptNodesIntoSection                                 |
+| `structure.ts`  | group, ungroup, wrapInAutoLayout, reorder, reparent, z-order                 |
+| `components.ts` | component/instance/detach/componentSet                                       |
+| `clipboard.ts`  | duplicate, copy, paste, delete, storeImage                                   |
+| `undo.ts`       | commitMove/Resize/Rotation, snapshot/restore                                 |
+| `text.ts`       | startTextEditing, commitTextEdit                                             |
+| `nodes.ts`      | updateNode, updateNodeWithUndo, setLayoutMode                                |
 
 Each module exports a factory: `createXxxActions(ctx: EditorContext) => { ... }`.
 `create.ts` assembles context + all modules, spreads into a flat return object.
@@ -70,20 +70,20 @@ Each module exports a factory: `createXxxActions(ctx: EditorContext) => { ... }`
 
 The editor exposes a typed nanoevents emitter for lifecycle events. Defined in `EditorEvents` (`types.ts`), emitted via `emitEditorEvent()` on the context, subscribed via `editor.onEditorEvent(event, handler)` which returns an unbind function.
 
-| Event | Payload | Emitted by |
-|---|---|---|
-| `render:requested` | `{ renderVersion, sceneVersion }` | `requestRender()` |
-| `repaint:requested` | `{ renderVersion, sceneVersion }` | `requestRepaint()` |
-| `graph:replaced` | `SceneGraph` | `replaceGraph()` |
-| `node:created` | `SceneNode` | SceneGraph emitter → `graph-events.ts` |
-| `node:updated` | `id, changes` | SceneGraph emitter → `graph-events.ts` |
-| `node:deleted` | `id` | SceneGraph emitter → `graph-events.ts` |
-| `node:reparented` | `nodeId, oldParentId, newParentId` | SceneGraph emitter → `graph-events.ts` |
-| `node:reordered` | `nodeId, parentId, index` | SceneGraph emitter → `graph-events.ts` |
-| `selection:changed` | `selectedIds[], previousIds[]` | `setSelectedIds()` |
-| `tool:changed` | `tool, previousTool` | `setActiveTool()` |
-| `page:changed` | `pageId, previousPageId` | `switchPage()`, `replaceGraph()` |
-| `viewport:changed` | `{ panX, panY, zoom }, previous` | viewport actions |
+| Event               | Payload                            | Emitted by                             |
+| ------------------- | ---------------------------------- | -------------------------------------- |
+| `render:requested`  | `{ renderVersion, sceneVersion }`  | `requestRender()`                      |
+| `repaint:requested` | `{ renderVersion, sceneVersion }`  | `requestRepaint()`                     |
+| `graph:replaced`    | `SceneGraph`                       | `replaceGraph()`                       |
+| `node:created`      | `SceneNode`                        | SceneGraph emitter → `graph-events.ts` |
+| `node:updated`      | `id, changes`                      | SceneGraph emitter → `graph-events.ts` |
+| `node:deleted`      | `id`                               | SceneGraph emitter → `graph-events.ts` |
+| `node:reparented`   | `nodeId, oldParentId, newParentId` | SceneGraph emitter → `graph-events.ts` |
+| `node:reordered`    | `nodeId, parentId, index`          | SceneGraph emitter → `graph-events.ts` |
+| `selection:changed` | `selectedIds[], previousIds[]`     | `setSelectedIds()`                     |
+| `tool:changed`      | `tool, previousTool`               | `setActiveTool()`                      |
+| `page:changed`      | `pageId, previousPageId`           | `switchPage()`, `replaceGraph()`       |
+| `viewport:changed`  | `{ panX, panY, zoom }, previous`   | viewport actions                       |
 
 All selection mutations in core use `ctx.setSelectedIds()` and all tool changes use `ctx.setActiveTool()` so the event bus fires consistently. App-layer code uses `editor.clearSelection()`, `editor.select()`, or `editor.setTool()` — never direct `state.selectedIds =` or `state.activeTool =` assignments.
 
@@ -130,12 +130,12 @@ The app editor session (`src/app/editor/session/create.ts`) is a thin Vue wrappe
 
 ### CI workflows
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| `build.yml` | `v*` tag push or manual | Build Tauri desktop apps (5 targets), create GitHub Release, publish `@nex-design/core`, `@nex-design/cli`, `@nex-design/mcp`, and `@nex-design/vue` |
-| `homebrew.yml` | Release published | Update `nex-design/homebrew-tap` cask with new version + SHA256 hashes |
-| `app.yml` | Push to `master` (non-docs) | Build web app, deploy to Cloudflare Pages (`app.nexdesign.dev`) |
-| `docs.yml` | Push to `master` (`packages/docs/**`) | Build VitePress docs, deploy to Cloudflare Pages (`nexdesign.dev`) |
+| Workflow       | Trigger                               | What it does                                                                                                                                         |
+| -------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `build.yml`    | `v*` tag push or manual               | Build Tauri desktop apps (5 targets), create GitHub Release, publish `@nex-design/core`, `@nex-design/cli`, `@nex-design/mcp`, and `@nex-design/vue` |
+| `homebrew.yml` | Release published                     | Update `nex-design/homebrew-tap` cask with new version + SHA256 hashes                                                                               |
+| `app.yml`      | Push to `master` (non-docs)           | Build web app, deploy to Cloudflare Pages (`app.nexdesign.dev`)                                                                                      |
+| `docs.yml`     | Push to `master` (`packages/docs/**`) | Build VitePress docs, deploy to Cloudflare Pages (`nexdesign.dev`)                                                                                   |
 
 ### Before committing
 
@@ -200,6 +200,9 @@ Release commits are the exception: keep using `Release v0.x.y`.
 - Each tool has: name, description, typed params, and an `execute(figma: FigmaAPI, args)` function
 - `defineTool()` gives type-safe params in the execute body; the array `ALL_TOOLS` erases the generics for adapters
 - AI adapter (`packages/core/src/tools/ai-adapter.ts`): `toolsToAI()` converts ToolDefs → valibot schemas + Vercel AI `tool()` wrappers
+- Agent skills (`src/app/ai/skills/`) are progressively resolved by task intent and model tier. Agent orchestration, local document-scoped generation memory, and authorized reference study live under `src/app/ai/orchestration/`, `memory/`, and `reference/`.
+- The built-in app agent is fixed to `poolside/laguna-s-2.1`. The client calls the same-origin Poolside proxy; credentials must remain in the server-only `POOLSIDE_API_KEY` environment variable. Never use a `VITE_*` variable for this secret. Production requires the `AI_RATE_LIMITER` Cloudflare binding and fails closed without it.
+- Portable design-system context uses `DESIGN.md`, parsed and applied through `src/app/design-system/design-markdown.ts` and surfaced by the Style Guide editor.
 - `src/app/ai/tools/index.ts` is just a thin wire: creates FigmaAPI from editor store, calls `toolsToAI()`
 - CLI commands (`packages/cli/src/commands/`) are **not** generated from ToolDefs — they have custom agentfmt formatting, tree walking, pagination. The `eval` command is the CLI's access to all ToolDef operations via FigmaAPI.
 - MCP adapter (`packages/mcp/src/server.ts`): `startServer()` creates unified HTTP + WebSocket server. Registers all ToolDefs as MCP tools (zod schemas). Single entry point: `index.ts` (Hono + Streamable HTTP with sessions). Browser connects via WebSocket, tool calls proxied through.
@@ -280,6 +283,7 @@ bun run test           # Playwright E2E
 ```
 
 Self-review checklist:
+
 - Run `bun run test:dupes` — if duplication rises, extract shared helpers or use existing types
 - No inline type definitions that duplicate named types (Color, Vector, SceneNode, Effect, Fill, Stroke, etc.)
 - No copy-pasted logic — extract into functions. If two components share a util, icon map, or data structure, export from one place. If `jscpd` flags it, fix it.
@@ -288,7 +292,6 @@ Self-review checklist:
 - `structuredClone` for deep copies, never shallow spread when mutating nested objects
 - Don't hand-roll what a dependency already does. Check existing deps first (`package.json`, `packages/*/package.json`). If none covers it, find a quality library instead of inlining an implementation — e.g. use `diff` for unified diffs, not a custom line-by-line loop; use `culori` for color math, not manual RGB parsing
 - Check Reka UI for existing components (Dialog, Popover, DropdownMenu, Select, Tooltip, Toast, etc.) before building custom ones — especially dropdowns, popovers, and modals
-
 
 ## Rendering
 
@@ -372,6 +375,7 @@ Self-review checklist:
 ## Reference
 
 [figma-use](https://github.com/dannote/figma-use) — our Figma toolkit. Use as reference for:
+
 - Kiwi binary format, schema, encode/decode (`packages/shared/src/kiwi/`)
 - Figma WebSocket multiplayer protocol (`packages/plugin/src/ws/`)
 - Vector network blob format (`packages/shared/src/vector/`)

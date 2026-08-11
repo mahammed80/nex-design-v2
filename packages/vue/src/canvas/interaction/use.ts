@@ -95,7 +95,7 @@ export function useCanvasInteraction(editor: Editor): CanvasInteraction {
 
   onScopeDispose(() => {
     unsubscribeDeleted?.()
-    unsubscribeReplaced?.()
+    unsubscribeReplaced()
     dispatcher.clear()
   })
 

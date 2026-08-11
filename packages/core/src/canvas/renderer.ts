@@ -10,7 +10,7 @@ import {
   COMPONENT_SET_BORDER_WIDTH,
   IS_BROWSER
 } from '#core/constants'
-import type { EditorState } from '#core/editor/types'
+import type { EditorState, Guide } from '#core/editor/types'
 import { RenderProfiler } from '#core/profiler'
 import type { SceneNode, SceneGraph, Fill, Stroke } from '#core/scene-graph'
 import type { SnapGuide } from '#core/scene-graph/snap'
@@ -82,6 +82,8 @@ export class SkiaRenderer {
   nodePictureCache = new Map<string, SkPicture | null>()
   readonly labelCache = new LabelCache()
   readonly profiler: RenderProfiler
+
+  private static readonly MAX_CACHE_SIZE = 512
 
   declare rulerBgPaint: Paint
   declare rulerTickPaint: Paint
@@ -190,7 +192,7 @@ export class SkiaRenderer {
   declare drawRulers: (canvas: Canvas, graph: SceneGraph, selectedIds: Set<string>) => void
   declare drawGuides: (
     canvas: Canvas,
-    guides?: import('#core/editor/types').Guide[],
+    guides?: Guide[],
     selectedGuideId?: string | null,
     visible?: boolean
   ) => void
@@ -563,6 +565,15 @@ export class SkiaRenderer {
   }
 
   destroyed: boolean = false
+
+  evictLru<K, V>(cache: Map<K, V>, onEvict?: (value: V) => void): void {
+    if (cache.size < SkiaRenderer.MAX_CACHE_SIZE) return
+    const firstKey = cache.keys().next().value
+    if (firstKey === undefined) return
+    const old = cache.get(firstKey)
+    if (old !== undefined) onEvict?.(old)
+    cache.delete(firstKey)
+  }
 
   destroy(): void {
     destroyRenderer(this)

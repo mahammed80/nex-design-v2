@@ -152,6 +152,23 @@ function onToggleCorners() {
             </Tip>
           </div>
         </div>
+
+        <div v-if="node" class="flex flex-col gap-0.5 flex-1">
+          <span class="text-[9px] text-muted uppercase font-semibold">Smoothing</span>
+          <ScrubInput
+            data-test-id="corner-smoothing-input"
+            suffix="%"
+            :model-value="Math.round((node.cornerSmoothing ?? 0) * 100)"
+            :min="0"
+            :max="100"
+            @update:model-value="updateProp('cornerSmoothing', $event / 100)"
+            @commit="(v: number, p: number) => commitProp('cornerSmoothing', v / 100, p / 100)"
+          >
+            <template #icon>
+              <icon-lucide-sparkle class="size-3" />
+            </template>
+          </ScrubInput>
+        </div>
       </template>
     </div>
 

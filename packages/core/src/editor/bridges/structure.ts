@@ -8,6 +8,8 @@ export function createStructureBridge(structure: StructureActions, selection: Se
   return {
     wrapInAutoLayout: () => structure.wrapInAutoLayout(selection.getSelectedNodes()),
     groupSelected: () => structure.groupSelected(selection.getSelectedNodes()),
+    createBooleanOperation: (operation: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE') =>
+      structure.createBooleanOperation(selection.getSelectedNodes(), operation),
     ungroupSelected: () => structure.ungroupSelected(selection.getSelectedNode())
   }
 }

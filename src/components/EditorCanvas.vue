@@ -9,7 +9,7 @@ import { useCanvasCollaborationAwareness } from '@/app/editor/canvas/collaborati
 import { createCanvasContextSelection } from '@/app/editor/canvas/context-selection'
 import { fadeOutGlobalLoader } from '@/app/editor/canvas/loader-overlay'
 import CanvasMenu from './CanvasMenu.vue'
-import StyleGuideEditor from './StyleGuideEditor.vue'
+import StyleGuideEditor from './StyleGuideEditor/StyleGuideEditorRoot.vue'
 
 const store = useEditorStore()
 const collab = useCollabInjected()

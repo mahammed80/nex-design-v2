@@ -23,7 +23,8 @@ Or download from the [releases page](https://github.com/nex-design/nex-design/re
 ## What it does
 
 - **Opens `.fig` and `.pen` files** — read and write native Figma files, open Pencil documents, copy & paste nodes between apps
-- **AI builds designs** — describe what you want in chat, 90+ tools create and modify nodes. Connect OpenRouter, Anthropic, OpenAI, Google AI, Z.ai, MiniMax, or compatible endpoints
+- **AI builds designs** — describe what you want in chat and the built-in Poolside Laguna agent uses 90+ tools to create, inspect, and modify nodes
+- **Agentic design workflow** — model-aware skills coordinate planning, scoped building, refinement, deterministic design audits, local generation memory, DESIGN.md style guides, and authorized reference studies
 - **Fully programmable** — headless CLI, XPath queries, Figma Plugin API via `eval`, MCP server for AI agents, and desktop agent integrations for Claude Code, Codex, and Gemini CLI
 - **Lint, convert, and extract tokens** — inspect documents, lint naming/layout/accessibility, convert between supported formats, analyze colors/typography/spacing/clusters, and extract design tokens
 - **Design-to-code export** — export selections as JSX/Tailwind, generate token outputs, and map designs into component-oriented code workflows
@@ -150,7 +151,7 @@ All commands support `--json` for machine-readable output.
 
 ### Built-in chat
 
-Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It has 100+ tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Bring your own API key for OpenRouter, Anthropic, OpenAI, Google AI, Z.ai, MiniMax, or compatible endpoints. No backend, no account.
+Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It uses Poolside Laguna and has 100+ tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Poolside credentials are held by the server proxy and are never included in the browser or desktop bundle.
 
 ### Coding agents (desktop)
 
@@ -245,12 +246,12 @@ bun run tauri dev  # Desktop app (requires Rust)
 
 ### Quality gates
 
-| Command | Description |
-|---------|-------------|
-| `bun run check` | Lint + typecheck |
-| `bun run test` | E2E visual regression |
-| `bun run test:unit` | Unit tests |
-| `bun run format` | Code formatting |
+| Command             | Description           |
+| ------------------- | --------------------- |
+| `bun run check`     | Lint + typecheck      |
+| `bun run test`      | E2E visual regression |
+| `bun run test:unit` | Unit tests            |
+| `bun run format`    | Code formatting       |
 
 ### Project structure
 
@@ -268,15 +269,15 @@ tests/            E2E (188 tests) + unit (764 tests)
 
 ### Tech stack
 
-| Layer | Tech |
-|-------|------|
-| Rendering | Skia (CanvasKit WASM) |
-| Layout | Yoga WASM (flex + grid via [fork](https://github.com/nex-design/yoga/tree/grid)) |
-| UI | Vue 3, Reka UI, Tailwind CSS 4 |
-| File format | Kiwi binary + Zstd + ZIP |
-| Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT) |
-| Desktop | Tauri v2 |
-| AI/MCP | Multi-provider (Anthropic, OpenAI, Google AI, OpenRouter), MCP SDK, Hono |
+| Layer         | Tech                                                                             |
+| ------------- | -------------------------------------------------------------------------------- |
+| Rendering     | Skia (CanvasKit WASM)                                                            |
+| Layout        | Yoga WASM (flex + grid via [fork](https://github.com/nex-design/yoga/tree/grid)) |
+| UI            | Vue 3, Reka UI, Tailwind CSS 4                                                   |
+| File format   | Kiwi binary + Zstd + ZIP                                                         |
+| Collaboration | Trystero (WebRTC P2P) + Yjs (CRDT)                                               |
+| Desktop       | Tauri v2                                                                         |
+| AI/MCP        | Multi-provider (Anthropic, OpenAI, Google AI, OpenRouter), MCP SDK, Hono         |
 
 ### Desktop builds
 

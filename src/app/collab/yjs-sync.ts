@@ -32,6 +32,8 @@ type YjsGraphSyncOptions = {
   getYnodes: () => YNodes | null
   getYimages: () => YImages | null
   setSuppressYjsEvents: (value: boolean) => void
+  ynodeIndex: () => Map<Y.Map<unknown>, string> | undefined
+  setYnodeIndex: (index: Map<Y.Map<unknown>, string>) => void
 }
 
 export function syncNodePropsToYMap(node: SceneNode, ynode: Y.Map<unknown>) {
@@ -136,7 +138,9 @@ export function createYjsGraphSync({
   getYdoc,
   getYnodes,
   getYimages,
-  setSuppressYjsEvents
+  setSuppressYjsEvents,
+  ynodeIndex,
+  setYnodeIndex
 }: YjsGraphSyncOptions) {
   function syncNodeToYjs(nodeId: string) {
     const store = getStore()
@@ -153,6 +157,7 @@ export function createYjsGraphSync({
       if (!ynode) {
         ynode = new Y.Map()
         ynodes.set(nodeId, ynode)
+        ynodeIndex()?.set(ynode, nodeId)
       }
       syncNodePropsToYMap(node, ynode)
 
@@ -174,6 +179,7 @@ export function createYjsGraphSync({
     const ynodes = getYnodes()
     if (!ydoc || !ynodes) return
     const localYimages = getYimages()
+    const index = new Map<Y.Map<unknown>, string>()
     setSuppressYjsEvents(true)
     ydoc.transact(() => {
       for (const node of store.graph.getAllNodes()) {
@@ -182,9 +188,11 @@ export function createYjsGraphSync({
           ynode = new Y.Map()
           ynodes.set(node.id, ynode)
         }
+        index.set(ynode, node.id)
         syncNodePropsToYMap(node, ynode)
       }
     })
+    setYnodeIndex(index)
     if (localYimages) {
       ydoc.transact(() => {
         for (const [hash, data] of store.graph.images) {
@@ -206,13 +214,17 @@ export function createYjsGraphSync({
         for (const [key, change] of event.changes.keys) {
           if (change.action === 'add') {
             const ynode = ynodes.get(key)
-            if (ynode) applyYnodeToGraph(key, ynode)
+            if (ynode) {
+              const idx = ynodeIndex()
+              idx?.set(ynode, key)
+              applyYnodeToGraph(key, ynode)
+            }
           } else if (change.action === 'delete') {
             store.graph.deleteNode(key)
           }
         }
       } else if (event.target.parent === ynodes) {
-        const nodeId = findNodeIdForYMap(event.target)
+        const nodeId = findNodeIdForYMap(event.target, ynodeIndex)
         if (nodeId) {
           const ynode = ynodes.get(nodeId)
           if (ynode) applyYnodeToGraph(nodeId, ynode)
@@ -221,13 +233,13 @@ export function createYjsGraphSync({
     }
   }
 
-  function findNodeIdForYMap(ymap: Y.Map<unknown>): string | null {
-    const ynodes = getYnodes()
-    if (!ynodes) return null
-    for (const [key, value] of ynodes.entries()) {
-      if (value === ymap) return key
-    }
-    return null
+  function findNodeIdForYMap(
+    ymap: Y.Map<unknown>,
+    indexGetter: () => Map<Y.Map<unknown>, string> | undefined
+  ): string | null {
+    const index = indexGetter()
+    if (!index) return null
+    return index.get(ymap) ?? null
   }
 
   function applyYnodeToGraph(nodeId: string, ynode: Y.Map<unknown>) {

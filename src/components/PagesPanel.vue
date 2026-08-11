@@ -3,9 +3,11 @@ import { ref, watch } from 'vue'
 import { templateRef } from '@vueuse/core'
 
 import { PageListRoot, useI18n, useInlineRename } from '@nex-design/vue'
+import { useEditorStore } from '@/app/editor/active-store'
 
 import Tip from '@/components/ui/Tip.vue'
 
+const editor = useEditorStore()
 const pageInput = templateRef<HTMLInputElement>('pageInput')
 const rename = useInlineRename((id, name) => pageActions.value?.rename(id, name))
 const { panels } = useI18n()
@@ -32,6 +34,10 @@ function handlePageDblClick(
 ) {
   setPageActions(renamePage)
   startRename(pg)
+}
+
+function onDuplicatePage(pageId: string) {
+  editor.duplicatePage(pageId)
 }
 </script>
 
@@ -75,21 +81,30 @@ function handlePageDblClick(
           >
             <div class="h-px flex-1 bg-border" />
           </div>
-          <button
-            v-else
-            data-test-id="pages-item"
-            class="flex w-full cursor-pointer items-center gap-1.5 rounded border-none px-2 py-1 text-left text-xs"
-            :class="
-              pg.id === currentPageId
-                ? 'bg-hover text-surface'
-                : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
-            "
-            @click="actions.switch(pg.id)"
-            @dblclick="handlePageDblClick(pg, actions.rename)"
-          >
-            <icon-lucide-file class="size-3 shrink-0" />
-            <span class="truncate">{{ pg.name }}</span>
-          </button>
+          <div v-else class="group relative flex w-full items-center">
+            <button
+              data-test-id="pages-item"
+              class="flex w-full cursor-pointer items-center gap-1.5 rounded border-none px-2 py-1 text-left text-xs"
+              :class="
+                pg.id === currentPageId
+                  ? 'bg-hover text-surface font-semibold'
+                  : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
+              "
+              @click="actions.switch(pg.id)"
+              @dblclick="handlePageDblClick(pg, actions.rename)"
+            >
+              <icon-lucide-file class="size-3 shrink-0" />
+              <span class="truncate flex-1">{{ pg.name }}</span>
+            </button>
+            <Tip label="Duplicate Page">
+              <button
+                class="absolute right-1 hidden group-hover:flex size-5 items-center justify-center rounded text-muted hover:bg-muted/30 hover:text-surface transition-colors cursor-pointer"
+                @click.stop="onDuplicatePage(pg.id)"
+              >
+                <icon-lucide-copy class="size-3" />
+              </button>
+            </Tip>
+          </div>
         </div>
       </div>
     </div>

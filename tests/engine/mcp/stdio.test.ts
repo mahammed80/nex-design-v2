@@ -82,7 +82,7 @@ async function createStdioClient(wsPort: number) {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js')
   const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js')
   const transport = new StdioClientTransport({
-    command: 'bun',
+    command: process.execPath,
     args: ['packages/mcp/src/stdio.ts'],
     env: {
       ...process.env,

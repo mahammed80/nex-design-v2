@@ -10,6 +10,9 @@ export interface AppMenuActionItem {
   accelerator?: string
   command?: EditorCommandId
   checkbox?: boolean
+  checked?: boolean
+  disabled?: boolean
+  onCheckedChange?: (checked: boolean) => void
   target?: AppMenuTarget
   sub?: AppMenuEntry[]
 }

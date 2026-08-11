@@ -11,7 +11,7 @@ import type * as valibot from 'valibot'
 
 import type { FigmaAPI } from '#core/figma-api'
 
-import type { ToolDef, ParamDef, ParamType } from './schema'
+import type { ToolDef, ParamDef } from './schema'
 
 export interface ToolLogEntry {
   tool: string
@@ -300,28 +300,40 @@ export function buildDebugLog(entries: ToolLogEntry[]): ToolDebugLog {
 }
 
 function paramToValibot(v: typeof valibot, param: ParamDef): unknown {
-  const typeMap: Record<ParamType, () => unknown> = {
-    string: () => (param.enum ? v.picklist(param.enum as [string, ...string[]]) : v.string()),
-    number: () => {
+  let result: unknown
+
+  switch (param.type) {
+    case 'string':
+      result = param.enum ? v.picklist(param.enum as [string, ...string[]]) : v.string()
+      break
+    case 'number': {
       const pipes: unknown[] = [v.number()]
       if (param.min !== undefined) pipes.push(v.minValue(param.min))
       if (param.max !== undefined) pipes.push(v.maxValue(param.max))
-      return pipes.length > 1 ? v.pipe(...(pipes as [never, never, ...never[]])) : v.number()
-    },
-    boolean: () => v.boolean(),
-    color: () => v.pipe(v.string(), v.description('Color value (hex like #ff0000 or #ff000080)')),
-    'string[]': () => v.pipe(v.array(v.string()), v.minLength(1))
+      result = pipes.length > 1 ? v.pipe(...(pipes as [never, never, ...never[]])) : v.number()
+      break
+    }
+    case 'boolean':
+      result = v.boolean()
+      break
+    case 'color':
+      result = v.pipe(
+        v.string(),
+        v.regex(/^#([0-9a-fA-F]{3,8})$/, 'Color must be a hex string like #ff0000 or #ff000080')
+      )
+      break
+    case 'string[]':
+      result = v.pipe(v.array(v.string()), v.minLength(1))
+      break
   }
 
-  let schema = typeMap[param.type]()
-
   if (param.description && param.type !== 'color') {
-    schema = v.pipe(schema as never, v.description(param.description))
+    result = v.pipe(result as never, v.description(param.description))
   }
 
   if (!param.required) {
-    schema = v.optional(schema as never, param.default as never)
+    result = v.optional(result as never, param.default as never)
   }
 
-  return schema
+  return result
 }

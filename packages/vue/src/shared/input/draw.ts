@@ -58,7 +58,7 @@ export function handleDrawUp(d: DragDraw, editor: Editor) {
     } else {
       editor.updateNode(d.nodeId, { width: 100, height: 100 })
     }
-  } else if (node && node.type === 'TEXT') {
+  } else if (node?.type === 'TEXT') {
     editor.updateNode(d.nodeId, { textAutoResize: 'NONE' })
   }
 

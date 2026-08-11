@@ -16,6 +16,7 @@ import * as SceneRender from '#core/canvas/scene'
 import { renderEffects as renderShadowEffects } from '#core/canvas/shadows'
 import * as Shapes from '#core/canvas/shapes'
 import * as Strokes from '#core/canvas/strokes'
+import type { Guide } from '#core/editor/types'
 import type { Fill, SceneGraph, SceneNode, Stroke } from '#core/scene-graph'
 import type { SnapGuide } from '#core/scene-graph/snap'
 import type { TextEditor } from '#core/text/editor'
@@ -82,7 +83,7 @@ const rendererMethods: ThisType<SkiaRenderer> = {
 
   drawGuides(
     canvas: Canvas,
-    guides?: import('#core/editor/types').Guide[],
+    guides?: Guide[],
     selectedGuideId?: string | null,
     visible?: boolean
   ): void {

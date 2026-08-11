@@ -54,5 +54,26 @@ export function createComponentInstanceActions(ctx: EditorContext) {
     })
   }
 
-  return { createInstanceFromComponent, detachInstance }
+  function resetInstanceOverrides(instanceId: string) {
+    const node = ctx.graph.getNode(instanceId)
+    if (node?.type !== 'INSTANCE') return
+
+    const prevOverrides = { ...node.overrides }
+
+    ctx.graph.updateNode(instanceId, { overrides: {} })
+    ctx.undo.push({
+      label: 'Reset instance overrides',
+      forward: () => {
+        ctx.graph.updateNode(instanceId, { overrides: {} })
+        ctx.requestRender()
+      },
+      inverse: () => {
+        ctx.graph.updateNode(instanceId, { overrides: prevOverrides })
+        ctx.requestRender()
+      }
+    })
+    ctx.requestRender()
+  }
+
+  return { createInstanceFromComponent, detachInstance, resetInstanceOverrides }
 }

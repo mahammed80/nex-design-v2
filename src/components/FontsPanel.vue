@@ -12,9 +12,6 @@ const previewSize = ref(16)
 const emit = defineEmits<{ (e: 'select', family: string): void }>()
 
 onMounted(async () => {
-  try {
-    await requestLocalFontAccess()
-  } catch {}
   const entries = await listAllFamilies()
   allFamilies.value = entries.map((e) => e.family)
 })
@@ -24,9 +21,8 @@ const filteredFamilies = computed(() => {
   const list = allFamilies.value
   if (!query) return list.slice(0, 100)
 
-  const results = []
-  for (let i = 0; i < list.length; i++) {
-    const f = list[i]
+  const results: string[] = []
+  for (const f of list) {
     if (f.toLowerCase().includes(query)) {
       results.push(f)
       if (results.length >= 100) break

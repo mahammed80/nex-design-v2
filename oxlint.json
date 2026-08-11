@@ -159,6 +159,12 @@
   },
   "overrides": [
     {
+      "files": ["**/image-filter-shader.ts"],
+      "rules": {
+        "nex-design/no-hand-rolled-color": "off"
+      }
+    },
+    {
       "files": ["src/**/*.ts"],
       "rules": {
         "nex-design/no-useless-pass-through-wrappers": "error"

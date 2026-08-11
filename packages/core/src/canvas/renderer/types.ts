@@ -1,3 +1,5 @@
+import type { Guide } from '#core/editor/types'
+import type { ConnectionSide } from '#core/prototype'
 import type { VectorRegion, VectorVertex } from '#core/scene-graph'
 import type { SnapGuide } from '#core/scene-graph/snap'
 import type { TextEditor } from '#core/text/editor'
@@ -18,7 +20,7 @@ export interface RenderOverlays {
     endX: number
     endY: number
     hoveredNodeId?: string | null
-    hoveredSide?: import('#core/prototype').ConnectionSide | null
+    hoveredSide?: ConnectionSide | null
   } | null
   prototypeReconnectDrag?: {
     connectionId: string
@@ -26,7 +28,7 @@ export interface RenderOverlays {
     currentX: number
     currentY: number
     hoveredNodeId: string | null
-    hoveredSide: import('#core/prototype').ConnectionSide | null
+    hoveredSide: ConnectionSide | null
   } | null
   hoveredNodeId?: string | null
   enteredContainerId?: string | null
@@ -80,7 +82,7 @@ export interface RenderOverlays {
     selection?: string[]
   }>
   fontPreviewActive?: boolean
-  guides?: import('#core/editor/types').Guide[]
+  guides?: Guide[]
   selectedGuideId?: string | null
   guidesVisible?: boolean
 }

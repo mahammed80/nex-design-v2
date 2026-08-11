@@ -9,6 +9,7 @@ import { clearToolLogEntries, didHitStepLimit } from '@/app/ai/tools'
 import { activeTab } from '@/app/tabs'
 import AcpPermissionDialog from '@/components/chat/AcpPermissionDialog.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
+import AgentOnboarding from '@/components/chat/AgentOnboarding.vue'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ProviderSetup from '@/components/chat/ProviderSetup.vue'
 import { useAIChat } from '@/app/ai/chat/use'
@@ -17,6 +18,8 @@ import { useI18n } from '@nex-design/vue'
 
 import type { Chat } from '@ai-sdk/vue'
 import type { UIMessage } from 'ai'
+import { getActiveEditorStore } from '@/app/editor/active-store'
+import { getAgentRunProgress } from '@/app/ai/orchestration/progress'
 
 const IS_DEV = import.meta.env.DEV
 
@@ -33,6 +36,7 @@ const debugCopied = refAutoReset(false, 1500)
 const acpLogCopied = refAutoReset(false, 1500)
 
 const messages = computed(() => chat.value?.messages ?? [])
+const agentProgress = computed(() => getAgentRunProgress(getActiveEditorStore()))
 const status = computed(() => chat.value?.status ?? 'ready')
 const isThinking = computed(() => {
   const s = status.value
@@ -122,6 +126,17 @@ function handleClearChat() {
     <ProviderSetup v-if="!isConfigured" />
 
     <template v-else>
+      <div
+        v-if="agentProgress.phase !== 'idle' && status !== 'ready'"
+        class="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 text-[11px] text-muted"
+      >
+        <span class="size-1.5 animate-pulse rounded-full bg-accent" />
+        <span class="font-medium capitalize text-surface">{{ agentProgress.role }}</span>
+        <span class="capitalize">{{ agentProgress.phase }}</span>
+        <span v-if="agentProgress.activeTool" class="ml-auto truncate font-mono">{{
+          agentProgress.activeTool
+        }}</span>
+      </div>
       <ScrollAreaRoot class="min-h-0 flex-1">
         <ScrollAreaViewport class="h-full px-3 py-3 [&>div]:h-full">
           <!-- Empty state -->
@@ -132,6 +147,7 @@ function handleClearChat() {
           >
             <icon-lucide-message-circle class="size-8 opacity-50" />
             <p class="text-center text-xs">{{ dialogs.describeCreateOrChange }}</p>
+            <AgentOnboarding />
           </div>
 
           <!-- Messages -->

@@ -29,6 +29,54 @@ interface OverlayPaints {
   controlLinePaint: Paint
 }
 
+const prototypePaintCache = new WeakMap<SkiaRenderer, OverlayPaints>()
+
+function getPrototypePaints(r: SkiaRenderer): OverlayPaints {
+  let paints = prototypePaintCache.get(r)
+  if (!paints) {
+    const ck = r.ck
+    paints = {
+      strokePaint: createPaint(ck, [56 / 255, 189 / 255, 248 / 255, 1], ck.PaintStyle.Stroke, 2.5),
+      hoverStrokePaint: createPaint(
+        ck,
+        [56 / 255, 189 / 255, 248 / 255, 1],
+        ck.PaintStyle.Stroke,
+        3.0
+      ),
+      selectedStrokePaint: createPaint(
+        ck,
+        [124 / 255, 58 / 255, 237 / 255, 1],
+        ck.PaintStyle.Stroke,
+        3.5
+      ),
+      unselectedStrokePaint: createPaint(
+        ck,
+        [56 / 255, 189 / 255, 248 / 255, 0.5],
+        ck.PaintStyle.Stroke,
+        2.5
+      ),
+      fillPaint: createPaint(ck, [56 / 255, 189 / 255, 248 / 255, 1], ck.PaintStyle.Fill),
+      selectedFillPaint: createPaint(ck, [124 / 255, 58 / 255, 237 / 255, 1], ck.PaintStyle.Fill),
+      handleStrokePaint: createPaint(ck, [1, 1, 1, 1], ck.PaintStyle.Stroke, 1.5),
+      handleSelectedOutlinePaint: createPaint(
+        ck,
+        [124 / 255, 58 / 255, 237 / 255, 1],
+        ck.PaintStyle.Stroke,
+        1.5
+      ),
+      snapPaint: createPaint(ck, [56 / 255, 189 / 255, 248 / 255, 0.8], ck.PaintStyle.Stroke, 4),
+      controlLinePaint: createPaint(
+        ck,
+        [124 / 255, 58 / 255, 237 / 255, 0.4],
+        ck.PaintStyle.Stroke,
+        1.2
+      )
+    }
+    prototypePaintCache.set(r, paints)
+  }
+  return paints
+}
+
 function createPaint(
   ck: CanvasKit,
   color: number[],
@@ -58,59 +106,7 @@ export function drawPrototypeOverlay(
     panY = r.panY
   const toScreen = (p: Vector) => ({ x: p.x * zoom + panX, y: p.y * zoom + panY })
 
-  const strokePaint = createPaint(
-    ck,
-    [56 / 255, 189 / 255, 248 / 255, 1],
-    ck.PaintStyle.Stroke,
-    2.5
-  )
-  const hoverStrokePaint = createPaint(
-    ck,
-    [56 / 255, 189 / 255, 248 / 255, 1],
-    ck.PaintStyle.Stroke,
-    3.0
-  )
-  const selectedStrokePaint = createPaint(
-    ck,
-    [124 / 255, 58 / 255, 237 / 255, 1],
-    ck.PaintStyle.Stroke,
-    3.5
-  )
-  const unselectedStrokePaint = createPaint(
-    ck,
-    [56 / 255, 189 / 255, 248 / 255, 0.5],
-    ck.PaintStyle.Stroke,
-    2.5
-  )
-  const fillPaint = createPaint(ck, [56 / 255, 189 / 255, 248 / 255, 1], ck.PaintStyle.Fill)
-  const selectedFillPaint = createPaint(ck, [124 / 255, 58 / 255, 237 / 255, 1], ck.PaintStyle.Fill)
-  const handleStrokePaint = createPaint(ck, [1, 1, 1, 1], ck.PaintStyle.Stroke, 1.5)
-  const handleSelectedOutlinePaint = createPaint(
-    ck,
-    [124 / 255, 58 / 255, 237 / 255, 1],
-    ck.PaintStyle.Stroke,
-    1.5
-  )
-  const snapPaint = createPaint(ck, [56 / 255, 189 / 255, 248 / 255, 0.8], ck.PaintStyle.Stroke, 4)
-  const controlLinePaint = createPaint(
-    ck,
-    [124 / 255, 58 / 255, 237 / 255, 0.4],
-    ck.PaintStyle.Stroke,
-    1.2
-  )
-
-  const paints: OverlayPaints = {
-    strokePaint,
-    hoverStrokePaint,
-    selectedStrokePaint,
-    unselectedStrokePaint,
-    fillPaint,
-    selectedFillPaint,
-    handleStrokePaint,
-    handleSelectedOutlinePaint,
-    snapPaint,
-    controlLinePaint
-  }
+  const paints = getPrototypePaints(r)
 
   const pageId = r.pageId ?? graph.rootId
   const pageNode = graph.getNode(pageId)
@@ -127,17 +123,6 @@ export function drawPrototypeOverlay(
     drawActiveDraggingConnector(canvas, overlays.prototypeDragLine, paints, ck)
   }
   drawSnapIndicators(canvas, graph, overlays, toScreen, paints)
-
-  strokePaint.delete()
-  hoverStrokePaint.delete()
-  selectedStrokePaint.delete()
-  unselectedStrokePaint.delete()
-  fillPaint.delete()
-  selectedFillPaint.delete()
-  handleStrokePaint.delete()
-  handleSelectedOutlinePaint.delete()
-  snapPaint.delete()
-  controlLinePaint.delete()
 }
 
 function resolveDragAnchors(
@@ -156,16 +141,14 @@ function resolveDragAnchors(
   if (drag.endpoint === 'target') {
     if (drag.hoveredNodeId && drag.hoveredSide) {
       tBounds = graph.getAbsoluteBounds(drag.hoveredNodeId)
-      if (tBounds) {
-        const p = { x: drag.currentX, y: drag.currentY }
-        let offset =
-          drag.hoveredSide === 'LEFT' || drag.hoveredSide === 'RIGHT'
-            ? (p.y - tBounds.y) / (tBounds.height || 1)
-            : (p.x - tBounds.x) / (tBounds.width || 1)
-        offset = Math.max(0, Math.min(1, offset))
-        if (Math.abs(offset - 0.5) < 0.1) offset = 0.5
-        tAnchor = { side: drag.hoveredSide, offset }
-      }
+      const p = { x: drag.currentX, y: drag.currentY }
+      let offset =
+        drag.hoveredSide === 'LEFT' || drag.hoveredSide === 'RIGHT'
+          ? (p.y - tBounds.y) / (tBounds.height || 1)
+          : (p.x - tBounds.x) / (tBounds.width || 1)
+      offset = Math.max(0, Math.min(1, offset))
+      if (Math.abs(offset - 0.5) < 0.1) offset = 0.5
+      tAnchor = { side: drag.hoveredSide, offset }
     } else {
       tAnchor = { side: 'LEFT', offset: 0.5 }
       tBounds = null
@@ -173,16 +156,14 @@ function resolveDragAnchors(
   } else {
     if (drag.hoveredNodeId && drag.hoveredSide) {
       sBounds = graph.getAbsoluteBounds(drag.hoveredNodeId)
-      if (sBounds) {
-        const p = { x: drag.currentX, y: drag.currentY }
-        let offset =
-          drag.hoveredSide === 'LEFT' || drag.hoveredSide === 'RIGHT'
-            ? (p.y - sBounds.y) / (sBounds.height || 1)
-            : (p.x - sBounds.x) / (sBounds.width || 1)
-        offset = Math.max(0, Math.min(1, offset))
-        if (Math.abs(offset - 0.5) < 0.1) offset = 0.5
-        sAnchor = { side: drag.hoveredSide, offset }
-      }
+      const p = { x: drag.currentX, y: drag.currentY }
+      let offset =
+        drag.hoveredSide === 'LEFT' || drag.hoveredSide === 'RIGHT'
+          ? (p.y - sBounds.y) / (sBounds.height || 1)
+          : (p.x - sBounds.x) / (sBounds.width || 1)
+      offset = Math.max(0, Math.min(1, offset))
+      if (Math.abs(offset - 0.5) < 0.1) offset = 0.5
+      sAnchor = { side: drag.hoveredSide, offset }
     } else {
       sAnchor = { side: 'RIGHT', offset: 0.5 }
       sBounds = null
@@ -279,14 +260,12 @@ function drawConnectionPath(
     const p1 = toScreen(geom.p1)
     path.moveTo(p0.x, p0.y)
     path.cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, p1.x, p1.y)
-  } else if (geom.kind === 'polyline') {
-    if (geom.points.length > 0) {
-      const first = toScreen(geom.points[0])
-      path.moveTo(first.x, first.y)
-      for (let i = 1; i < geom.points.length; i++) {
-        const pt = toScreen(geom.points[i])
-        path.lineTo(pt.x, pt.y)
-      }
+  } else if (geom.points.length > 0) {
+    const first = toScreen(geom.points[0])
+    path.moveTo(first.x, first.y)
+    for (let i = 1; i < geom.points.length; i++) {
+      const pt = toScreen(geom.points[i])
+      path.lineTo(pt.x, pt.y)
     }
   }
   canvas.drawPath(path, drawPaint)
@@ -388,9 +367,6 @@ function drawSingleConnection(
   const sourceBounds = graph.getAbsoluteBounds(conn.sourceNodeId)
   const targetBounds = graph.getAbsoluteBounds(conn.targetNodeId)
 
-  if (!sourceBounds && !isDraggingThis) return
-  if (!targetBounds && !isDraggingThis) return
-
   const { finalSourceAnchor, finalTargetAnchor, sourcePoint, targetPoint } =
     resolveAnchorsAndPoints(
       graph,
@@ -410,16 +386,13 @@ function drawSingleConnection(
     sourcePoint,
     targetPoint
   )
-  if (!geom) return
 
   const isSelected = selectedIds.has(conn.id)
   const isHovered = isConnectionHovered(r, conn.id, overlays)
 
   const drawPaint = isSelected
     ? paints.selectedStrokePaint
-    : isHovered
-      ? paints.hoverStrokePaint
-      : paints.unselectedStrokePaint
+    : (isHovered ? paints.hoverStrokePaint : paints.unselectedStrokePaint)
 
   const drawFill = isSelected ? paints.selectedFillPaint : paints.fillPaint
 
@@ -444,24 +417,22 @@ function drawStartBadge(
   const startNode = graph.getNode(startNodeId)
   if (startNode) {
     const bounds = graph.getAbsoluteBounds(startNode.id)
-    if (bounds) {
-      const x = bounds.x * zoom + panX,
-        y = bounds.y * zoom + panY
-      const badgeW = 60,
-        badgeH = 20
-      const rect = ck.LTRBRect(x, y - badgeH - 4, x + badgeW, y - 4)
-      canvas.drawRRect(ck.RRectXY(rect, 4, 4), paints.fillPaint)
+    const x = bounds.x * zoom + panX,
+      y = bounds.y * zoom + panY
+    const badgeW = 60,
+      badgeH = 20
+    const rect = ck.LTRBRect(x, y - badgeH - 4, x + badgeW, y - 4)
+    canvas.drawRRect(ck.RRectXY(rect, 4, 4), paints.fillPaint)
 
-      const playPath = new ck.Path()
-      const px = x + 8,
-        py = y - badgeH / 2 - 4
-      playPath.moveTo(px, py - 4)
-      playPath.lineTo(px + 6, py)
-      playPath.lineTo(px, py + 4)
-      playPath.close()
-      canvas.drawPath(playPath, paints.handleStrokePaint)
-      playPath.delete()
-    }
+    const playPath = new ck.Path()
+    const px = x + 8,
+      py = y - badgeH / 2 - 4
+    playPath.moveTo(px, py - 4)
+    playPath.lineTo(px + 6, py)
+    playPath.lineTo(px, py + 4)
+    playPath.close()
+    canvas.drawPath(playPath, paints.handleStrokePaint)
+    playPath.delete()
   }
 }
 
@@ -480,31 +451,29 @@ function drawSelectedConnectorHandles(
     if (!node || node.type === 'CANVAS') continue
 
     const bounds = graph.getAbsoluteBounds(selectedId)
-    if (bounds) {
-      const rx = (bounds.x + bounds.width) * zoom + panX + 8,
-        ry = (bounds.y + bounds.height / 2) * zoom + panY
-      canvas.drawCircle(rx, ry, 7, paints.fillPaint)
+    const rx = (bounds.x + bounds.width) * zoom + panX + 8,
+      ry = (bounds.y + bounds.height / 2) * zoom + panY
+    canvas.drawCircle(rx, ry, 7, paints.fillPaint)
 
-      const plusPath = new ck.Path()
-      plusPath.moveTo(rx - 4, ry)
-      plusPath.lineTo(rx + 4, ry)
-      plusPath.moveTo(rx, ry - 4)
-      plusPath.lineTo(rx, ry + 4)
-      canvas.drawPath(plusPath, paints.handleStrokePaint)
-      plusPath.delete()
+    const plusPath = new ck.Path()
+    plusPath.moveTo(rx - 4, ry)
+    plusPath.lineTo(rx + 4, ry)
+    plusPath.moveTo(rx, ry - 4)
+    plusPath.lineTo(rx, ry + 4)
+    canvas.drawPath(plusPath, paints.handleStrokePaint)
+    plusPath.delete()
 
-      const lx = bounds.x * zoom + panX - 8,
-        ly = (bounds.y + bounds.height / 2) * zoom + panY
-      canvas.drawCircle(lx, ly, 7, paints.fillPaint)
+    const lx = bounds.x * zoom + panX - 8,
+      ly = (bounds.y + bounds.height / 2) * zoom + panY
+    canvas.drawCircle(lx, ly, 7, paints.fillPaint)
 
-      const plusPath2 = new ck.Path()
-      plusPath2.moveTo(lx - 4, ly)
-      plusPath2.lineTo(lx + 4, ly)
-      plusPath2.moveTo(lx, ly - 4)
-      plusPath2.lineTo(lx, ly + 4)
-      canvas.drawPath(plusPath2, paints.handleStrokePaint)
-      plusPath2.delete()
-    }
+    const plusPath2 = new ck.Path()
+    plusPath2.moveTo(lx - 4, ly)
+    plusPath2.lineTo(lx + 4, ly)
+    plusPath2.moveTo(lx, ly - 4)
+    plusPath2.lineTo(lx, ly + 4)
+    canvas.drawPath(plusPath2, paints.handleStrokePaint)
+    plusPath2.delete()
   }
 }
 
@@ -531,14 +500,12 @@ function drawCandidateTargetOutlines(
       .filter((n) => n.type === 'FRAME' || n.type === 'SECTION' || n.type === 'COMPONENT')
     for (const scr of screens) {
       const bounds = graph.getAbsoluteBounds(scr.id)
-      if (bounds) {
-        const rx = bounds.x * zoom + panX,
-          ry = bounds.y * zoom + panY,
-          rw = bounds.width * zoom,
-          rh = bounds.height * zoom
-        const rect = ck.LTRBRect(rx, ry, rx + rw, ry + rh)
-        canvas.drawRect(rect, candidatePaint)
-      }
+      const rx = bounds.x * zoom + panX,
+        ry = bounds.y * zoom + panY,
+        rw = bounds.width * zoom,
+        rh = bounds.height * zoom
+      const rect = ck.LTRBRect(rx, ry, rx + rw, ry + rh)
+      canvas.drawRect(rect, candidatePaint)
     }
     candidatePaint.delete()
   }
@@ -588,50 +555,17 @@ function drawSnapIndicators(
   toScreen: (p: Vector) => Vector,
   paints: OverlayPaints
 ): void {
-  const drawSnapIndicator = (hoveredNodeId: string, hoveredSide: string) => {
-    const bounds = graph.getAbsoluteBounds(hoveredNodeId)
-    if (bounds) {
-      let x1 = 0,
-        y1 = 0,
-        x2 = 0,
-        y2 = 0
-      if (hoveredSide === 'LEFT') {
-        x1 = bounds.x
-        y1 = bounds.y
-        x2 = bounds.x
-        y2 = bounds.y + bounds.height
-      } else if (hoveredSide === 'RIGHT') {
-        x1 = bounds.x + bounds.width
-        y1 = bounds.y
-        x2 = bounds.x + bounds.width
-        y2 = bounds.y + bounds.height
-      } else if (hoveredSide === 'TOP') {
-        x1 = bounds.x
-        y1 = bounds.y
-        x2 = bounds.x + bounds.width
-        y2 = bounds.y
-      } else if (hoveredSide === 'BOTTOM') {
-        x1 = bounds.x
-        y1 = bounds.y + bounds.height
-        x2 = bounds.x + bounds.width
-        y2 = bounds.y + bounds.height
-      }
-
-      const p1 = toScreen({ x: x1, y: y1 })
-      const p2 = toScreen({ x: x2, y: y2 })
-      canvas.drawLine(p1.x, p1.y, p2.x, p2.y, paints.snapPaint)
-    }
-  }
-
-  if (overlays.prototypeReconnectDrag) {
-    const drag = overlays.prototypeReconnectDrag
-    if (drag.hoveredNodeId && drag.hoveredSide) {
-      drawSnapIndicator(drag.hoveredNodeId, drag.hoveredSide)
-    }
-  } else if (overlays.prototypeDragLine) {
-    const drag = overlays.prototypeDragLine
-    if (drag.hoveredNodeId && drag.hoveredSide) {
-      drawSnapIndicator(drag.hoveredNodeId, drag.hoveredSide)
-    }
-  }
+  const drag = overlays.prototypeReconnectDrag ?? overlays.prototypeDragLine
+  if (!drag?.hoveredNodeId || !drag.hoveredSide) return
+  const b = graph.getAbsoluteBounds(drag.hoveredNodeId)
+  const s = drag.hoveredSide
+  const p1 = toScreen({
+    x: s === 'RIGHT' ? b.x + b.width : b.x,
+    y: s === 'BOTTOM' ? b.y + b.height : b.y
+  })
+  const p2 = toScreen({
+    x: s === 'LEFT' ? b.x : b.x + b.width,
+    y: s === 'TOP' ? b.y : b.y + b.height
+  })
+  canvas.drawLine(p1.x, p1.y, p2.x, p2.y, paints.snapPaint)
 }

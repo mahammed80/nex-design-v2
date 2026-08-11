@@ -77,20 +77,32 @@ export function createEditor(options?: EditorOptions) {
     return events.on(event, handler)
   }
 
+  let _renderScheduled = false
+
   function requestRender() {
     state.renderVersion++
     state.sceneVersion++
-    emitEditorEvent('render:requested', {
-      renderVersion: state.renderVersion,
-      sceneVersion: state.sceneVersion
+    if (_renderScheduled) return
+    _renderScheduled = true
+    void Promise.resolve().then(() => {
+      _renderScheduled = false
+      emitEditorEvent('render:requested', {
+        renderVersion: state.renderVersion,
+        sceneVersion: state.sceneVersion
+      })
     })
   }
 
   function requestRepaint() {
     state.renderVersion++
-    emitEditorEvent('repaint:requested', {
-      renderVersion: state.renderVersion,
-      sceneVersion: state.sceneVersion
+    if (_renderScheduled) return
+    _renderScheduled = true
+    void Promise.resolve().then(() => {
+      _renderScheduled = false
+      emitEditorEvent('repaint:requested', {
+        renderVersion: state.renderVersion,
+        sceneVersion: state.sceneVersion
+      })
     })
   }
 
@@ -103,6 +115,7 @@ export function createEditor(options?: EditorOptions) {
       previous.some((id, index) => id !== selected[index])
     ) {
       emitEditorEvent('selection:changed', selected, previous)
+      requestRender()
     }
   }
 
@@ -129,7 +142,7 @@ export function createEditor(options?: EditorOptions) {
   }
 
   // Build the shared context
-  const ctx: EditorContext = {
+  const _ctx: EditorContext = {
     get graph() {
       return _graph
     },
@@ -153,21 +166,21 @@ export function createEditor(options?: EditorOptions) {
   }
 
   // Assemble domain modules
-  const viewport = createViewportActions(ctx)
-  const selection = createSelectionActions(ctx)
-  const pages = createPageActions(ctx)
-  const shapes = createShapeActions(ctx)
-  const structure = createStructureActions(ctx)
-  const components = createComponentActions(ctx)
-  const clipboard = createClipboardActions(ctx)
-  const colorSpace = createColorSpaceActions(ctx)
-  const undoActions = createUndoActions(ctx)
-  const text = createTextActions(ctx)
-  const nodes = createNodeActions(ctx)
-  const variables = createVariableActions(ctx)
-  const alignment = createAlignmentActions(ctx)
-  const prototype = createPrototypeActions(ctx)
-  const guides = createGuidesActions(ctx)
+  const viewport = createViewportActions(_ctx)
+  const selection = createSelectionActions(_ctx)
+  const pages = createPageActions(_ctx)
+  const shapes = createShapeActions(_ctx)
+  const structure = createStructureActions(_ctx)
+  const components = createComponentActions(_ctx)
+  const clipboard = createClipboardActions(_ctx)
+  const colorSpace = createColorSpaceActions(_ctx)
+  const undoActions = createUndoActions(_ctx)
+  const text = createTextActions(_ctx)
+  const nodes = createNodeActions(_ctx)
+  const variables = createVariableActions(_ctx)
+  const alignment = createAlignmentActions(_ctx)
+  const prototype = createPrototypeActions(_ctx)
+  const guides = createGuidesActions(_ctx)
   const clipboardBridge = createClipboardBridge(clipboard, selection)
   const componentBridge = createComponentBridge(components, selection, structure, pages)
   const structureBridge = createStructureBridge(structure, selection)
@@ -191,6 +204,7 @@ export function createEditor(options?: EditorOptions) {
 
   function replaceGraph(newGraph: SceneGraph) {
     _graph = newGraph
+    undo.clear()
     subscribeToGraph()
     const previousPageId = state.currentPageId
     state.currentPageId = _graph.getPages()[0]?.id ?? _graph.rootId
@@ -213,6 +227,9 @@ export function createEditor(options?: EditorOptions) {
     },
     get textEditor() {
       return _textEditor
+    },
+    get ctx() {
+      return _ctx
     },
     undo,
     state,

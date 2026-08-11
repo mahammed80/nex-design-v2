@@ -12,6 +12,11 @@ const selectCls = useSelectUI({
 })
 
 const open = ref(false)
+
+function handleSelect(family: string) {
+  open.value = false
+  emit('select', family)
+}
 </script>
 
 <template>
@@ -30,12 +35,7 @@ const open = ref(false)
         @interact-outside="(e) => e.preventDefault()"
         class="z-[100] w-[280px] h-[400px] rounded-xl border border-border bg-panel p-0 shadow-2xl overflow-hidden flex flex-col"
       >
-        <FontsPanel
-          @select="
-            open = false
-            emit('select', $event)
-          "
-        />
+        <FontsPanel @select="handleSelect" />
       </PopoverContent>
     </PopoverPortal>
   </PopoverRoot>

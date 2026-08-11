@@ -15,6 +15,9 @@ export function getCachedDropShadow(
   let filter = r.imageFilterCache.get(key)
   if (!filter) {
     filter = r.ck.ImageFilter.MakeDropShadowOnly(dx, dy, sigma, sigma, color, null)
+    r.evictLru(r.imageFilterCache, (old) => {
+      if (old) old.delete()
+    })
     r.imageFilterCache.set(key, filter)
   }
   return filter
@@ -25,6 +28,9 @@ export function getCachedBlur(r: SkiaRenderer, sigma: number): ImageFilter {
   let filter = r.imageFilterCache.get(key)
   if (!filter) {
     filter = r.ck.ImageFilter.MakeBlur(sigma, sigma, r.ck.TileMode.Clamp, null)
+    r.evictLru(r.imageFilterCache, (old) => {
+      if (old) old.delete()
+    })
     r.imageFilterCache.set(key, filter)
   }
   return filter
@@ -35,6 +41,9 @@ export function getCachedDecalBlur(r: SkiaRenderer, sigma: number): ImageFilter 
   let filter = r.imageFilterCache.get(key)
   if (!filter) {
     filter = r.ck.ImageFilter.MakeBlur(sigma, sigma, r.ck.TileMode.Decal, null)
+    r.evictLru(r.imageFilterCache, (old) => {
+      if (old) old.delete()
+    })
     r.imageFilterCache.set(key, filter)
   }
   return filter
@@ -44,6 +53,9 @@ export function getCachedMaskBlur(r: SkiaRenderer, sigma: number): MaskFilter {
   let filter = r.maskFilterCache.get(sigma)
   if (!filter) {
     filter = r.ck.MaskFilter.MakeBlur(r.ck.BlurStyle.Normal, sigma, true)
+    r.evictLru(r.maskFilterCache, (old) => {
+      if (old) old.delete()
+    })
     r.maskFilterCache.set(sigma, filter)
   }
   return filter

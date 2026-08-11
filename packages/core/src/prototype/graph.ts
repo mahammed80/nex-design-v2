@@ -18,7 +18,7 @@ export function navigationReactionFor(
     node.reactions.find(
       (r) =>
         r.trigger.type === triggerType &&
-        r.actions.some((a: any) => a.type === 'NAVIGATE' && a.destinationId)
+        r.actions.some((a) => a.type === 'NAVIGATE' && a.destinationId)
     ) ?? null
   )
 }
@@ -27,8 +27,7 @@ function navigationDestination(
   reaction: NonNullable<SceneNode['reactions']>[number]
 ): string | null {
   return (
-    reaction?.actions.find((a: any) => a.type === 'NAVIGATE' && a.destinationId)?.destinationId ??
-    null
+    reaction.actions.find((a) => a.type === 'NAVIGATE' && a.destinationId)?.destinationId ?? null
   )
 }
 
@@ -123,7 +122,7 @@ export class PrototypeGraph {
 
   controlPoints(conn: PrototypeConnection): [Vector | null, Vector | null] {
     const g = this.geometry(conn)
-    if (!g || g.kind !== 'cubic') return [null, null]
+    if (g?.kind !== 'cubic') return [null, null]
     return [g.cp1, g.cp2]
   }
 

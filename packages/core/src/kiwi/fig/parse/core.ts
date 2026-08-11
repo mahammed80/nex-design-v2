@@ -70,8 +70,10 @@ export function parseFigKiwiContainer(data: Uint8Array): FigKiwiPayload | null {
   } else {
     try {
       dataRaw = inflateSync(compressed)
-    } catch {
-      dataRaw = compressed
+    } catch (e) {
+      throw new Error(
+        `Failed to decompress .fig data chunk: ${e instanceof Error ? e.message : 'unknown error'}`
+      )
     }
   }
 

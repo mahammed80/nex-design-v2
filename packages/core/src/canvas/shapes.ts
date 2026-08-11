@@ -169,6 +169,9 @@ export function getVectorPaths(r: SkiaRenderer, node: SceneNode): Path[] | null 
   const cached = r.vectorPathCache.get(node.id)
   if (cached) return cached
   const paths = vectorNetworkToPath(r.ck, node.vectorNetwork)
+  r.evictLru(r.vectorPathCache, (old) => {
+    for (const p of old) p.delete()
+  })
   r.vectorPathCache.set(node.id, paths)
   return paths
 }
@@ -180,6 +183,9 @@ export function getFillGeometry(r: SkiaRenderer, node: SceneNode): Path[] | null
   const paths = node.fillGeometry.map((g) =>
     geometryBlobToPath(r.ck, g.commandsBlob, g.windingRule)
   )
+  r.evictLru(r.fillGeometryCache, (old) => {
+    for (const p of old) p.delete()
+  })
   r.fillGeometryCache.set(node.id, paths)
   return paths
 }
@@ -191,6 +197,9 @@ export function getStrokeGeometry(r: SkiaRenderer, node: SceneNode): Path[] | nu
   const paths = node.strokeGeometry.map((g) =>
     geometryBlobToPath(r.ck, g.commandsBlob, g.windingRule)
   )
+  r.evictLru(r.strokeGeometryCache, (old) => {
+    for (const p of old) p.delete()
+  })
   r.strokeGeometryCache.set(node.id, paths)
   return paths
 }

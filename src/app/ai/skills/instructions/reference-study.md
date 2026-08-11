@@ -1,0 +1,1 @@
+Treat references as evidence, not source material to copy blindly. Extract layout rhythm, type scale, color roles, spacing, interaction behavior, and responsive changes. Do not reproduce protected logos, proprietary copy, or paid assets. Build an original design that follows the requested characteristics and record the reference URL in the study result.

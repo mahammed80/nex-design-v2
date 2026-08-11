@@ -2,17 +2,12 @@
 import { TooltipProvider } from 'reka-ui'
 import { computed, ref } from 'vue'
 
-import ProviderModelSelect from '@/components/chat/ProviderModelSelect.vue'
-import ProviderSettings from '@/components/chat/ProviderSettings/ProviderSettings.vue'
 import Tip from '@/components/ui/Tip.vue'
 import { useButtonUI } from '@/components/ui/button'
 import { useInputUI } from '@/components/ui/input'
-import { useAIChat } from '@/app/ai/chat/use'
+import { POOLSIDE_MODEL_NAME } from '@/app/ai/poolside'
 import { useI18n } from '@nex-design/vue'
 
-import { ACP_AGENTS } from '@nex-design/core/constants'
-
-const { providerID, providerDef, modelID, customModelID } = useAIChat()
 const { dialogs } = useI18n()
 
 const { status } = defineProps<{
@@ -27,20 +22,6 @@ const emit = defineEmits<{
 const input = ref('')
 
 const isStreaming = computed(() => status === 'streaming' || status === 'submitted')
-const isACPProvider = computed(() => providerID.value.startsWith('acp:'))
-const acpAgentName = computed(() => {
-  const agentId = providerID.value.replace('acp:', '')
-  return ACP_AGENTS.find((a) => a.id === agentId)?.name ?? agentId
-})
-const isCustomProvider = computed(
-  () => providerID.value === 'openai-compatible' || providerID.value === 'anthropic-compatible'
-)
-
-const selectedModelName = computed(() => {
-  if (isCustomProvider.value) return customModelID.value || 'No model'
-  return providerDef.value.models.find((m) => m.id === modelID.value)?.name ?? modelID.value
-})
-
 function handleSubmit(e: Event) {
   e.preventDefault()
   const text = input.value.trim()
@@ -53,29 +34,13 @@ function handleSubmit(e: Event) {
 <template>
   <TooltipProvider>
     <div class="shrink-0 border-t border-border px-3 py-2">
-      <!-- Model selector & settings -->
       <div class="mb-1.5 flex items-center gap-1">
-        <template v-if="isACPProvider">
-          <div class="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-muted">
-            <icon-lucide-bot class="size-3" />
-            {{ acpAgentName }}
-          </div>
-        </template>
-        <template v-else-if="isCustomProvider">
-          <div
-            class="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-muted"
-            data-test-id="chat-custom-model-label"
-          >
-            <icon-lucide-bot class="size-3" />
-            {{ selectedModelName }}
-          </div>
-        </template>
-        <ProviderModelSelect v-else>
-          <template #value>{{ selectedModelName }}</template>
-        </ProviderModelSelect>
-
-        <div class="ml-auto">
-          <ProviderSettings />
+        <div
+          class="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-muted"
+          data-test-id="chat-poolside-model-label"
+        >
+          <icon-lucide-bot class="size-3" />
+          {{ POOLSIDE_MODEL_NAME }}
         </div>
       </div>
 

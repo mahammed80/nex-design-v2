@@ -5,7 +5,7 @@ import type { SceneNode } from '#core/scene-graph'
 export function wrapSelectionInContainer(
   ctx: EditorContext,
   isTopLevel: (parentId: string | null) => boolean,
-  containerType: 'GROUP' | 'FRAME' | 'COMPONENT' | 'COMPONENT_SET',
+  containerType: 'GROUP' | 'FRAME' | 'COMPONENT' | 'COMPONENT_SET' | 'BOOLEAN_OPERATION',
   selectedNodes: SceneNode[],
   extraProps?: Partial<SceneNode>
 ) {
@@ -41,7 +41,8 @@ export function wrapSelectionInContainer(
     COMPONENT_SET: selectedNodes[0].name.split('/')[0]?.trim() || 'Component Set',
     COMPONENT: 'Component',
     GROUP: 'Group',
-    FRAME: 'Frame'
+    FRAME: 'Frame',
+    BOOLEAN_OPERATION: 'Boolean union'
   }
   const containerNode = ctx.graph.createNode(containerType, parentId, {
     name: containerNames[containerType] ?? containerType,

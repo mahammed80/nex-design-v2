@@ -6,6 +6,7 @@ import {
   diffCreate,
   diffShow
 } from './analyze'
+import { designSkeleton, designContent, designRefine } from './design-workflow'
 import { designToComponentMap, designToTokens } from './codegen'
 import {
   createComponent,
@@ -187,5 +188,9 @@ export const EXTENDED_TOOLS: ToolDef[] = [
   diffShow,
   // Codegen
   designToTokens,
-  designToComponentMap
+  designToComponentMap,
+  // Orchestrator
+  designSkeleton,
+  designContent,
+  designRefine
 ]

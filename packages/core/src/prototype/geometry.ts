@@ -31,6 +31,8 @@ function sideNormal(side: ConnectionSide): Vector {
       return { x: 0, y: 1 }
     case 'TOP':
       return { x: 0, y: -1 }
+    default:
+      return { x: 1, y: 0 }
   }
 }
 
@@ -50,6 +52,8 @@ export function anchorPoint(
       return { x: bounds.x + bounds.width * o, y: bounds.y - margin }
     case 'BOTTOM':
       return { x: bounds.x + bounds.width * o, y: bounds.y + bounds.height + margin }
+    default:
+      return { x: bounds.x + bounds.width + margin, y: bounds.y + bounds.height * o }
   }
 }
 
@@ -127,7 +131,8 @@ export function buildConnectionGeometry(
     }
   }
 
-  const curvature = conn.curvature ?? DEFAULT_CONNECTION_CURVATURE
+  const curvature =
+    typeof conn.curvature === 'number' ? conn.curvature : DEFAULT_CONNECTION_CURVATURE
   const dist = Math.max(60, hypot(targetPoint.x - sourcePoint.x, targetPoint.y - sourcePoint.y))
   const spacing = dist * curvature
   const n1 = sideNormal(sourceAnchor.side)

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { ParamDef, ParamType } from '@nex-design/core/tools'
+import { isValidColor } from '@nex-design/core/tools'
 
 export function paramToZod(param: ParamDef): z.ZodType {
   const typeMap: Record<ParamType, () => z.ZodType> = {
@@ -15,7 +16,11 @@ export function paramToZod(param: ParamDef): z.ZodType {
       return schema.describe(param.description)
     },
     boolean: () => z.boolean().describe(param.description),
-    color: () => z.string().describe(param.description),
+    color: () =>
+      z
+        .string()
+        .refine(isValidColor, { message: 'Color must be a hex string like #ff0000 or #ff000080' })
+        .describe(param.description),
     'string[]': () => z.array(z.string()).min(1).describe(param.description)
   }
 

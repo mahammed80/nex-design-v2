@@ -27,4 +27,5 @@ const mcpServer = new McpServer({ name: 'nex-design', version: MCP_VERSION })
 registerTools(mcpServer, { enableEval, mcpRoot, sendRpc: bridge.sendRpc })
 
 const transport = new StdioServerTransport()
+transport.onclose = () => bridge.close()
 void mcpServer.connect(transport)

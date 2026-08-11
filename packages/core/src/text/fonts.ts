@@ -98,6 +98,9 @@ export class FontManager {
   private fallbackUserAgent: string | undefined
   private googleFontsCache = new Map<string, Record<string, string>>()
   private googleFontsFailed = new Set<string>()
+  private googleFontsPending = new Map<string, Promise<Record<string, string> | null>>()
+  private googleFontsQueue: Promise<void> = Promise.resolve()
+  private googleFontsBackoffUntil = 0
   private cjkFallbackFamilies: string[] = []
   private cjkFallbackPromise: Promise<string[]> | null = null
   private arabicFallbackFamilies: string[] = []
@@ -183,7 +186,7 @@ export class FontManager {
   }
 
   async listFamilies(): Promise<string[]> {
-    const fonts = this.localFonts ?? (await this.requestLocalFontAccess())
+    const fonts = this.localFonts ?? []
     return [...new Set(fonts.map((f) => f.family))].sort()
   }
 
@@ -217,6 +220,16 @@ export class FontManager {
     const localBuffer = await this.findLocalFont(family, style)
     if (localBuffer) return this.registerAndCache(family, style, localBuffer)
 
+    const bundledUrl = BUNDLED_FONTS[cacheKey]
+    if (bundledUrl) {
+      try {
+        const buffer = await this.fetchBundledFont(bundledUrl)
+        if (buffer && !isVariableFont(buffer)) return this.registerAndCache(family, style, buffer)
+      } catch (e) {
+        console.warn(`Bundled font load failed for "${family}" ${style}:`, e)
+      }
+    }
+
     if (typeof fetch !== 'undefined') {
       try {
         const buffer = await this.fetchGoogleFont(family, style)
@@ -226,16 +239,6 @@ export class FontManager {
         }
       } catch (e) {
         console.warn(`Google Fonts fetch failed for "${family}" ${style}:`, e)
-      }
-    }
-
-    const bundledUrl = BUNDLED_FONTS[cacheKey]
-    if (bundledUrl) {
-      try {
-        const buffer = await this.fetchBundledFont(bundledUrl)
-        if (buffer && !isVariableFont(buffer)) return this.registerAndCache(family, style, buffer)
-      } catch (e) {
-        console.warn(`Bundled font load failed for "${family}" ${style}:`, e)
       }
     }
 
@@ -401,12 +404,36 @@ export class FontManager {
   private async fetchGoogleFontFiles(family: string): Promise<Record<string, string> | null> {
     if (this.googleFontsCache.has(family)) return this.googleFontsCache.get(family) ?? null
     if (this.googleFontsFailed.has(family)) return null
+    if (Date.now() < this.googleFontsBackoffUntil) return null
+    const pending = this.googleFontsPending.get(family)
+    if (pending) return pending
+
+    const request = this.googleFontsQueue.then(() => this.fetchGoogleFontFilesQueued(family))
+    this.googleFontsPending.set(family, request)
+    this.googleFontsQueue = request.then(
+      () => undefined,
+      () => undefined
+    )
+    try {
+      return await request
+    } finally {
+      this.googleFontsPending.delete(family)
+    }
+  }
+
+  private async fetchGoogleFontFilesQueued(family: string): Promise<Record<string, string> | null> {
+    if (Date.now() < this.googleFontsBackoffUntil) return null
 
     const url = `https://www.googleapis.com/webfonts/v1/webfonts?family=${encodeURIComponent(family)}&key=${GOOGLE_FONTS_API_KEY}`
     let response: Response
     try {
       response = await fetch(url)
     } catch {
+      this.googleFontsFailed.add(family)
+      return null
+    }
+    if (response.status === 429) {
+      this.googleFontsBackoffUntil = Date.now() + 5 * 60 * 1000
       this.googleFontsFailed.add(family)
       return null
     }
@@ -445,7 +472,9 @@ export class FontManager {
     style?: string,
     options: FindLocalFontOptions = {}
   ): Promise<ArrayBuffer | null> {
-    if (!IS_BROWSER || !window.queryLocalFonts) return null
+    if (!IS_BROWSER || !window.queryLocalFonts || this.localFontAccessState !== 'granted') {
+      return null
+    }
     try {
       const fonts = await this.getRawLocalFonts()
       const families = [family]

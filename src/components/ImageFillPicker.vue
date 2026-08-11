@@ -184,17 +184,24 @@ const bgRemovalEnabled = computed({
   set: (val: boolean) => updateBgRemovalSetting('enabled', val)
 })
 
+import { IS_BROWSER } from '@/constants'
+
 const bgTargetColorHex = computed(() => {
   return rgbToHex(fill.filters?.bgRemoval?.targetColor ?? [0, 1, 0])
 })
 
-const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window
+const hasEyeDropper = IS_BROWSER && 'EyeDropper' in window
 
 async function startEyeDropper() {
   if (!hasEyeDropper) return
   try {
-    // @ts-ignore
-    const eyeDropper = new EyeDropper()
+    const EyeDropperClass = (
+      window as Window & {
+        EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> }
+      }
+    ).EyeDropper
+    if (!EyeDropperClass) return
+    const eyeDropper = new EyeDropperClass()
     const result = await eyeDropper.open()
     updateBgTargetColor(result.sRGBHex)
   } catch (err) {
@@ -225,7 +232,7 @@ async function toggleBgRemoval() {
   updateBgRemovalSetting('enabled', nextVal)
 }
 
-function updateBgRemovalSetting(key: keyof BgRemovalSettings, value: any) {
+function updateBgRemovalSetting(key: keyof BgRemovalSettings, value: unknown) {
   const currentFilters = fill.filters ?? {}
   const currentBg = currentFilters.bgRemoval ?? {}
   const newBg = { ...currentBg, [key]: value }
@@ -259,7 +266,7 @@ function updateBlendColor(hex: string) {
   updateBlendSetting('color', hexToRgb(hex))
 }
 
-function updateBlendSetting(key: keyof BlendSettings, value: any) {
+function updateBlendSetting(key: keyof BlendSettings, value: unknown) {
   const currentFilters = fill.filters ?? {}
   const currentBlend = currentFilters.blend ?? {}
   const newBlend = { ...currentBlend, [key]: value }
@@ -387,7 +394,7 @@ const curvePath = computed(() => {
   return d
 })
 
-function updateFilter(key: keyof ImageFilters, value: any) {
+function updateFilter(key: keyof ImageFilters, value: unknown) {
   const currentFilters = fill.filters ?? {}
   const newFilters = { ...currentFilters, [key]: value }
 
@@ -504,34 +511,35 @@ function resetAdjustments() {
   emit('update', { ...fill, filters: undefined })
 }
 
+function checkNumericFilters(f: ImageFilters): boolean {
+  const numericKeys: (keyof ImageFilters)[] = [
+    'brightness',
+    'contrast',
+    'exposure',
+    'highlights',
+    'shadows',
+    'whites',
+    'blacks',
+    'gamma',
+    'hue',
+    'saturation',
+    'vibrance',
+    'temperature',
+    'tint',
+    'cyan',
+    'magenta',
+    'yellow',
+    'key'
+  ]
+  return numericKeys.some((k) => ((f[k] as number | undefined) ?? 0) !== 0)
+}
+
 const hasAnyFilters = computed(() => {
   const f = fill.filters
   if (!f) return false
-
-  return (
-    (f.brightness ?? 0) !== 0 ||
-    (f.contrast ?? 0) !== 0 ||
-    (f.exposure ?? 0) !== 0 ||
-    (f.highlights ?? 0) !== 0 ||
-    (f.shadows ?? 0) !== 0 ||
-    (f.whites ?? 0) !== 0 ||
-    (f.blacks ?? 0) !== 0 ||
-    (f.gamma ?? 0) !== 0 ||
-    (f.hue ?? 0) !== 0 ||
-    (f.saturation ?? 0) !== 0 ||
-    (f.vibrance ?? 0) !== 0 ||
-    (f.temperature ?? 0) !== 0 ||
-    (f.tint ?? 0) !== 0 ||
-    (f.cyan ?? 0) !== 0 ||
-    (f.magenta ?? 0) !== 0 ||
-    (f.yellow ?? 0) !== 0 ||
-    (f.key ?? 0) !== 0 ||
-    f.pointsR !== undefined ||
-    f.pointsG !== undefined ||
-    f.pointsB !== undefined ||
-    f.bgRemoval?.enabled === true ||
-    f.blend?.enabled === true
-  )
+  if (checkNumericFilters(f)) return true
+  if (f.pointsR || f.pointsG || f.pointsB) return true
+  return Boolean(f.bgRemoval?.enabled || f.blend?.enabled)
 })
 </script>
 

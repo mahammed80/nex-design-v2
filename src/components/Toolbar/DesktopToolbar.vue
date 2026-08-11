@@ -7,7 +7,7 @@ import { parseColor } from '@nex-design/core/color'
 import Tip from '@/components/ui/Tip.vue'
 import ToolButton from '@/components/Toolbar/ToolButton.vue'
 import ToolFlyout from '@/components/Toolbar/ToolFlyout.vue'
-import { ToolbarItem } from '@nex-design/vue'
+import { ToolbarItem, useSelectionState } from '@nex-design/vue'
 
 import type { Tool } from '@nex-design/vue'
 import type { EditorToolDef, Editor } from '@nex-design/core/editor'
@@ -27,6 +27,12 @@ const { editor, tools, activeTool, toolIcons, toolLabels, toolShortcuts, ui } = 
 const emit = defineEmits<{
   setTool: [tool: Tool]
 }>()
+
+const { selectedCount } = useSelectionState()
+
+function performBoolean(op: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE') {
+  editor.createBooleanOperation(op)
+}
 
 function isActive(tool: EditorToolDef) {
   return tool.key === activeTool || (tool.flyout?.includes(activeTool) ?? false)
@@ -177,7 +183,6 @@ async function insertIcon(iconName: string) {
 
     editor.undo.commitBatch()
     editor.requestRender()
-    editor.state.sceneVersion++
   } catch (e) {
     console.error(e)
   }
@@ -217,6 +222,57 @@ async function insertIcon(iconName: string) {
           </Tip>
         </ToolbarItem>
       </template>
+
+      <!-- Boolean Operations Popover (Shown when 2+ shapes selected) -->
+      <PopoverRoot v-if="selectedCount >= 2">
+        <PopoverTrigger as-child>
+          <button
+            data-test-id="toolbar-boolean-operations"
+            class="flex size-8 cursor-pointer items-center justify-center rounded-lg bg-accent/15 text-accent hover:bg-accent/25 transition-colors"
+            title="Boolean Operations"
+          >
+            <icon-lucide-combine class="size-4.5" />
+          </button>
+        </PopoverTrigger>
+
+        <PopoverPortal>
+          <PopoverContent
+            side="top"
+            :side-offset="8"
+            align="center"
+            class="z-50 min-w-44 rounded-xl border border-border bg-panel p-1.5 shadow-xl flex flex-col gap-0.5"
+          >
+            <button
+              class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-xs text-surface hover:bg-hover transition-colors"
+              @click="performBoolean('UNION')"
+            >
+              <icon-lucide-combine class="size-3.5 text-accent" />
+              Union Selection
+            </button>
+            <button
+              class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-xs text-surface hover:bg-hover transition-colors"
+              @click="performBoolean('SUBTRACT')"
+            >
+              <icon-lucide-minus-circle class="size-3.5 text-accent" />
+              Subtract Selection
+            </button>
+            <button
+              class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-xs text-surface hover:bg-hover transition-colors"
+              @click="performBoolean('INTERSECT')"
+            >
+              <icon-lucide-squares-intersect class="size-3.5 text-accent" />
+              Intersect Selection
+            </button>
+            <button
+              class="flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-xs text-surface hover:bg-hover transition-colors"
+              @click="performBoolean('EXCLUDE')"
+            >
+              <icon-lucide-slash class="size-3.5 text-accent" />
+              Exclude Selection
+            </button>
+          </PopoverContent>
+        </PopoverPortal>
+      </PopoverRoot>
 
       <!-- Custom Icon Popover -->
       <PopoverRoot>

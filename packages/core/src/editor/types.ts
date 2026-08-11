@@ -2,6 +2,7 @@ import type { CanvasKit } from 'canvaskit-wasm'
 
 import type { RulerTheme, SkiaRenderer } from '#core/canvas/renderer'
 import type { RenderOverlays } from '#core/canvas/renderer/types'
+import type { ConnectionSide } from '#core/prototype'
 import type { SceneGraph, SceneNode, VectorSegment, VectorVertex } from '#core/scene-graph'
 import type { SnapGuide } from '#core/scene-graph/snap'
 import type { UndoManager } from '#core/scene-graph/undo'
@@ -33,7 +34,7 @@ export interface EditorState {
     endX: number
     endY: number
     hoveredNodeId?: string | null
-    hoveredSide?: import('#core/prototype').ConnectionSide | null
+    hoveredSide?: ConnectionSide | null
   } | null
   prototypeReconnectDrag: {
     connectionId: string
@@ -41,7 +42,7 @@ export interface EditorState {
     currentX: number
     currentY: number
     hoveredNodeId: string | null
-    hoveredSide: import('#core/prototype').ConnectionSide | null
+    hoveredSide: ConnectionSide | null
   } | null
   snapGuides: SnapGuide[]
   rotationPreview: { nodeId: string; angle: number } | null

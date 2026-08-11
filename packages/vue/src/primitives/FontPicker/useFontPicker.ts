@@ -53,7 +53,8 @@ export function useFontPicker(options: UseFontPickerOptions) {
   const filtered = computed(() => {
     let list = families.value
     if (providerFilter.value !== 'all' && options.providerMap) {
-      list = list.filter((family) => options.providerMap![family] === providerFilter.value)
+      const map = options.providerMap
+      list = list.filter((family) => map[family] === providerFilter.value)
     }
     if (!searchTerm.value) return list
     return list.filter((family) => contains(family, searchTerm.value))

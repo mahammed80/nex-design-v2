@@ -8,8 +8,13 @@ import { fontManager } from '@nex-design/core/text'
 import { CORE_TOOLS, toolsToAI } from '@nex-design/core/tools'
 import type { StepBudget, ToolLogEntry } from '@nex-design/core/tools'
 
+import { getAgentMemoryRequest, recordGenerationMemory } from '@/app/ai/memory/storage'
+import { finishAgentToolProgress, recordAgentToolProgress } from '@/app/ai/orchestration/progress'
+import { studyReference } from '@/app/ai/reference/tool'
+import { studyReferenceUrl } from '@/app/ai/reference/study-url'
 import { makeFigmaFromStore } from '@/app/automation/bridge/figma-factory'
 import { getActiveEditorStore } from '@/app/editor/active-store'
+import { runOrchestratorTool } from '@/app/ai/orchestrator/tool'
 import type { EditorStore } from '@/app/editor/active-store'
 
 export const MAX_AGENT_STEPS = 50
@@ -87,10 +92,11 @@ export function createAITools(store: EditorStore) {
   const runState = getRunState(store)
 
   return toolsToAI(
-    CORE_TOOLS,
+    [...CORE_TOOLS, studyReference, studyReferenceUrl, runOrchestratorTool],
     {
       getFigma: () => makeFigmaFromStore(store),
       onBeforeExecute: (def) => {
+        recordAgentToolProgress(store, def.name)
         if (def.mutates) {
           beforeSnapshot = store.snapshotPage()
         }
@@ -125,7 +131,14 @@ export function createAITools(store: EditorStore) {
             })
             beforeSnapshot = null
           }
+          recordGenerationMemory({
+            documentName: store.state.documentName,
+            request: getAgentMemoryRequest(store),
+            graph: store.graph,
+            pageId: store.state.currentPageId
+          })
         }
+        finishAgentToolProgress(store)
       },
       onFlashNodes: (nodeIds) => {
         store.renderer?.aiClearActive()

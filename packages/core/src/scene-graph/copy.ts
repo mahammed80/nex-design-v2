@@ -22,8 +22,8 @@ export function cloneNode(node: SceneNode): SceneNode {
     styleRuns: copyStyleRuns(node.styleRuns),
     fillGeometry: copyGeometryPaths(node.fillGeometry),
     strokeGeometry: copyGeometryPaths(node.strokeGeometry),
-    overrides: node.overrides ? structuredClone(node.overrides) : {},
-    layoutGrids: node.layoutGrids ? node.layoutGrids.map((g) => ({ ...g })) : [],
+    overrides: structuredClone(node.overrides),
+    layoutGrids: node.layoutGrids?.map((g) => ({ ...g })) ?? [],
     reactions: node.reactions
       ? node.reactions.map((r) => ({
           trigger: { ...r.trigger },
@@ -47,12 +47,10 @@ export function cloneNode(node: SceneNode): SceneNode {
         tangentStart: { ...s.tangentStart },
         tangentEnd: { ...s.tangentEnd }
       })),
-      regions: node.vectorNetwork.regions ? structuredClone(node.vectorNetwork.regions) : []
+      regions: structuredClone(node.vectorNetwork.regions)
     }
   }
-  if (node.boundVariables) {
-    clone.boundVariables = structuredClone(node.boundVariables)
-  }
+  clone.boundVariables = structuredClone(node.boundVariables)
   if (node.textPicture) {
     clone.textPicture = node.textPicture.slice()
   }

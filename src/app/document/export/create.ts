@@ -65,10 +65,31 @@ export function createDocumentExportActions(
     await exportTarget(getSelectionExportTarget(), formatId, { scale })
   }
 
+  async function renderExportBlob(
+    nodeId: string,
+    scale: number,
+    formatId: string
+  ): Promise<Blob | null> {
+    const format = io.getFormat(formatId)
+    if (!format) return null
+
+    const exportOptions = getExportOptions(formatId, { scale })
+    const result = await io.exportContent(
+      formatId,
+      { graph: editor.graph, target: { scope: 'node', nodeId } },
+      exportOptions,
+      editor.renderer ? { canvasKit: editor.renderer.ck, renderer: editor.renderer } : undefined
+    )
+
+    const bytes = getExportBytes(result.data)
+    return new Blob([bytes.buffer as ArrayBuffer], { type: result.mimeType })
+  }
+
   return {
     renderExportImage,
     listSelectionExportFormats,
     exportTarget,
-    exportSelection
+    exportSelection,
+    renderExportBlob
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onUnmounted } from 'vue'
+import { computed, nextTick, ref, watch, onUnmounted } from 'vue'
 import { DialogRoot, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from 'reka-ui'
 import { useElementSize } from '@vueuse/core'
 
@@ -52,6 +52,11 @@ const activeFrame = computed(() => {
   return editor.graph.getNode(activeFrameId.value)
 })
 
+const overlayFrame = computed(() => {
+  const id = presentationManager.activeOverlay.nodeId
+  return id ? (editor.graph.getNode(id) ?? null) : null
+})
+
 // Map of all page nodes for rapid access
 const nodesMap = computed(() => {
   if (!editor) return new Map<string, SceneNode>()
@@ -61,6 +66,16 @@ const nodesMap = computed(() => {
 // Fullscreen API Handling
 const fullscreenRef = ref<HTMLDivElement | null>(null)
 const isFullscreen = ref(false)
+
+async function handlePrototypeInteraction(payload: { nodeId: string; triggerType: string }) {
+  const result = presentationManager.handleInteraction(payload.nodeId, payload.triggerType)
+  if (!result?.scrollTargetId) return
+  await nextTick()
+  const target = document.querySelector<HTMLElement>(
+    `[data-prototype-node-id="${CSS.escape(result.scrollTargetId)}"]`
+  )
+  target?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+}
 
 function toggleFullscreen() {
   if (!fullscreenRef.value) return
@@ -356,13 +371,45 @@ onUnmounted(() => {
                         :node="activeFrame"
                         :nodesMap="nodesMap"
                         :is-root="true"
-                        @interaction="
-                          presentationManager.handleInteraction($event.nodeId, $event.triggerType)
-                        "
+                        @interaction="handlePrototypeInteraction"
                       />
                     </div>
                   </div>
                 </Transition>
+
+                <!-- Active Overlay Layer -->
+                <div
+                  v-if="presentationManager.activeOverlay.isOpen && overlayFrame"
+                  class="absolute inset-0 z-50 flex items-center justify-center transition-all duration-300"
+                  :class="{
+                    'bg-black/50': presentationManager.activeOverlay.settings?.backdrop !== false
+                  }"
+                  :style="{
+                    backgroundColor:
+                      presentationManager.activeOverlay.settings?.backdrop === false
+                        ? undefined
+                        : `rgb(0 0 0 / ${presentationManager.activeOverlay.settings?.backdropOpacity ?? 0.5})`
+                  }"
+                  @click.self="
+                    presentationManager.activeOverlay.settings?.closeOnOutsideClick !== false &&
+                    (presentationManager.activeOverlay.isOpen = false)
+                  "
+                >
+                  <div
+                    class="relative shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 bg-background"
+                    :style="{
+                      width: `${overlayFrame.width}px`,
+                      height: `${overlayFrame.height}px`
+                    }"
+                  >
+                    <PrototypeNode
+                      :node="overlayFrame"
+                      :nodesMap="nodesMap"
+                      :is-root="true"
+                      @interaction="handlePrototypeInteraction"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -72,6 +72,7 @@ export type NodeType =
   | 'INSTANCE'
   | 'CONNECTOR'
   | 'SHAPE_WITH_TEXT'
+  | 'BOOLEAN_OPERATION'
 
 export type FillType =
   | 'SOLID'
@@ -209,7 +210,7 @@ export interface OpenTypeFeatures {
   kerning?: boolean
   ligatures?: boolean
   hinting?: boolean
-  [tag: string]: any
+  [tag: string]: boolean | number | string | undefined
 }
 
 export interface CharacterStyleOverride {
@@ -307,6 +308,7 @@ export interface SceneNode {
   clipsContent: boolean
 
   blendMode: BlendMode
+  booleanOperation?: 'UNION' | 'SUBTRACT' | 'INTERSECT' | 'EXCLUDE'
 
   text: string
   fontSize: number
@@ -428,7 +430,16 @@ export type TriggerType =
   | 'MOUSE_UP'
   | 'AFTER_DELAY'
 
-export type ActionType = 'BACK' | 'CLOSE' | 'NAVIGATE' | 'URL'
+export type ActionType =
+  | 'BACK'
+  | 'CLOSE'
+  | 'NAVIGATE'
+  | 'URL'
+  | 'OPEN_OVERLAY'
+  | 'SWAP_OVERLAY'
+  | 'CHANGE_TO'
+  | 'SET_VARIABLE'
+  | 'SCROLL_TO'
 
 export type TransitionType =
   | 'INSTANT'
@@ -449,11 +460,22 @@ export interface Transition {
   direction?: string
 }
 
+export interface OverlaySettings {
+  position?: 'CENTER' | 'TOP_CENTER' | 'BOTTOM_CENTER' | 'MANUAL'
+  backdrop?: boolean
+  backdropOpacity?: number
+  closeOnOutsideClick?: boolean
+}
+
 export interface Action {
   type: ActionType
-  destinationId?: string // node ID for NAVIGATE
+  destinationId?: string // node ID for NAVIGATE, OPEN_OVERLAY, SWAP_OVERLAY, SCROLL_TO
   url?: string // URL for URL action
   transition?: Transition
+  variantProperties?: Record<string, string> // for CHANGE_TO (Component state transition)
+  variableId?: string // for SET_VARIABLE
+  variableValue?: unknown // for SET_VARIABLE
+  overlay?: OverlaySettings
 }
 
 export interface Trigger {

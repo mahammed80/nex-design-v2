@@ -35,6 +35,8 @@ export function createStdioRpcBridge({
   const pending = new Map<string, PendingRequest>()
   let ws: WebSocket | null = null
   let registered = false
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let closed = false
 
   function rejectAllPending(reason: string) {
     for (const [id, req] of pending) {
@@ -45,6 +47,7 @@ export function createStdioRpcBridge({
   }
 
   function connect() {
+    if (closed) return
     ws = new WebSocket(wsUrl)
 
     ws.on('open', () => {
@@ -84,12 +87,21 @@ export function createStdioRpcBridge({
     ws.on('close', () => {
       registered = false
       rejectAllPending('WebSocket closed')
-      setTimeout(connect, reconnectDelayMs)
+      if (!closed) reconnectTimer = setTimeout(connect, reconnectDelayMs)
     })
 
     ws.on('error', () => {
       ws?.close()
     })
+  }
+
+  function close() {
+    closed = true
+    if (reconnectTimer) clearTimeout(reconnectTimer)
+    reconnectTimer = null
+    rejectAllPending('Bridge closed')
+    ws?.close()
+    ws = null
   }
 
   function sendRpc(body: Record<string, unknown>): Promise<unknown> {
@@ -108,5 +120,5 @@ export function createStdioRpcBridge({
     })
   }
 
-  return { connect, sendRpc }
+  return { connect, sendRpc, close }
 }

@@ -7,11 +7,13 @@ import * as HitTest from './hit-test'
 import * as Instances from './instances'
 import { CONTAINER_TYPES, createDefaultNode } from './node-defaults'
 import * as Traversal from './traversal'
+import { validateSceneGraph } from './validation'
 import * as Variables from './variables'
 import { normalizeVectorNetwork } from './vector-network'
 
 export type { GUID, Color } from '#core/types'
 export * from './types'
+export * from './validation'
 
 import type { Emitter } from 'nanoevents'
 
@@ -41,10 +43,15 @@ export {
 } from './traversal'
 export { hitTestStack } from './hit-test'
 
+let sessionID: number | undefined
 let nextLocalID = 1
 
 export function generateId(): string {
-  return `0:${nextLocalID++}`
+  if (sessionID === undefined) {
+    const bytes = crypto.getRandomValues(new Uint32Array(1))
+    sessionID = bytes[0] >>> 0
+  }
+  return `${sessionID}:${nextLocalID++}`
 }
 
 export class SceneGraph {
@@ -443,18 +450,19 @@ export class SceneGraph {
     const newParent = this.nodes.get(parentId)
     if (!newParent) return
 
-    // Remove from old parent
-    if (oldParent) {
-      oldParent.childIds = oldParent.childIds.filter((cid) => cid !== nodeId)
-    }
-
-    // If same parent, adjust index since we removed the item
     let idx = insertIndex
-    if (
-      oldParent === newParent &&
-      idx > (oldParent.childIds.indexOf(nodeId) === -1 ? idx : oldParent.childIds.length)
-    ) {
-      // Already removed above, no adjustment needed
+
+    if (oldParent === newParent) {
+      const oldIndex = oldParent.childIds.indexOf(nodeId)
+      if (oldIndex === -1) return
+      if (oldIndex < insertIndex) {
+        idx = insertIndex - 1
+      }
+      oldParent.childIds.splice(oldIndex, 1)
+    } else {
+      if (oldParent) {
+        oldParent.childIds = oldParent.childIds.filter((cid) => cid !== nodeId)
+      }
     }
 
     node.parentId = parentId
@@ -471,7 +479,6 @@ export class SceneGraph {
     }
     const newParent = this.getNode(parentId)
     if (!newParent) return
-    newParent.childIds = newParent.childIds.filter((id) => id !== childId)
     newParent.childIds.splice(index, 0, childId)
     const node = this.getNode(childId)
     if (node) node.parentId = parentId
@@ -571,12 +578,14 @@ export class SceneGraph {
   getInstances(componentId: string): SceneNode[] {
     return Instances.getInstances(this, componentId)
   }
+  validate(): string[] {
+    return validateSceneGraph(this.rootId, this.nodes)
+  }
 
   flattenTree(parentId?: string, depth = 0): Array<{ node: SceneNode; depth: number }> {
     const id = parentId ?? this.rootId
     const parent = this.nodes.get(id)
     if (!parent) return []
-
     const result: Array<{ node: SceneNode; depth: number }> = []
     for (const childId of parent.childIds) {
       const child = this.nodes.get(childId)

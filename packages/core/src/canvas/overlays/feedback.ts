@@ -108,10 +108,12 @@ export function drawLayoutInsertIndicator(
   }
 }
 
+import type { Guide } from '#core/editor/types'
+
 export function drawGuides(
   r: SkiaRenderer,
   canvas: Canvas,
-  guides?: import('#core/editor/types').Guide[],
+  guides?: Guide[],
   selectedGuideId?: string | null,
   visible?: boolean
 ): void {

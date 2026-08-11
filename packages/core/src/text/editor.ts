@@ -1,6 +1,7 @@
 import type { CanvasKit, Paragraph } from 'canvaskit-wasm'
 
 import type { SceneNode } from '#core/scene-graph'
+import type { Rect } from '#core/types'
 
 export interface TextCaret {
   x: number
@@ -17,9 +18,13 @@ export interface TextEditorState {
   textDirection: 'LTR' | 'RTL'
 }
 
+export interface TextRenderer {
+  buildParagraph(node: SceneNode, fontProvider?: unknown, options?: unknown): Paragraph | null
+}
+
 export class TextEditor {
   private ck: CanvasKit
-  private renderer: any = null
+  private renderer: TextRenderer | null = null
   private _state: TextEditorState | null = null
   caretVisible = true
 
@@ -37,7 +42,7 @@ export class TextEditor {
     return this._state?.nodeId ?? null
   }
 
-  setRenderer(renderer: any): void {
+  setRenderer(renderer: TextRenderer | null): void {
     this.renderer = renderer
   }
 
@@ -185,7 +190,7 @@ export class TextEditor {
   }
 
   setCursorAt(x: number, y: number, extend?: boolean): void {
-    if (!this._state || !this._state.paragraph) return
+    if (!this._state?.paragraph) return
     const pos = this._state.paragraph.getGlyphPositionAtCoordinate(x, y)
     const newCursor = pos.pos
     if (extend) {
@@ -222,7 +227,8 @@ export class TextEditor {
     if (extend && this._state.selectionAnchor === null)
       this._state.selectionAnchor = this._state.cursor
     else if (!extend && this.hasSelection()) {
-      this._state.cursor = this.getSelectionRange()![0]
+      const range = this.getSelectionRange()
+      if (range) this._state.cursor = range[0]
       this._state.selectionAnchor = null
       return
     } else if (!extend) this._state.selectionAnchor = null
@@ -235,7 +241,8 @@ export class TextEditor {
     if (extend && this._state.selectionAnchor === null)
       this._state.selectionAnchor = this._state.cursor
     else if (!extend && this.hasSelection()) {
-      this._state.cursor = this.getSelectionRange()![1]
+      const range = this.getSelectionRange()
+      if (range) this._state.cursor = range[1]
       this._state.selectionAnchor = null
       return
     } else if (!extend) this._state.selectionAnchor = null
@@ -243,20 +250,30 @@ export class TextEditor {
     if (this._state.cursor < this._state.text.length) this._state.cursor++
   }
 
-  moveUp(_extend?: boolean): void {}
-  moveDown(_extend?: boolean): void {}
+  moveUp(_extend?: boolean): void {
+    void _extend
+  }
+  moveDown(_extend?: boolean): void {
+    void _extend
+  }
 
   clickAt(x: number, y: number, extend: boolean): void {
     this.setCursorAt(x, y, extend)
   }
-  doubleClickAt(_x: number, _y: number): void {}
-  tripleClickAt(_x: number, _y: number): void {}
+  doubleClickAt(_x: number, _y: number): void {
+    void _x
+    void _y
+  }
+  tripleClickAt(_x: number, _y: number): void {
+    void _x
+    void _y
+  }
   dragTo(x: number, y: number): void {
     this.setCursorAt(x, y, true)
   }
 
   getCaretRect(): TextCaret | null {
-    if (!this._state || !this._state.paragraph) return null
+    if (!this._state?.paragraph) return null
     if (this._state.text.length === 0) {
       const metrics = this._state.paragraph.getLineMetrics()
       if (metrics.length === 0) return { x: 0, y0: 0, y1: 16 }
@@ -286,7 +303,7 @@ export class TextEditor {
       this.ck.RectHeightStyle.Max,
       this.ck.RectWidthStyle.Tight
     )
-    if (rects && rects.length > 0) {
+    if (rects.length > 0) {
       const [left, top, right] = rects[0].rect
       const bottom = rects[0].rect[3]
       return {
@@ -299,9 +316,10 @@ export class TextEditor {
     return { x: 0, y0: 0, y1: 16 }
   }
 
-  getSelectionRects(): any[] {
-    if (!this._state || !this._state.paragraph || !this.hasSelection()) return []
-    const range = this.getSelectionRange()!
+  getSelectionRects(): Rect[] {
+    if (!this._state?.paragraph || !this.hasSelection()) return []
+    const range = this.getSelectionRange()
+    if (!range) return []
     const rects = this._state.paragraph.getRectsForRange(
       range[0],
       range[1],

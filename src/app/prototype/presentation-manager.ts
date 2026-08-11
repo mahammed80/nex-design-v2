@@ -1,6 +1,6 @@
 import { reactive, watch } from 'vue'
 
-import type { SceneNode } from '@nex-design/core/scene-graph'
+import type { OverlaySettings, SceneNode } from '@nex-design/core/scene-graph'
 
 import type { EditorStore } from '@/app/editor/active-store'
 
@@ -146,11 +146,29 @@ export class PresentationManager {
     }
   }
 
+  public activeOverlay = reactive<{
+    isOpen: boolean
+    nodeId: string
+    settings?: OverlaySettings
+  }>({
+    isOpen: false,
+    nodeId: ''
+  })
+
   handleInteraction(nodeId: string, triggerType: string) {
     const res = this.interactionEngine.handleInteraction(nodeId, triggerType)
     if (res === 'CLOSE') {
-      this.stopPresentation()
+      if (this.activeOverlay.isOpen) {
+        this.activeOverlay.isOpen = false
+      } else {
+        this.stopPresentation()
+      }
+    } else if (typeof res === 'object' && res.handled && res.overlayId) {
+      this.activeOverlay.isOpen = true
+      this.activeOverlay.nodeId = res.overlayId
+      this.activeOverlay.settings = res.overlaySettings as OverlaySettings
     }
+    return typeof res === 'object' ? res : undefined
   }
 
   private clearDelayTriggers() {
@@ -179,7 +197,7 @@ export class PresentationManager {
       }
       for (const childId of node.childIds) {
         const child = this.editor.graph.getNode(childId)
-        if (child && child.visible) walk(child)
+        if (child?.visible) walk(child)
       }
     }
 
