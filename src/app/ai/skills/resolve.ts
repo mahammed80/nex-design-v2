@@ -1,7 +1,7 @@
 import { AGENT_SKILLS } from './registry'
 import type { AgentSkillContext, ResolvedAgentSkills } from './types'
 
-const FULL_SKILL_BUDGET = 2400
+const FULL_SKILL_BUDGET = 3400
 
 export function resolveAgentSkills(context: AgentSkillContext): ResolvedAgentSkills {
   const selected = AGENT_SKILLS.filter((skill) => skill.matches(context)).sort(
