@@ -5,6 +5,9 @@ import { TooltipProvider } from 'reka-ui'
 
 import { provideEditor, useI18n } from '@nex-design/vue'
 import AppToast from '@/components/AppToast.vue'
+import NetworkToast from '@/components/NetworkToast.vue'
+import AuthModal from '@/components/Auth/AuthModal.vue'
+import AccountProfileModal from '@/components/Auth/AccountProfileModal.vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import { toast } from '@/app/shell/ui'
 import { useAppTheme } from '@/app/shell/theme'
@@ -27,5 +30,8 @@ onMounted(() => {
   <TooltipProvider :delay-duration="400">
     <RouterView />
     <AppToast />
+    <NetworkToast />
+    <AuthModal />
+    <AccountProfileModal />
   </TooltipProvider>
 </template>

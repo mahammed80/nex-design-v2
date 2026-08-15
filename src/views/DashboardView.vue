@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useEventListener } from '@vueuse/core'
+import { useEventListener, useLocalStorage } from '@vueuse/core'
 import { readFigFile, exportFigFile } from '@nex-design/core/io/formats/fig'
 import { createEditorStore } from '@/app/editor/session'
 import { createDemoShapes } from '@/app/demo/document'
+import UserMenu from '@/components/Auth/UserMenu.vue'
 import {
   openDb,
   getAllProjectsFromDb,
@@ -19,62 +20,69 @@ import {
 const router = useRouter()
 
 // UI state
-const activeView = ref<'home' | 'recents' | 'starred' | 'projects'>('home')
+const activeView = ref<'home' | 'recents' | 'starred' | 'projects' | 'folder-ui-ux' | 'folder-design-systems' | 'folder-web-apps'>('home')
+const activeFilterTab = ref<'recents' | 'shared-docs' | 'shared-folders'>('recents')
 const searchQuery = ref('')
 const sortBy = ref<'modified' | 'created' | 'name'>('modified')
-const viewMode = ref<'grid' | 'list'>('grid')
-const activeAccount = ref(localStorage.getItem('nex-design:active-account') || localStorage.getItem('nex-design:user-name') || 'Mohamed')
-const accounts = ref<string[]>(JSON.parse(localStorage.getItem('nex-design:accounts') || '[]'))
-
-if (accounts.value.length === 0) {
-  accounts.value = [activeAccount.value]
-  localStorage.setItem('nex-design:accounts', JSON.stringify(accounts.value))
-}
-localStorage.setItem('nex-design:active-account', activeAccount.value)
-
-const profileName = ref(activeAccount.value)
+const viewMode = ref<'grid' | 'list'>('list')
 const isSettingsOpen = ref(false)
 const isSearchOpen = ref(false)
+const isNewFolderModalOpen = ref(false)
+const newFolderName = ref('')
 const searchFilter = ref('')
 const selectedSearchIndex = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
+const profileName = useLocalStorage('nex-design:profile-name', 'Alex')
 
-// Add Account Dialog state
-const isAddAccountOpen = ref(false)
-const newAccountName = ref('')
+// Tree Collapse State
+const isOverviewExpanded = ref(true)
+const isUiUxExpanded = ref(true)
+const isProductDesignsExpanded = ref(true)
 
-function switchAccount(name: string) {
-  activeAccount.value = name
-  profileName.value = name
-  localStorage.setItem('nex-design:active-account', name)
-  localStorage.setItem('nex-design:user-name', name)
-}
+// Selected project for bottom preview dock
+const selectedProject = ref<ProjectRecord | null>(null)
 
-function openAddAccount() {
-  newAccountName.value = ''
-  isAddAccountOpen.value = true
-}
-
-function addAccount() {
-  const name = newAccountName.value.trim()
-  if (!name) return
-  if (!accounts.value.includes(name)) {
-    accounts.value.push(name)
-    localStorage.setItem('nex-design:accounts', JSON.stringify(accounts.value))
-  }
-  isAddAccountOpen.value = false
-  switchAccount(name)
-}
-
-function signOut() {
-  localStorage.removeItem('nex-design:active-account')
-  localStorage.removeItem('nex-design:user-name')
-  router.push('/landing')
+function saveProfileName() {
+  isSettingsOpen.value = false
 }
 
 // Project records
 const projects = ref<ProjectRecord[]>([])
 const loading = ref(true)
+
+// Realistic Folders with Dark Red / Crimson & Accent Themes
+const mockFolders = ref([
+  {
+    id: 'folder-1',
+    name: 'Dashboard Designs',
+    fileCount: 62,
+    size: '2.6 GB',
+    tabColor: '#be123c',
+    tabBg: 'linear-gradient(135deg, #e11d48, #9f1239)',
+    members: ['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80'],
+    moreCount: 0
+  },
+  {
+    id: 'folder-2',
+    name: 'Figma Files',
+    fileCount: 202,
+    size: '2.6 GB',
+    tabColor: '#9f1239',
+    tabBg: 'linear-gradient(135deg, #be123c, #881337)',
+    members: ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80', 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80'],
+    moreCount: 12
+  },
+  {
+    id: 'folder-3',
+    name: 'Product Components',
+    fileCount: 12,
+    size: '840 MB',
+    tabColor: '#881337',
+    tabBg: 'linear-gradient(135deg, #9f1239, #4c0519)',
+    members: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80'],
+    moreCount: 4
+  }
+])
 
 // Load projects from database
 async function loadProjects() {
@@ -90,6 +98,9 @@ async function loadProjects() {
     }
     
     projects.value = list
+    if (list.length > 0 && !selectedProject.value) {
+      selectedProject.value = list[0]
+    }
   } catch (err) {
     console.error('Failed to load projects:', err)
   } finally {
@@ -99,14 +110,10 @@ async function loadProjects() {
 
 // Seed the default demo project
 async function seedDemoProject(db: IDBDatabase) {
-  // Create a transient editor store
   const store = createEditorStore()
   createDemoShapes(store)
   
-  // Export binary document
   const docBytes = await exportFigFile(store.graph)
-  
-  // Render thumbnail
   let thumbnail = ''
   try {
     const renderData = await store.renderExportImage([], 0.5, 'PNG')
@@ -117,95 +124,90 @@ async function seedDemoProject(db: IDBDatabase) {
     console.warn('Failed to render demo thumbnail', e)
   }
   
-  // Save to DB
   await createProjectInDb(db, {
     id: 'demo-project-id',
-    name: 'SaaS Dashboard (Demo)',
+    name: 'Cloud Dashboard.fig',
     document: docBytes,
     thumbnail,
     starred: true,
-    createdAt: Date.now() - 3600000 * 2, // 2 hours ago
+    createdAt: Date.now() - 3600000 * 2,
     updatedAt: Date.now() - 3600000 * 2
+  })
+
+  await createProjectInDb(db, {
+    id: 'demo-project-2',
+    name: 'Project Brief.docx',
+    document: docBytes,
+    thumbnail: '',
+    starred: false,
+    createdAt: Date.now() - 3600000 * 5,
+    updatedAt: Date.now() - 3600000 * 5
+  })
+
+  await createProjectInDb(db, {
+    id: 'demo-project-3',
+    name: 'Project Details.xls',
+    document: docBytes,
+    thumbnail: '',
+    starred: false,
+    createdAt: Date.now() - 3600000 * 12,
+    updatedAt: Date.now() - 3600000 * 12
+  })
+
+  await createProjectInDb(db, {
+    id: 'demo-project-4',
+    name: 'Design Notes.docx',
+    document: docBytes,
+    thumbnail: '',
+    starred: true,
+    createdAt: Date.now() - 3600000 * 24,
+    updatedAt: Date.now() - 3600000 * 24
   })
   
   store.dispose()
 }
 
-// Filtered and sorted projects for the current active view
+// Filtered and sorted projects
 const filteredProjects = computed(() => {
   let list = [...projects.value]
 
-  // Filter based on active view tab
   if (activeView.value === 'starred') {
     list = list.filter((p) => p.starred)
-  } else if (activeView.value === 'recents') {
-    // Sorted by updatedAt desc in recents
-    list.sort((a, b) => b.updatedAt - a.updatedAt)
   }
 
-  // Filter by search query if any
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     list = list.filter((p) => p.name.toLowerCase().includes(query))
   }
 
-  // Sorting
-  if (activeView.value !== 'recents') {
-    list.sort((a, b) => {
-      if (sortBy.value === 'modified') return b.updatedAt - a.updatedAt
-      if (sortBy.value === 'created') return b.createdAt - a.createdAt
-      if (sortBy.value === 'name') return a.name.localeCompare(b.name)
-      return 0
-    })
-  }
+  list.sort((a, b) => {
+    if (sortBy.value === 'modified') return b.updatedAt - a.updatedAt
+    if (sortBy.value === 'created') return b.createdAt - a.createdAt
+    if (sortBy.value === 'name') return a.name.localeCompare(b.name)
+    return 0
+  })
 
   return list
 })
 
-// Recents grouping for the dedicated Recents page
-const groupedRecents = computed(() => {
-  const sorted = [...projects.value].sort((a, b) => b.updatedAt - a.updatedAt)
-  const now = Date.now()
-  const today: ProjectRecord[] = []
-  const yesterday: ProjectRecord[] = []
-  const earlier: ProjectRecord[] = []
-
-  for (const p of sorted) {
-    const diff = now - p.updatedAt
-    if (diff < 24 * 3600 * 1000) {
-      today.push(p)
-    } else if (diff < 48 * 3600 * 1000) {
-      yesterday.push(p)
-    } else {
-      earlier.push(p)
-    }
-  }
-
-  return { today, yesterday, earlier }
-})
-
-// Starred projects list
 const starredProjects = computed(() => projects.value.filter((p) => p.starred))
 
-// Search dialog filter list
 const searchDialogMatches = computed(() => {
   const query = searchFilter.value.trim().toLowerCase()
-  if (!query) return projects.value.slice(0, 5) // Show recent 5 if empty
+  if (!query) return projects.value.slice(0, 5)
   return projects.value.filter((p) => p.name.toLowerCase().includes(query))
 })
 
-// Database CRUD Actions
 async function createNewDesign() {
   const db = await openDb()
   const store = createEditorStore()
-  // Add some starting canvas defaults
   store.graph.addPage('Page 1')
   const docBytes = await exportFigFile(store.graph)
   
   const id = crypto.randomUUID()
   const newProject: ProjectRecord = {
     id,
-    name: 'Untitled',
+    name: 'Untitled.fig',
     thumbnail: '',
     starred: false,
     createdAt: Date.now(),
@@ -232,18 +234,6 @@ async function toggleStar(project: ProjectRecord) {
   }
 }
 
-async function renameProject(project: ProjectRecord) {
-  const newName = prompt('Rename Project:', project.name)
-  if (newName === null || !newName.trim()) return
-  try {
-    const db = await openDb()
-    await updateProjectInDb(db, project.id, { name: newName.trim(), updatedAt: Date.now() })
-    await loadProjects()
-  } catch (err) {
-    console.error('Failed to rename project:', err)
-  }
-}
-
 async function duplicateProject(project: ProjectRecord) {
   try {
     const db = await openDb()
@@ -265,27 +255,6 @@ async function deleteProject(project: ProjectRecord) {
   }
 }
 
-// User Settings Settings
-function saveProfileName() {
-  const oldName = activeAccount.value
-  const newName = profileName.value.trim()
-  if (!newName) return
-  
-  const idx = accounts.value.indexOf(oldName)
-  if (idx !== -1) {
-    accounts.value[idx] = newName
-  } else {
-    accounts.value.push(newName)
-  }
-  
-  activeAccount.value = newName
-  localStorage.setItem('nex-design:active-account', newName)
-  localStorage.setItem('nex-design:user-name', newName)
-  localStorage.setItem('nex-design:accounts', JSON.stringify(accounts.value))
-  isSettingsOpen.value = false
-}
-
-// Import Design File
 function handleImportClick() {
   fileInput.value?.click()
 }
@@ -311,7 +280,7 @@ async function handleImportFile(e: Event) {
     const id = crypto.randomUUID()
     const importedProject: ProjectRecord = {
       id,
-      name,
+      name: `${name}.fig`,
       thumbnail: '',
       starred: false,
       createdAt: Date.now(),
@@ -329,7 +298,6 @@ async function handleImportFile(e: Event) {
   }
 }
 
-// Command palette search trigger
 function openSearchPalette() {
   isSearchOpen.value = true
   searchFilter.value = ''
@@ -358,14 +326,12 @@ function handleSearchKeyDown(e: KeyboardEvent) {
 }
 
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
-  // Command + K or Ctrl + K opens Search
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault()
     openSearchPalette()
   }
 })
 
-// Time formatter
 function formatTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp
   if (diff < 60000) return 'Just now'
@@ -379,898 +345,724 @@ function formatTimeAgo(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString()
 }
 
+function getFileIcon(name: string) {
+  const lower = name.toLowerCase()
+  if (lower.endsWith('.fig')) return { bg: '#e11d48', label: 'FIG', color: '#ffe4e6' }
+  if (lower.endsWith('.docx') || lower.endsWith('.doc')) return { bg: '#9f1239', label: 'W', color: '#fecdd3' }
+  if (lower.endsWith('.xls') || lower.endsWith('.xlsx')) return { bg: '#881337', label: 'X', color: '#fda4af' }
+  return { bg: '#be123c', label: 'UI', color: '#fff1f2' }
+}
+
 onMounted(() => {
   loadProjects()
 })
 </script>
 
 <template>
-<div class="flex h-screen w-screen bg-[#09090b] text-[#eae8e4] overflow-hidden font-sans">
-    <!-- Sidebar Navigation -->
-    <aside class="w-64 border-r border-white/5 bg-[#0e0e11] flex flex-col justify-between shrink-0 select-none">
-      <div class="flex flex-col py-6">
-        <!-- Logo -->
-        <div class="px-6 mb-8 select-none">
-          <img src="/logo.png" class="h-8 w-auto invert object-contain opacity-90 hover:opacity-100 transition-opacity" alt="Nexx Design" />
+  <!-- ══════════════════════════════════════════════════════════════════
+       NexDesign Cloud Dock — Dark Red / Crimson & Folder Geometry
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="flex h-screen w-screen overflow-hidden font-sans text-[#f4e8eb] relative"
+       style="background: radial-gradient(ellipse at 0% 0%, #1f080e 0%, #0d0407 45%, #050103 100%);">
+
+    <!-- Ambient Dark Red Glow Orbs -->
+    <div class="bg-ambient" />
+    <div class="absolute inset-0 bg-grid z-[1] opacity-40 pointer-events-none" />
+
+    <!-- ════════ 1. SLIM ICON DOCK (FAR LEFT RAIL) ════════ -->
+    <aside class="cloud-dock-rail relative z-20 w-[64px] shrink-0 flex flex-col items-center justify-between py-6 select-none">
+      <div class="flex flex-col items-center gap-6 w-full">
+        <!-- Logo Symbol (Dark Red Gradient) -->
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-red-700 flex items-center justify-center shadow-lg shadow-rose-600/40 cursor-pointer hover:scale-105 transition-transform"
+             @click="activeView = 'home'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+          </svg>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="px-3 space-y-1">
+        <!-- Vertical Dock Action Icons -->
+        <nav class="flex flex-col items-center gap-3 w-full px-2">
+          <!-- Apps / Dashboard (Active) -->
           <button
             @click="activeView = 'home'"
             type="button"
-            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-xs font-medium tracking-wide transition-all duration-200"
-            :class="[activeView === 'home' ? 'bg-white/5 text-[#fafafa] font-semibold' : 'text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa]']"
+            title="Dashboard Overview"
+            class="w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200"
+            :class="activeView === 'home' || activeView === 'recents' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/40 ring-1 ring-rose-400/40' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'"
           >
-            <icon-lucide-home class="size-4 shrink-0" />
-            Home
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
           </button>
+
+          <!-- Shared / Link -->
           <button
-            @click="activeView = 'recents'"
+            @click="activeView = 'folder-ui-ux'"
             type="button"
-            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-xs font-medium tracking-wide transition-all duration-200"
-            :class="[activeView === 'recents' ? 'bg-white/5 text-[#fafafa] font-semibold' : 'text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa]']"
+            title="Shared Files"
+            class="w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200"
+            :class="activeView === 'folder-ui-ux' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/40 ring-1 ring-rose-400/40' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'"
           >
-            <icon-lucide-history class="size-4 shrink-0" />
-            Recents
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           </button>
+
+          <!-- Cloud Import -->
+          <button
+            @click="handleImportClick"
+            type="button"
+            title="Import .fig File"
+            class="w-11 h-11 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200"
+          >
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+
+          <!-- Starred -->
           <button
             @click="activeView = 'starred'"
             type="button"
-            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-xs font-medium tracking-wide transition-all duration-200"
-            :class="[activeView === 'starred' ? 'bg-white/5 text-[#fafafa] font-semibold' : 'text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa]']"
+            title="Starred Projects"
+            class="w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200"
+            :class="activeView === 'starred' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/40 ring-1 ring-rose-400/40' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'"
           >
-            <icon-lucide-star class="size-4 shrink-0" />
-            Starred
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </button>
-          <button
-            @click="activeView = 'projects'"
-            type="button"
-            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-xs font-medium tracking-wide transition-all duration-200"
-            :class="[activeView === 'projects' ? 'bg-white/5 text-[#fafafa] font-semibold' : 'text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa]']"
-          >
-            <icon-lucide-folder class="size-4 shrink-0" />
-            Projects
-          </button>
-        </nav>
 
-        <!-- Divider -->
-        <div class="h-px bg-white/5 my-6 mx-4" />
-
-        <!-- Subheading -->
-        <div class="px-6 text-[10px] font-semibold text-[#52525b] uppercase tracking-widest mb-3">Workspace</div>
-        <div class="px-3">
-          <button
-            @click="activeView = 'projects'"
-            type="button"
-            class="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-xs text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa] transition-all duration-200"
-          >
-            <span class="w-1.5 h-1.5 rounded-full bg-accent" />
-            My Projects
-          </button>
-        </div>
-      </div>
-
-      <!-- Bottom Settings/Help Links -->
-      <div class="p-3 space-y-1">
-        <button
-          @click="isSettingsOpen = true"
-          type="button"
-          class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-xs text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa] transition-all duration-200"
-        >
-          <icon-lucide-settings class="size-4" />
-          Settings
-        </button>
-        <a
-          href="https://github.com/mahammed80/nex-design-v2"
-          target="_blank"
-          class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-xs text-[#a1a1aa] hover:bg-white/[0.02] hover:text-[#fafafa] transition-all duration-200"
-        >
-          <icon-lucide-help-circle class="size-4" />
-          Help
-        </a>
-
-        <!-- Account Control Section -->
-        <div class="border-t border-white/5 pt-3 mt-3 px-3">
-          <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2.5 min-w-0">
-              <!-- Avatar -->
-              <div class="w-7 h-7 rounded-full bg-accent/20 border border-accent/35 flex items-center justify-center font-bold text-accent text-xs shrink-0 uppercase select-none">
-                {{ activeAccount[0] }}
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="text-[11px] font-bold text-[#fafafa] truncate leading-tight">{{ activeAccount }}</div>
-                <div class="text-[9px] text-[#71717a] leading-none">Active Profile</div>
-              </div>
-            </div>
-            
-            <!-- Dropdown Action Trigger -->
-            <div class="relative group/account">
-              <button
-                type="button"
-                class="size-6 rounded hover:bg-white/5 text-[#a1a1aa] hover:text-white flex items-center justify-center transition-colors"
-              >
-                <icon-lucide-more-vertical class="size-3.5" />
-              </button>
-              <!-- Dropdown Menu -->
-              <div class="absolute bottom-full left-0 mb-1.5 w-44 rounded-lg border border-white/5 bg-[#121215] p-1 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover/account:opacity-100 group-hover/account:translate-y-0 group-hover/account:pointer-events-auto transition-all duration-150 z-50 before:absolute before:inset-x-0 before:h-2 before:top-full">
-                <div class="px-2 py-1 text-[9px] font-semibold text-[#52525b] uppercase tracking-wider border-b border-white/5 mb-1">Accounts</div>
-                <!-- List Accounts -->
-                <button
-                  v-for="acc in accounts.filter(a => a !== activeAccount)"
-                  :key="acc"
-                  @click="switchAccount(acc)"
-                  type="button"
-                  class="w-full text-left px-2 py-1.5 rounded text-[11px] text-[#a1a1aa] hover:bg-white/5 hover:text-white transition-colors truncate flex items-center gap-1.5"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-[#52525b]" />
-                  {{ acc }}
-                </button>
-                <button
-                  @click="openAddAccount"
-                  type="button"
-                  class="w-full text-left px-2 py-1.5 rounded text-[11px] text-accent hover:bg-accent/10 transition-colors flex items-center gap-1.5"
-                >
-                  <icon-lucide-plus class="size-3" />
-                  Add Account
-                </button>
-                <button
-                  @click="signOut"
-                  type="button"
-                  class="w-full text-left px-2 py-1.5 rounded text-[11px] text-red-400 hover:bg-red-500/10 transition-colors border-t border-white/5 mt-1 pt-1.5 flex items-center gap-1.5"
-                >
-                  <icon-lucide-log-out class="size-3" />
-                  Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Workspace Dashboard Content Area -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-      <!-- Top Sticky Header -->
-      <header class="h-16 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-40">
-        <div class="flex items-center select-none">
-          <img src="/logo.png" class="h-6 w-auto invert object-contain" alt="Nexx Design" />
-        </div>
-
-        <!-- Global Search trigger bar -->
-        <div
-          @click="openSearchPalette"
-          class="w-96 h-9 rounded-lg border border-white/5 bg-[#121215] flex items-center px-3 gap-2.5 cursor-pointer text-[#71717a] hover:border-white/10 transition-colors select-none"
-        >
-          <icon-lucide-search class="size-4" />
-          <span class="text-xs">Search projects, files, designs...</span>
-          <span class="ml-auto text-[10px] font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/5">Ctrl K</span>
-        </div>
-
-        <!-- + New Button Dropdown wrapper -->
-        <div class="relative group">
+          <!-- Plus Create New -->
           <button
             @click="createNewDesign"
             type="button"
-            class="h-9 px-4 rounded-lg bg-accent hover:bg-accent/80 text-white font-bold text-xs tracking-wide transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-violet-600/10 active:scale-[0.98]"
+            title="Create New Canvas"
+            class="w-10 h-10 rounded-2xl border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 hover:border-rose-500/40 transition-all duration-200"
           >
-            <icon-lucide-plus class="size-3.5" />
-            New Design
+            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
-          
-          <!-- Dropdown container -->
-          <div class="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-white/5 bg-[#18181b] p-1.5 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-150 z-50 before:absolute before:inset-x-0 before:h-2 before:bottom-full">
+        </nav>
+      </div>
+
+      <!-- Dock Bottom Tools -->
+      <div class="flex flex-col items-center gap-3 w-full px-2">
+        <button
+          @click="router.push('/admin')"
+          type="button"
+          title="Admin Dashboard"
+          class="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-rose-300 hover:bg-rose-600/15 transition-colors"
+        >
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M12 22v-4"/><path d="m19.07 19.07-2.83-2.83"/><path d="M22 12h-4"/><path d="m19.07 4.93-2.83 2.83"/></svg>
+        </button>
+
+        <button
+          @click="isSettingsOpen = true"
+          type="button"
+          title="Settings"
+          class="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+        >
+          <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ════════ 2. HIERARCHY TREE SIDEBAR ════════ -->
+    <aside class="glass-sidebar relative z-10 w-[270px] shrink-0 flex flex-col justify-between select-none border-r border-white/5">
+      <div class="flex flex-col pt-5 flex-1 overflow-y-auto scrollbar-none px-4">
+        <!-- Sidebar Header: << Dashboard -->
+        <div class="flex items-center justify-between mb-5 px-1">
+          <div class="flex items-center gap-2 text-white font-bold text-sm tracking-tight cursor-pointer hover:text-rose-300 transition-colors"
+               @click="activeView = 'home'">
+            <span class="text-xs text-zinc-500 font-mono">«</span>
+            <span>Dashboard</span>
+          </div>
+          <button @click="isSettingsOpen = true" class="size-7 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 flex items-center justify-center transition-colors">
+            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+
+        <!-- Search Input with Cmd+K -->
+        <div class="mb-5">
+          <button
+            @click="openSearchPalette"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-zinc-900/80 border border-white/5 text-xs text-zinc-400 hover:text-white hover:border-rose-500/30 transition-all duration-200"
+          >
+            <div class="flex items-center gap-2.5">
+              <svg class="size-3.5 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span>Search</span>
+            </div>
+            <span class="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded border border-white/5">⌘ K</span>
+          </button>
+        </div>
+
+        <!-- ── HIERARCHY TREE ACCORDION ── -->
+        <div class="space-y-3 text-xs">
+          <!-- 1. OVERVIEW ACCORDION (Dark Red Active Pill) -->
+          <div>
             <button
-              @click="createNewDesign"
-              type="button"
-              class="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-colors flex flex-col gap-0.5"
+              @click="isOverviewExpanded = !isOverviewExpanded; activeView = 'home'"
+              class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200"
+              :class="activeView === 'home' || activeView === 'recents' ? 'active-dark-red-pill text-white' : 'text-zinc-300 hover:bg-white/5'"
             >
-              <span class="text-xs font-bold text-[#fafafa] flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-accent" />
-                🎨 Design
-              </span>
-              <span class="text-[10px] text-[#71717a]">Create a new design canvas</span>
+              <div class="flex items-center gap-2.5">
+                <span class="text-sm">📁</span>
+                <span>Overview</span>
+              </div>
+              <svg class="size-3.5 transition-transform" :class="{ 'rotate-180': !isOverviewExpanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
             </button>
+
+            <!-- Overview Tree Branches -->
+            <div v-show="isOverviewExpanded" class="tree-branch-line ml-4 pl-4 pt-1.5 space-y-1">
+              <div
+                @click="activeView = 'home'"
+                class="tree-branch-item flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer transition-colors"
+                :class="activeView === 'home' ? 'text-rose-300 font-semibold bg-rose-600/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'"
+              >
+                <span>My Overview</span>
+                <svg class="size-3 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+
+              <div
+                @click="activeView = 'recents'"
+                class="tree-branch-item flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer transition-colors"
+                :class="activeView === 'recents' ? 'text-rose-300 font-semibold bg-rose-600/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'"
+              >
+                <span>Recent Activity</span>
+                <span class="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">242</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. STARRED FILES -->
+          <div
+            @click="activeView = 'starred'"
+            class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-colors"
+            :class="activeView === 'starred' ? 'bg-rose-600/20 text-rose-300 font-semibold border border-rose-500/30' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'"
+          >
+            <div class="flex items-center gap-2.5">
+              <span class="text-amber-400">⭐</span>
+              <span>Starred Files</span>
+            </div>
+            <span v-if="starredProjects.length > 0" class="text-[10px] font-mono text-zinc-500">{{ starredProjects.length }}</span>
+          </div>
+
+          <!-- 3. UI & UX DESIGN (Tree Branch) -->
+          <div>
             <button
-              @click="handleImportClick"
-              type="button"
-              class="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-colors flex flex-col gap-0.5"
+              @click="isUiUxExpanded = !isUiUxExpanded; activeView = 'folder-ui-ux'"
+              class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-zinc-300 hover:bg-white/5 transition-colors"
             >
-              <span class="text-xs font-bold text-[#fafafa] flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-accent" />
-                📄 Import
-              </span>
-              <span class="text-[10px] text-[#71717a]">Import an existing .fig file</span>
+              <div class="flex items-center gap-2.5">
+                <span>📁</span>
+                <span>UI & UX Design</span>
+              </div>
+              <svg class="size-3.5 text-zinc-500 transition-transform" :class="{ 'rotate-180': !isUiUxExpanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+
+            <!-- Nested Products Designs -->
+            <div v-show="isUiUxExpanded" class="tree-branch-line ml-4 pl-4 pt-1 space-y-1">
+              <div>
+                <button
+                  @click="isProductDesignsExpanded = !isProductDesignsExpanded"
+                  class="w-full tree-branch-item flex items-center justify-between py-1.5 px-2.5 rounded-lg text-zinc-300 hover:text-white transition-colors"
+                >
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs">📁</span>
+                    <span>Products Designs</span>
+                  </div>
+                  <svg class="size-3 text-zinc-500 transition-transform" :class="{ 'rotate-180': !isProductDesignsExpanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+
+                <!-- Sub-items under Products Designs -->
+                <div v-show="isProductDesignsExpanded" class="tree-branch-line ml-4 pl-4 pt-1 space-y-1">
+                  <div @click="activeView = 'projects'" class="tree-branch-item py-1.5 px-2 text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer">
+                    Course Dashboard
+                  </div>
+                  <div @click="activeView = 'projects'" class="tree-branch-item py-1.5 px-2 text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer">
+                    KDS Dashboard
+                  </div>
+                  <div @click="activeView = 'projects'" class="tree-branch-item flex items-center justify-between py-1.5 px-2 text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer">
+                    <span>📁 Drapora Projects</span>
+                    <svg class="size-3 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. DESIGN SYSTEMS -->
+          <div
+            @click="activeView = 'folder-design-systems'"
+            class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+          >
+            <div class="flex items-center gap-2.5">
+              <span>📁</span>
+              <span>Design Systems</span>
+            </div>
+            <svg class="size-3 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <!-- 5. WEB APPS -->
+          <div
+            @click="activeView = 'folder-web-apps'"
+            class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+          >
+            <div class="flex items-center gap-2.5">
+              <span>📁</span>
+              <span>Web Apps</span>
+            </div>
+            <svg class="size-3 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+
+          <!-- + New Folder Button -->
+          <div class="pt-2">
+            <button
+              @click="isNewFolderModalOpen = true"
+              class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 border border-dashed border-white/10 text-xs transition-colors"
+            >
+              <span class="size-4 rounded-full bg-rose-600/30 text-rose-300 flex items-center justify-center text-xs font-bold">+</span>
+              <span>New Folder</span>
             </button>
           </div>
+        </div>
+
+        <!-- ── ROCKET UPGRADE CARD (Dark Red / Ruby Gradient) ── -->
+        <div class="my-6 p-4 rounded-2xl relative overflow-hidden bg-gradient-to-br from-rose-950/70 via-red-950/50 to-rose-950/70 border border-rose-500/20 shadow-xl">
+          <div class="flex items-start justify-between">
+            <!-- 3D Rocket Icon -->
+            <div class="text-3xl filter drop-shadow-[0_4px_12px_rgba(225,29,72,0.5)]">
+              🚀
+            </div>
+            <button class="text-zinc-500 hover:text-zinc-300">
+              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </button>
+          </div>
+
+          <div class="mt-2.5 space-y-1">
+            <h4 class="text-xs font-bold text-white tracking-tight">Trial Ending Soon !</h4>
+            <p class="text-[10px] text-zinc-400 leading-relaxed">Your access expires in 6 days. Upgrade now for access!</p>
+          </div>
+
+          <button
+            @click="router.push('/admin')"
+            class="w-full mt-3.5 py-2 px-3 rounded-xl text-[11px] font-bold text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-1.5"
+          >
+            <span>✨</span>
+            <span>Upgrade to Pro</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- User Profile at bottom -->
+      <div class="px-3 pb-4 pt-2 border-t border-white/5">
+        <UserMenu />
+      </div>
+    </aside>
+
+    <!-- ════════ 3. MAIN DASHBOARD CONTENT AREA ════════ -->
+    <div class="relative z-10 flex-1 flex flex-col min-w-0 overflow-hidden bg-gradient-to-br from-zinc-950/60 via-zinc-900/30 to-zinc-950/80">
+      
+      <!-- Top Sticky Header -->
+      <header class="glass-header h-[64px] flex items-center justify-between px-8 shrink-0 z-30 sticky top-0">
+        <!-- Storage Pill & Breadcrumbs -->
+        <div class="flex items-center gap-6">
+          <!-- Cloud Storage Indicator (Dark Red / Crimson Theme) -->
+          <div class="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-white/5 text-xs">
+            <span class="text-base text-rose-400">☁️</span>
+            <div>
+              <div class="flex items-center justify-between gap-3 text-[10px] font-medium text-zinc-300">
+                <span>Basic Storage</span>
+                <span class="text-zinc-500">50GB / 100GB</span>
+              </div>
+              <div class="w-28 h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-1">
+                <div class="w-1/2 h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Breadcrumbs -->
+          <div class="hidden lg:flex items-center gap-2 text-xs text-zinc-400">
+            <span class="hover:text-white cursor-pointer">Dashboard</span>
+            <span>/</span>
+            <span class="text-zinc-200 font-medium">Overview</span>
+            <span>/</span>
+            <span class="text-zinc-400">Recent Activity</span>
+            <span class="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded">242</span>
+          </div>
+        </div>
+
+        <!-- Header Action Buttons (Dark Red Theme) -->
+        <div class="flex items-center gap-3">
+          <button
+            @click="handleImportClick"
+            type="button"
+            class="h-9 px-4 rounded-xl text-xs font-semibold text-zinc-300 glass-panel hover:text-white hover:border-rose-500/40 transition-all flex items-center gap-2"
+          >
+            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Import .fig</span>
+          </button>
+
+          <button
+            @click="createNewDesign"
+            type="button"
+            class="h-9 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2"
+          >
+            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>New Design</span>
+          </button>
         </div>
       </header>
 
-      <!-- Main Dashboard view switcher -->
-      <div class="p-8 max-w-7xl mx-auto w-full flex-1">
-        <!-- ── HOME VIEW ── -->
-        <div v-if="activeView === 'home'" class="space-y-10 animate-fade-in">
-          <!-- Welcome Section -->
-          <div class="flex flex-col gap-1.5">
-            <h2 class="text-3xl font-extrabold tracking-tight text-[#fafafa]">
-              Good morning, {{ profileName }} 👋
-            </h2>
-            <p class="text-sm text-[#a1a1aa] font-light">What do you want to create today?</p>
-          </div>
+      <!-- Scrollable Main Dashboard Canvas -->
+      <main class="flex-1 overflow-y-auto scrollbar-thin px-8 py-6 space-y-8">
 
-          <!-- Quick Actions Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              @click="createNewDesign"
-              class="group/card rounded-2xl border border-white/5 bg-[#121215] p-6 hover:border-accent/40 hover:bg-accent/5 transition-all duration-300 cursor-pointer flex flex-col gap-4 shadow-sm"
-            >
-              <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent group-hover/card:scale-105 transition-transform">
-                <icon-lucide-plus class="size-5" />
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-[#fafafa] mb-1">New Design</h3>
-                <p class="text-xs text-[#a1a1aa] leading-relaxed">Start with a blank canvas and design anything you can imagine.</p>
-              </div>
-            </div>
-
-            <div
-              @click="handleImportClick"
-              class="group/card rounded-2xl border border-white/5 bg-[#121215] p-6 hover:border-accent/40 hover:bg-accent/5 transition-all duration-300 cursor-pointer flex flex-col gap-4 shadow-sm"
-            >
-              <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent group-hover/card:scale-105 transition-transform">
-                <icon-lucide-external-link class="size-4.5" />
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-[#fafafa] mb-1">Import File</h3>
-                <p class="text-xs text-[#a1a1aa] leading-relaxed">Import and open a local Figma .fig design file directly on Nexx.</p>
-              </div>
-            </div>
-
-            <div
-              @click="createNewDesign"
-              class="group/card rounded-2xl border border-white/5 bg-[#121215] p-6 hover:border-accent/40 hover:bg-accent/5 transition-all duration-300 cursor-pointer flex flex-col gap-4 shadow-sm"
-            >
-              <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-accent group-hover/card:scale-105 transition-transform">
-                <icon-lucide-grid class="size-4.5" />
-              </div>
-              <div>
-                <h3 class="text-sm font-bold text-[#fafafa] mb-1">Use Template</h3>
-                <p class="text-xs text-[#a1a1aa] leading-relaxed">Jumpstart your workflow with SaaS, dashboard, or landing page templates.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Recent Section -->
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-base font-bold text-[#fafafa]">Recent Files</h3>
-              <button @click="activeView = 'recents'" type="button" class="text-xs text-accent hover:text-accent/80 transition-colors">See all</button>
-            </div>
-            
-            <div v-if="projects.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              <div
-                v-for="project in projects.slice(0, 4)"
-                :key="project.id"
-                class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300"
-              >
-                <!-- Thumbnail Area -->
-                <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer select-none group/thumb border-b border-white/5">
-                  <img
-                    v-if="project.thumbnail"
-                    :src="project.thumbnail"
-                    alt="Design Preview"
-                    class="w-full h-full object-cover group-hover/thumb:scale-[1.02] transition-transform duration-500"
-                  />
-                  <div v-else class="text-[10px] font-mono text-[#52525b]">No Preview</div>
-
-                  <!-- Quick Action Actions trigger button on card hover -->
-                  <div class="absolute right-2 top-2 opacity-0 group-hover/item:opacity-100 transition-opacity z-20 flex gap-1">
-                    <button
-                      @click.stop="toggleStar(project)"
-                      type="button"
-                      class="size-7 rounded bg-[#18181b]/90 border border-white/5 flex items-center justify-center hover:bg-[#27272a] hover:text-[#fafafa] text-[#a1a1aa] transition-colors"
-                      :title="project.starred ? 'Unstar project' : 'Star project'"
-                    >
-                      <icon-lucide-star class="size-3.5" :class="{ 'fill-amber-500 text-amber-500': project.starred }" />
-                    </button>
-                    
-                    <!-- Actions Dropdown -->
-                    <div class="relative group/menu">
-                      <button
-                        type="button"
-                        class="size-7 rounded bg-[#18181b]/90 border border-white/5 flex items-center justify-center hover:bg-[#27272a] hover:text-[#fafafa] text-[#a1a1aa] transition-colors"
-                      >
-                        <icon-lucide-ellipsis class="size-3.5" />
-                      </button>
-                      <div class="absolute right-0 top-full mt-1 w-36 rounded-lg border border-white/5 bg-[#1c1c21] p-1 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover/menu:opacity-100 group-hover/menu:translate-y-0 group-hover/menu:pointer-events-auto transition-all duration-150">
-                        <button @click.stop="openProject(project.id)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-external-link class="size-3" /> Open</button>
-                        <button @click.stop="renameProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-pencil class="size-3" /> Rename</button>
-                        <button @click.stop="duplicateProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-copy class="size-3" /> Duplicate</button>
-                        <button @click.stop="deleteProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-rose-400 flex items-center gap-1.5"><icon-lucide-trash-2 class="size-3" /> Delete</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Info footer -->
-                <div class="p-3.5 flex flex-col gap-0.5">
-                  <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                  <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div v-else class="rounded-2xl border border-dashed border-white/5 p-12 text-center flex flex-col items-center justify-center gap-4">
-              <div class="size-10 rounded-full bg-white/5 flex items-center justify-center text-[#71717a]"><icon-lucide-history class="size-5" /></div>
-              <div>
-                <h4 class="text-sm font-semibold text-[#fafafa] mb-1">No recent files</h4>
-                <p class="text-xs text-[#71717a]">Your recently opened designs will appear here.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- My Projects grid view -->
-          <div class="space-y-4">
-            <div class="flex items-center justify-between border-b border-white/5 pb-4">
-              <h3 class="text-base font-bold text-[#fafafa]">My Projects</h3>
-              <div class="flex items-center gap-3">
-                <!-- Sort Dropdown -->
-                <div class="relative group/sort">
-                  <button type="button" class="px-2.5 py-1.5 rounded-lg border border-white/5 bg-[#121215] text-[11px] text-[#a1a1aa] flex items-center gap-1 hover:text-white transition-colors">
-                    Sort: {{ sortBy === 'modified' ? 'Last modified' : sortBy === 'created' ? 'Created' : 'Name' }}
-                    <icon-lucide-chevron-down class="size-3 text-muted" />
-                  </button>
-                  <div class="absolute right-0 top-full mt-1 w-32 rounded-lg border border-white/5 bg-[#1c1c21] p-1 shadow-lg opacity-0 translate-y-1 pointer-events-none group-hover/sort:opacity-100 group-hover/sort:translate-y-0 group-hover/sort:pointer-events-auto transition-all duration-150 z-25">
-                    <button @click="sortBy = 'modified'" type="button" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-white/5 text-[11px]" :class="{ 'text-violet-400': sortBy === 'modified' }">Last modified</button>
-                    <button @click="sortBy = 'created'" type="button" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-white/5 text-[11px]" :class="{ 'text-violet-400': sortBy === 'created' }">Created</button>
-                    <button @click="sortBy = 'name'" type="button" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-white/5 text-[11px]" :class="{ 'text-violet-400': sortBy === 'name' }">Name</button>
-                  </div>
-                </div>
-
-                <!-- View Mode Grid/List toggle buttons -->
-                <div class="flex items-center gap-1 bg-[#121215] border border-white/5 p-1 rounded-lg">
-                  <button @click="viewMode = 'grid'" type="button" class="p-1 rounded text-[#a1a1aa] hover:text-white" :class="{ 'bg-white/5 text-[#fafafa]': viewMode === 'grid' }"><icon-lucide-grid class="size-3.5" /></button>
-                  <button @click="viewMode = 'list'" type="button" class="p-1 rounded text-[#a1a1aa] hover:text-white" :class="{ 'bg-white/5 text-[#fafafa]': viewMode === 'list' }"><icon-lucide-list class="size-3.5" /></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Grid Display -->
-            <div v-if="filteredProjects.length > 0 && viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-              <div
-                v-for="project in filteredProjects"
-                :key="project.id"
-                class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300"
-              >
-                <!-- Thumbnail -->
-                <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer select-none group/thumb border-b border-white/5">
-                  <img
-                    v-if="project.thumbnail"
-                    :src="project.thumbnail"
-                    alt="Design Preview"
-                    class="w-full h-full object-cover group-hover/thumb:scale-[1.02] transition-transform duration-500"
-                  />
-                  <div v-else class="text-[10px] font-mono text-[#52525b]">No Preview</div>
-
-                  <!-- Quick Actions -->
-                  <div class="absolute right-2 top-2 opacity-0 group-hover/item:opacity-100 transition-opacity z-20 flex gap-1">
-                    <button
-                      @click.stop="toggleStar(project)"
-                      type="button"
-                      class="size-7 rounded bg-[#18181b]/90 border border-white/5 flex items-center justify-center hover:bg-[#27272a] hover:text-[#fafafa] text-[#a1a1aa] transition-colors"
-                    >
-                      <icon-lucide-star class="size-3.5" :class="{ 'fill-amber-500 text-amber-500': project.starred }" />
-                    </button>
-                    
-                    <div class="relative group/menu">
-                      <button type="button" class="size-7 rounded bg-[#18181b]/90 border border-white/5 flex items-center justify-center hover:bg-[#27272a] hover:text-[#fafafa] text-[#a1a1aa] transition-colors">
-                        <icon-lucide-ellipsis class="size-3.5" />
-                      </button>
-                      <div class="absolute right-0 top-full mt-1 w-36 rounded-lg border border-white/5 bg-[#1c1c21] p-1 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover/menu:opacity-100 group-hover/menu:translate-y-0 group-hover/menu:pointer-events-auto transition-all duration-150">
-                        <button @click.stop="openProject(project.id)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-external-link class="size-3" /> Open</button>
-                        <button @click.stop="renameProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-pencil class="size-3" /> Rename</button>
-                        <button @click.stop="duplicateProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-copy class="size-3" /> Duplicate</button>
-                        <button @click.stop="deleteProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-rose-400 flex items-center gap-1.5"><icon-lucide-trash-2 class="size-3" /> Delete</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Info footer -->
-                <div class="p-3.5 flex flex-col gap-0.5">
-                  <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                  <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- List Display -->
-            <div v-else-if="filteredProjects.length > 0 && viewMode === 'list'" class="border border-white/5 rounded-xl bg-[#121215] overflow-hidden divide-y divide-white/5">
-              <div
-                v-for="project in filteredProjects"
-                :key="project.id"
-                class="flex items-center justify-between p-3.5 hover:bg-white/[0.02] transition-colors group/item cursor-pointer"
-                @click="openProject(project.id)"
-              >
-                <div class="flex items-center gap-3.5 min-w-0">
-                  <div class="w-10 h-7 rounded border border-white/5 bg-[#1d1d22] flex items-center justify-center shrink-0 overflow-hidden">
-                    <img v-if="project.thumbnail" :src="project.thumbnail" alt="Thumbnail" class="w-full h-full object-cover" />
-                    <icon-lucide-image v-else class="size-3.5 text-muted" />
-                  </div>
-                  <span class="text-xs font-bold text-[#fafafa] truncate">{{ project.name }}</span>
-                </div>
-
-                <div class="flex items-center gap-6 text-[10px] text-[#71717a] shrink-0" @click.stop>
-                  <span>Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                  
-                  <div class="flex items-center gap-1.5">
-                    <button
-                      @click.stop="toggleStar(project)"
-                      type="button"
-                      class="p-1 rounded hover:bg-white/5 text-[#a1a1aa] hover:text-[#fafafa] transition-colors"
-                    >
-                      <icon-lucide-star class="size-3.5" :class="{ 'fill-amber-500 text-amber-500': project.starred }" />
-                    </button>
-                    
-                    <div class="relative group/menu">
-                      <button type="button" class="p-1 rounded hover:bg-white/5 text-[#a1a1aa] hover:text-[#fafafa] transition-colors">
-                        <icon-lucide-ellipsis class="size-3.5" />
-                      </button>
-                      <div class="absolute right-0 top-full mt-1 w-36 rounded-lg border border-white/5 bg-[#1c1c21] p-1 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover/menu:opacity-100 group-hover/menu:translate-y-0 group-hover/menu:pointer-events-auto transition-all duration-150 z-30">
-                        <button @click.stop="openProject(project.id)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-external-link class="size-3" /> Open</button>
-                        <button @click.stop="renameProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-pencil class="size-3" /> Rename</button>
-                        <button @click.stop="duplicateProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-[#eae8e4] flex items-center gap-1.5"><icon-lucide-copy class="size-3" /> Duplicate</button>
-                        <button @click.stop="deleteProject(project)" type="button" class="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 text-xs text-rose-400 flex items-center gap-1.5"><icon-lucide-trash-2 class="size-3" /> Delete</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Empty Projects state -->
-            <div v-else class="rounded-2xl border border-dashed border-white/5 p-16 text-center flex flex-col items-center justify-center gap-4">
-              <div class="size-10 rounded-full bg-white/5 flex items-center justify-center text-[#71717a]"><icon-lucide-folder class="size-5" /></div>
-              <div>
-                <h4 class="text-sm font-semibold text-[#fafafa] mb-1">Create your first design</h4>
-                <p class="text-xs text-[#71717a] mb-4">Start building something amazing on Nexx Design.</p>
-                <button
-                  @click="createNewDesign"
-                  type="button"
-                  class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 font-bold text-xs tracking-wide text-white transition-colors"
-                >
-                  Create design
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Templates list Section -->
-          <div class="space-y-4 pt-4 border-t border-white/5">
-            <h3 class="text-base font-bold text-[#fafafa]">Templates Library</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div
-                @click="createNewDesign"
-                class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300 cursor-pointer"
-              >
-                <div class="aspect-[1.8] bg-[#1d1c1a] border-b border-white/5 flex items-center justify-center text-[10px] font-mono text-[#52525b]">
-                  SaaS Dashboard
-                </div>
-                <div class="p-3">
-                  <h4 class="text-xs font-semibold text-[#fafafa] truncate">SaaS Dashboard</h4>
-                  <span class="text-[9px] text-[#71717a]">Start with standard components</span>
-                </div>
-              </div>
-
-              <div
-                @click="createNewDesign"
-                class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300 cursor-pointer"
-              >
-                <div class="aspect-[1.8] bg-[#1c1c1f] border-b border-white/5 flex items-center justify-center text-[10px] font-mono text-[#52525b]">
-                  Landing Page
-                </div>
-                <div class="p-3">
-                  <h4 class="text-xs font-semibold text-[#fafafa] truncate">Landing Page</h4>
-                  <span class="text-[9px] text-[#71717a]">Start with pricing and CTA sections</span>
-                </div>
-              </div>
-
-              <div
-                @click="createNewDesign"
-                class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300 cursor-pointer"
-              >
-                <div class="aspect-[1.8] bg-[#1a1a1f] border-b border-white/5 flex items-center justify-center text-[10px] font-mono text-[#52525b]">
-                  Mobile App Mockup
-                </div>
-                <div class="p-3">
-                  <h4 class="text-xs font-semibold text-[#fafafa] truncate">Mobile App Screen</h4>
-                  <span class="text-[9px] text-[#71717a]">Mobile layout and UI modules</span>
-                </div>
-              </div>
-
-              <div
-                @click="createNewDesign"
-                class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300 cursor-pointer"
-              >
-                <div class="aspect-[1.8] bg-[#1a1c1d] border-b border-white/5 flex items-center justify-center text-[10px] font-mono text-[#52525b]">
-                  Admin Template
-                </div>
-                <div class="p-3">
-                  <h4 class="text-xs font-semibold text-[#fafafa] truncate">Admin Portal</h4>
-                  <span class="text-[9px] text-[#71717a]">Side-nav layout and tabular records</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── RECENTS VIEW ── -->
-        <div v-else-if="activeView === 'recents'" class="space-y-8 animate-fade-in">
-          <div>
-            <h2 class="text-2xl font-extrabold text-[#fafafa] mb-1">Recents</h2>
-            <p class="text-xs text-[#a1a1aa]">Your recently opened and edited designs</p>
-          </div>
-
-          <div v-if="projects.length > 0" class="space-y-8">
-            <!-- Today Group -->
-            <div v-if="groupedRecents.today.length > 0" class="space-y-4">
-              <h3 class="text-xs font-semibold text-[#71717a] uppercase tracking-wider">Today</h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <div v-for="project in groupedRecents.today" :key="project.id" class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300">
-                  <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer border-b border-white/5">
-                    <img v-if="project.thumbnail" :src="project.thumbnail" alt="Preview" class="w-full h-full object-cover" />
-                    <span v-else class="text-[10px] font-mono text-[#52525b]">No Preview</span>
-                  </div>
-                  <div class="p-3 flex items-center justify-between">
-                    <div>
-                      <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                      <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Yesterday Group -->
-            <div v-if="groupedRecents.yesterday.length > 0" class="space-y-4">
-              <h3 class="text-xs font-semibold text-[#71717a] uppercase tracking-wider">Yesterday</h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <div v-for="project in groupedRecents.yesterday" :key="project.id" class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300">
-                  <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer border-b border-white/5">
-                    <img v-if="project.thumbnail" :src="project.thumbnail" alt="Preview" class="w-full h-full object-cover" />
-                    <span v-else class="text-[10px] font-mono text-[#52525b]">No Preview</span>
-                  </div>
-                  <div class="p-3 flex items-center justify-between">
-                    <div>
-                      <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                      <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Earlier Group -->
-            <div v-if="groupedRecents.earlier.length > 0" class="space-y-4">
-              <h3 class="text-xs font-semibold text-[#71717a] uppercase tracking-wider">Earlier</h3>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                <div v-for="project in groupedRecents.earlier" :key="project.id" class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300">
-                  <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer border-b border-white/5">
-                    <img v-if="project.thumbnail" :src="project.thumbnail" alt="Preview" class="w-full h-full object-cover" />
-                    <span v-else class="text-[10px] font-mono text-[#52525b]">No Preview</span>
-                  </div>
-                  <div class="p-3 flex items-center justify-between">
-                    <div>
-                      <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                      <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="rounded-2xl border border-dashed border-white/5 p-16 text-center flex flex-col items-center justify-center gap-4">
-            <div class="size-10 rounded-full bg-white/5 flex items-center justify-center text-[#71717a]"><icon-lucide-history class="size-5" /></div>
-            <div>
-              <h4 class="text-sm font-semibold text-[#fafafa] mb-1">No recent files</h4>
-              <p class="text-xs text-[#71717a]">Your recently opened designs will appear here.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── STARRED VIEW ── -->
-        <div v-else-if="activeView === 'starred'" class="space-y-8 animate-fade-in">
-          <div>
-            <h2 class="text-2xl font-extrabold text-[#fafafa] mb-1">Starred</h2>
-            <p class="text-xs text-[#a1a1aa]">Your starred designs for quick access</p>
-          </div>
-
-          <div v-if="starredProjects.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <div
-              v-for="project in starredProjects"
-              :key="project.id"
-              class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300"
-            >
-              <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer border-b border-white/5">
-                <img v-if="project.thumbnail" :src="project.thumbnail" alt="Preview" class="w-full h-full object-cover" />
-                <span v-else class="text-[10px] font-mono text-[#52525b]">No Preview</span>
-              </div>
-              <div class="p-3 flex items-center justify-between">
-                <div>
-                  <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                  <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                </div>
-                <button @click="toggleStar(project)" type="button" class="p-1 rounded text-amber-500 hover:bg-white/5 transition-colors">
-                  <icon-lucide-star class="size-4 fill-amber-500" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty Starred state -->
-          <div v-else class="rounded-2xl border border-dashed border-white/5 p-16 text-center flex flex-col items-center justify-center gap-4">
-            <div class="size-10 rounded-full bg-white/5 flex items-center justify-center text-[#71717a]"><icon-lucide-star class="size-5" /></div>
-            <div>
-              <h4 class="text-sm font-semibold text-[#fafafa] mb-1">No starred projects</h4>
-              <p class="text-xs text-[#71717a]">Star important projects to find them quickly here.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── PROJECTS VIEW ── -->
-        <div v-else-if="activeView === 'projects'" class="space-y-6 animate-fade-in">
+        <!-- ── SECTION 1: RECENT EDITED ── -->
+        <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-extrabold text-[#fafafa] mb-1">Projects</h2>
-              <p class="text-xs text-[#a1a1aa]">Browse, search and manage all designs</p>
-            </div>
-            <button
-              @click="createNewDesign"
-              type="button"
-              class="h-9 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs tracking-wide transition-colors"
-            >
-              + New Design
-            </button>
+            <h2 class="text-sm font-bold text-white tracking-tight">Recent edited</h2>
+            <button @click="activeView = 'recents'" class="text-xs text-rose-400 hover:text-rose-300">View all</button>
           </div>
 
-          <!-- Filter Search Toolbar -->
-          <div class="flex items-center gap-3">
-            <div class="relative flex-1 max-w-md">
-              <icon-lucide-search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#71717a]" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+              v-for="item in projects.slice(0, 4)"
+              :key="item.id"
+              @click="selectedProject = item"
+              class="glass-card rounded-2xl p-4 cursor-pointer relative group transition-all duration-300"
+              :class="selectedProject?.id === item.id ? 'ring-2 ring-rose-500/50 bg-rose-950/20' : ''"
+            >
+              <div class="flex items-start gap-3.5">
+                <!-- Icon badge -->
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold shrink-0 shadow"
+                     :style="{ backgroundColor: getFileIcon(item.name).bg, color: getFileIcon(item.name).color }">
+                  {{ getFileIcon(item.name).label }}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-xs font-bold text-white truncate group-hover:text-rose-300 transition-colors">{{ item.name }}</h4>
+                  <p class="text-[10px] text-zinc-400 mt-0.5">Edited {{ formatTimeAgo(item.updatedAt) }}</p>
+                </div>
+
+                <button @click.stop="openProject(item.id)" class="text-zinc-500 hover:text-white">
+                  <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                </button>
+              </div>
+
+              <!-- Hover "See details" Pill button -->
+              <div class="mt-4 flex items-center justify-end">
+                <button
+                  @click.stop="openProject(item.id)"
+                  class="px-3 py-1 rounded-full text-[10px] font-bold text-white bg-zinc-900 border border-white/10 hover:bg-rose-600 hover:border-rose-500 transition-all"
+                >
+                  See details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SECTION 2: SHARED FOLDERS (REALISTIC FOLDER SHAPE GEOMETRY) ── -->
+        <div class="space-y-4 pt-2">
+          <h2 class="text-sm font-bold text-white tracking-tight">Shared Folders</h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-3">
+            <div
+              v-for="folder in mockFolders"
+              :key="folder.id"
+              class="relative pt-6 group cursor-pointer"
+            >
+              <!-- 1. Authentically Raised Folder Tab on Top-Left -->
+              <div
+                class="absolute top-0 left-0 h-7 px-4 rounded-t-xl flex items-center gap-2 border-t border-x border-white/10 z-10"
+                :style="{ background: folder.tabBg }"
+              >
+                <!-- Folder Mini Icon -->
+                <span class="text-xs">📁</span>
+                <span class="text-[11px] font-bold text-white truncate max-w-[100px]">{{ folder.name }}</span>
+              </div>
+
+              <!-- 2. Main Folder Sleeve Body (Cutout Under Tab) -->
+              <div class="folder-realistic-card glass-card p-5 relative overflow-hidden group-hover:border-rose-500/50 shadow-2xl transition-all duration-300">
+                <!-- Inner Sleeve Drop Line -->
+                <div class="absolute top-0 right-0 left-28 h-px bg-white/10" />
+
+                <div class="flex flex-col justify-between h-full space-y-4 pt-1">
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <h3 class="text-sm font-bold text-white group-hover:text-rose-300 transition-colors">{{ folder.name }}</h3>
+                      <p class="text-[11px] text-zinc-400 mt-0.5">{{ folder.fileCount }} files, {{ folder.size }}</p>
+                    </div>
+
+                    <span class="text-[10px] text-zinc-500 font-mono px-2 py-0.5 rounded-full bg-zinc-900/80 border border-white/5">
+                      {{ folder.size }}
+                    </span>
+                  </div>
+
+                  <!-- Members Avatar Stack -->
+                  <div class="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div class="flex items-center -space-x-2">
+                      <img
+                        v-for="(avatar, i) in folder.members"
+                        :key="i"
+                        :src="avatar"
+                        class="w-6 h-6 rounded-full border-2 border-zinc-950 object-cover"
+                        alt="Member"
+                      />
+                      <span v-if="folder.moreCount > 0" class="w-6 h-6 rounded-full bg-zinc-800 border-2 border-zinc-950 text-[9px] font-bold text-zinc-300 flex items-center justify-center">
+                        +{{ folder.moreCount }}
+                      </span>
+                    </div>
+
+                    <span class="text-xs text-zinc-500 group-hover:text-rose-400 transition-colors">→</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SECTION 3: FILE LIST & FILTER PILLS ── -->
+        <div class="space-y-4 pt-2">
+          <!-- Filter Tabs -->
+          <div class="flex items-center justify-between pb-3 border-b border-white/5">
+            <div class="flex items-center gap-2">
+              <button
+                @click="activeFilterTab = 'recents'"
+                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5"
+                :class="activeFilterTab === 'recents' ? 'bg-zinc-900 text-white border border-white/10 shadow' : 'text-zinc-400 hover:text-white'"
+              >
+                <span v-if="activeFilterTab === 'recents'" class="text-rose-400">✓</span>
+                <span>Recently Opened</span>
+              </button>
+
+              <button
+                @click="activeFilterTab = 'shared-docs'"
+                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+                :class="activeFilterTab === 'shared-docs' ? 'bg-zinc-900 text-white border border-white/10 shadow' : 'text-zinc-400 hover:text-white'"
+              >
+                Shared Documents
+              </button>
+
+              <button
+                @click="activeFilterTab = 'shared-folders'"
+                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
+                :class="activeFilterTab === 'shared-folders' ? 'bg-zinc-900 text-white border border-white/10 shadow' : 'text-zinc-400 hover:text-white'"
+              >
+                Shared Folders
+              </button>
+            </div>
+
+            <!-- Search filter in list -->
+            <div class="relative w-64">
+              <svg class="size-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input
                 v-model="searchQuery"
                 type="text"
-                placeholder="Search projects..."
-                class="w-full h-9 pl-9 pr-4 rounded-lg border border-white/5 bg-[#121215] text-xs text-[#eae8e4] focus:outline-none focus:border-white/10 transition-colors"
+                placeholder="Filter files..."
+                class="w-full pl-9 pr-3 py-1.5 rounded-xl bg-zinc-900/60 border border-white/5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500/50"
               />
             </div>
-
-            <!-- List/Grid Toggle -->
-            <div class="flex items-center gap-1 bg-[#121215] border border-white/5 p-1 rounded-lg ml-auto">
-              <button @click="viewMode = 'grid'" type="button" class="p-1 rounded text-[#a1a1aa] hover:text-white" :class="{ 'bg-white/5 text-[#fafafa]': viewMode === 'grid' }"><icon-lucide-grid class="size-3.5" /></button>
-              <button @click="viewMode = 'list'" type="button" class="p-1 rounded text-[#a1a1aa] hover:text-white" :class="{ 'bg-white/5 text-[#fafafa]': viewMode === 'list' }"><icon-lucide-list class="size-3.5" /></button>
-            </div>
           </div>
 
-          <!-- Project Display Grid -->
-          <div v-if="filteredProjects.length > 0 && viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <div
-              v-for="project in filteredProjects"
-              :key="project.id"
-              class="group/item rounded-xl border border-white/5 bg-[#121215] overflow-hidden hover:border-white/10 hover:shadow-lg transition-all duration-300"
-            >
-              <div @dblclick="openProject(project.id)" class="aspect-[1.6] bg-[#1d1d22] relative flex items-center justify-center overflow-hidden cursor-pointer border-b border-white/5">
-                <img v-if="project.thumbnail" :src="project.thumbnail" alt="Preview" class="w-full h-full object-cover" />
-                <span v-else class="text-[10px] font-mono text-[#52525b]">No Preview</span>
-              </div>
-              <div class="p-3 flex items-center justify-between">
-                <div>
-                  <h4 @click="openProject(project.id)" class="text-xs font-bold text-[#fafafa] truncate cursor-pointer hover:text-white">{{ project.name }}</h4>
-                  <span class="text-[10px] text-[#71717a]">Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                </div>
-                
-                <div class="flex items-center gap-1">
-                  <button @click="toggleStar(project)" type="button" class="p-1 rounded text-[#a1a1aa] hover:text-[#fafafa] transition-colors">
-                    <icon-lucide-star class="size-3.5" :class="{ 'fill-amber-500 text-amber-500': project.starred }" />
-                  </button>
-                  <button @click="deleteProject(project)" type="button" class="p-1 rounded text-[#a1a1aa] hover:text-rose-400 transition-colors">
-                    <icon-lucide-trash-2 class="size-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Data Table (Dark Red Accents) -->
+          <div class="rounded-2xl glass-card overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-white/5 bg-zinc-950/60 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <th class="py-3 px-4 w-8">
+                      <input type="checkbox" class="rounded bg-zinc-900 border-white/20 text-rose-600 focus:ring-0" />
+                    </th>
+                    <th class="py-3 px-4">File Name</th>
+                    <th class="py-3 px-4">Owner</th>
+                    <th class="py-3 px-4">Last Modified</th>
+                    <th class="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
 
-          <!-- Project Display List -->
-          <div v-else-if="filteredProjects.length > 0 && viewMode === 'list'" class="border border-white/5 rounded-xl bg-[#121215] overflow-hidden divide-y divide-white/5">
-            <div
-              v-for="project in filteredProjects"
-              :key="project.id"
-              class="flex items-center justify-between p-3.5 hover:bg-white/[0.02] transition-colors cursor-pointer"
-              @click="openProject(project.id)"
-            >
-              <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-7 rounded border border-white/5 bg-[#1d1d22] flex items-center justify-center overflow-hidden shrink-0">
-                  <img v-if="project.thumbnail" :src="project.thumbnail" alt="Thumbnail" class="w-full h-full object-cover" />
-                  <icon-lucide-image v-else class="size-3.5 text-muted" />
-                </div>
-                <span class="text-xs font-bold text-[#fafafa] truncate">{{ project.name }}</span>
-              </div>
-              <div class="flex items-center gap-6 text-[10px] text-[#71717a]" @click.stop>
-                <span>Edited {{ formatTimeAgo(project.updatedAt) }}</span>
-                <button @click="toggleStar(project)" type="button" class="p-1 rounded hover:bg-white/5 transition-colors">
-                  <icon-lucide-star class="size-3.5" :class="{ 'fill-amber-500 text-amber-500': project.starred }" />
-                </button>
-                <button @click="deleteProject(project)" type="button" class="p-1 rounded hover:bg-white/5 text-rose-400 transition-colors">
-                  <icon-lucide-trash-2 class="size-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
+                <tbody class="divide-y divide-white/5 text-xs text-zinc-300">
+                  <tr
+                    v-for="project in filteredProjects"
+                    :key="project.id"
+                    @click="selectedProject = project"
+                    class="hover:bg-white/[0.03] transition-colors cursor-pointer"
+                    :class="selectedProject?.id === project.id ? 'bg-rose-950/25' : ''"
+                  >
+                    <!-- Checkbox -->
+                    <td class="py-3.5 px-4" @click.stop>
+                      <input type="checkbox" :checked="selectedProject?.id === project.id" class="rounded bg-zinc-900 border-white/20 text-rose-600 focus:ring-0" />
+                    </td>
 
-          <!-- Empty list state -->
-          <div v-else class="rounded-2xl border border-dashed border-white/5 p-16 text-center flex flex-col items-center justify-center gap-4">
-            <div class="size-10 rounded-full bg-white/5 flex items-center justify-center text-[#71717a]"><icon-lucide-folder class="size-5" /></div>
-            <div>
-              <h4 class="text-sm font-semibold text-[#fafafa] mb-1">No designs found</h4>
-              <p class="text-xs text-[#71717a]">Try adjusting your search query or create a new design.</p>
+                    <!-- File Name & Icon -->
+                    <td class="py-3.5 px-4 font-semibold text-white">
+                      <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shadow"
+                             :style="{ backgroundColor: getFileIcon(project.name).bg, color: getFileIcon(project.name).color }">
+                          {{ getFileIcon(project.name).label }}
+                        </div>
+                        <div>
+                          <div class="hover:text-rose-300 transition-colors" @click="openProject(project.id)">
+                            {{ project.name }}
+                          </div>
+                          <div class="text-[10px] text-zinc-500 font-normal flex items-center gap-1.5">
+                            <span>Shared 👥</span>
+                            <span v-if="project.starred" class="text-amber-400">• Starred ⭐</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Owner Avatars -->
+                    <td class="py-3.5 px-4">
+                      <div class="flex items-center -space-x-1.5">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80" class="w-6 h-6 rounded-full border border-zinc-950 object-cover" />
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80" class="w-6 h-6 rounded-full border border-zinc-950 object-cover" />
+                        <span class="w-6 h-6 rounded-full bg-zinc-800 text-[9px] font-bold text-zinc-300 flex items-center justify-center border border-zinc-950">+2</span>
+                      </div>
+                    </td>
+
+                    <!-- Modified -->
+                    <td class="py-3.5 px-4 text-zinc-400 text-[11px]">
+                      {{ formatTimeAgo(project.updatedAt) }}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="py-3.5 px-4 text-right" @click.stop>
+                      <div class="flex items-center justify-end gap-1">
+                        <button @click="toggleStar(project)" class="p-1 rounded hover:bg-white/5 text-zinc-400 hover:text-amber-400">
+                          <svg class="size-3.5" :class="{ 'fill-amber-400 text-amber-400': project.starred }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </button>
+                        <button @click="openProject(project.id)" class="px-2.5 py-1 rounded-lg bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white text-[10px] font-bold transition-all">
+                          Open
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
-      </div>
-    </main>
+
+      </main>
+
+      <!-- ════ 4. FLOATING BOTTOM SELECTION STATUS BAR ════ -->
+      <footer v-if="selectedProject" class="h-12 border-t border-white/5 bg-zinc-950/90 backdrop-blur-md px-8 flex items-center justify-between shrink-0 z-30">
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-sm">🎨</span>
+          <span class="font-bold text-white">{{ selectedProject.name }}</span>
+          <span class="text-zinc-500">•</span>
+          <span class="text-zinc-400 text-[11px]">1.5 GB</span>
+          <span class="text-zinc-500">•</span>
+          <span class="text-zinc-400 text-[11px]">{{ new Date(selectedProject.updatedAt).toLocaleDateString() }}</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold flex items-center gap-1">
+            <span>🔒</span> Restricted Access
+          </span>
+
+          <button
+            @click="openProject(selectedProject.id)"
+            class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/20 transition-all flex items-center gap-1.5"
+          >
+            <span>Open Canvas</span>
+            <span>→</span>
+          </button>
+        </div>
+      </footer>
+
+    </div>
 
     <!-- Hidden Input for Importing .fig file -->
-    <input
-      type="file"
-      ref="fileInput"
-      accept=".fig"
-      class="hidden"
-      @change="handleImportFile"
-    />
+    <input type="file" ref="fileInput" accept=".fig" class="hidden" @change="handleImportFile" />
 
-    <!-- Settings Dialog / Profile Panel modal -->
-    <div
-      v-if="isSettingsOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      @click.self="isSettingsOpen = false"
-    >
-      <div class="w-full max-w-sm rounded-2xl border border-white/5 bg-[#18181b] p-6 shadow-2xl animate-scale-up">
-        <h3 class="text-base font-bold text-[#fafafa] mb-4">Workspace Settings</h3>
-        <div class="space-y-4">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Your Name</label>
-            <input
-              v-model="profileName"
-              type="text"
-              class="h-9 px-3 rounded-lg border border-white/5 bg-[#121215] text-xs text-[#eae8e4] focus:outline-none focus:border-violet-500/50"
-            />
-          </div>
+    <!-- Search Palette Dialog -->
+    <div v-if="isSearchOpen" class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/70 backdrop-blur-md"
+         @click.self="isSearchOpen = false">
+      <div class="w-full max-w-lg glass-modal rounded-2xl overflow-hidden shadow-2xl animate-scale-up" @keydown="handleSearchKeyDown">
+        <div class="relative border-b border-white/[0.06]">
+          <svg class="size-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input v-model="searchFilter" type="text" placeholder="Search projects, files, designs…"
+                 class="w-full h-14 pl-12 pr-4 bg-transparent text-[13px] text-white focus:outline-none placeholder-zinc-500"
+                 autofocus />
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500">ESC to close</span>
         </div>
-
-        <div class="flex items-center justify-end gap-2 mt-6">
-          <button
-            @click="isSettingsOpen = false"
-            type="button"
-            class="h-9 px-4 rounded-lg border border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 text-xs font-bold transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            @click="saveProfileName"
-            type="button"
-            class="h-9 px-4 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold transition-colors"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
-    <!-- Add Account Dialog -->
-    <div
-      v-if="isAddAccountOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      @click.self="isAddAccountOpen = false"
-    >
-      <div class="w-full max-w-sm rounded-2xl border border-white/5 bg-[#18181b] p-6 shadow-2xl animate-scale-up">
-        <h3 class="text-base font-bold text-[#fafafa] mb-4">Add Account</h3>
-        <div class="space-y-4">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[10px] font-semibold text-[#a1a1aa] uppercase tracking-wider">Account Name</label>
-            <input
-              v-model="newAccountName"
-              type="text"
-              placeholder="e.g. Sarah"
-              class="h-9 px-3 rounded-lg border border-white/5 bg-[#121215] text-xs text-[#eae8e4] focus:outline-none focus:border-accent"
-              @keydown.enter="addAccount"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 mt-6">
-          <button
-            @click="isAddAccountOpen = false"
-            type="button"
-            class="h-9 px-4 rounded-lg border border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 text-xs font-bold transition-all"
-          >
-            Cancel
-          </button>
-          <button
-            @click="addAccount"
-            type="button"
-            class="h-9 px-4 rounded-lg bg-accent hover:bg-accent/80 text-white text-xs font-bold transition-colors"
-          >
-            Add
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Command palette dialog search modal overlay -->
-    <div
-      v-if="isSearchOpen"
-      class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-24 bg-black/60 backdrop-blur-sm"
-      @click.self="isSearchOpen = false"
-    >
-      <div class="w-full max-w-lg rounded-2xl border border-white/5 bg-[#18181b] overflow-hidden shadow-2xl animate-scale-up" @keydown="handleSearchKeyDown">
-        <!-- Search Input -->
-        <div class="relative border-b border-white/5">
-          <icon-lucide-search class="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#71717a]" />
-          <input
-            v-model="searchFilter"
-            type="text"
-            placeholder="Search projects, files, designs..."
-            class="w-full h-12 pl-12 pr-4 bg-transparent text-xs text-[#fafafa] focus:outline-none placeholder-[#71717a]"
-            autofocus
-          />
-        </div>
-
-        <!-- Matches dropdown -->
-        <div class="max-h-72 overflow-y-auto p-1.5">
+        <div class="max-h-80 overflow-y-auto p-2">
           <div v-if="searchDialogMatches.length > 0">
-            <div class="px-3 py-2 text-[9px] font-bold text-[#71717a] uppercase tracking-wider select-none">Projects</div>
-            
+            <div class="px-3 py-1.5 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Projects</div>
             <div
               v-for="(match, index) in searchDialogMatches"
               :key="match.id"
-              class="p-2.5 rounded-lg flex items-center justify-between cursor-pointer select-none transition-colors"
-              :class="[index === selectedSearchIndex ? 'bg-white/5 text-white' : 'text-[#a1a1aa] hover:bg-white/[0.01] hover:text-[#eae8e4]']"
+              class="px-3 py-2.5 rounded-xl flex items-center justify-between cursor-pointer transition-colors"
+              :class="index === selectedSearchIndex ? 'bg-rose-600/20 text-white' : 'text-zinc-400 hover:bg-white/[0.03]'"
               @mouseenter="selectedSearchIndex = index"
               @click="openProject(match.id)"
             >
               <div class="flex items-center gap-3 min-w-0">
-                <icon-lucide-file class="size-4 shrink-0 text-violet-400" />
-                <span class="text-xs truncate font-medium">{{ match.name }}</span>
+                <span class="text-rose-400">📄</span>
+                <span class="text-[12px] font-medium truncate">{{ match.name }}</span>
               </div>
-              <span class="text-[9px] font-mono opacity-50 shrink-0">Edited {{ formatTimeAgo(match.updatedAt) }}</span>
+              <span class="text-[9px] font-mono text-zinc-500 shrink-0">Edited {{ formatTimeAgo(match.updatedAt) }}</span>
             </div>
           </div>
-
-          <div v-else class="py-8 text-center text-xs text-[#71717a] select-none">
-            No projects match "{{ searchFilter }}"
-          </div>
+          <div v-else class="py-10 text-center text-[12px] text-zinc-500">No results for "{{ searchFilter }}"</div>
         </div>
       </div>
     </div>
+
+    <!-- New Folder Dialog Modal -->
+    <div v-if="isNewFolderModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+         @click.self="isNewFolderModalOpen = false">
+      <div class="w-full max-w-sm glass-modal rounded-2xl p-6 shadow-2xl animate-scale-up space-y-4">
+        <h3 class="text-sm font-bold text-white">Create New Folder</h3>
+        <div>
+          <label class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-1">Folder Name</label>
+          <input v-model="newFolderName" type="text" placeholder="e.g. Mobile Design Kit"
+                 class="glass-input h-9 px-3.5 rounded-xl text-[12px] text-white w-full" />
+        </div>
+        <div class="flex items-center justify-end gap-2.5 pt-2">
+          <button @click="isNewFolderModalOpen = false" class="px-4 py-2 rounded-xl text-xs text-zinc-400 hover:text-white">Cancel</button>
+          <button @click="isNewFolderModalOpen = false; newFolderName = ''" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workspace Settings Modal -->
+    <div v-if="isSettingsOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+         @click.self="isSettingsOpen = false">
+      <div class="w-full max-w-sm glass-modal rounded-2xl p-6 shadow-2xl animate-scale-up">
+        <h3 class="text-sm font-bold text-white mb-5">Workspace Settings</h3>
+        <div class="space-y-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Display Name</label>
+            <input v-model="profileName" type="text"
+                   class="glass-input h-9 px-3.5 rounded-xl text-[12px] text-white w-full" />
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2.5 mt-6">
+          <button @click="isSettingsOpen = false" type="button"
+                  class="h-9 px-4 rounded-xl glass-panel text-[11px] font-semibold text-zinc-400 hover:text-white transition-colors">
+            Cancel
+          </button>
+          <button @click="saveProfileName" type="button"
+                  class="h-9 px-4 rounded-xl text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-500">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <style scoped>
 .animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .animate-scale-up {
-  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 </style>
