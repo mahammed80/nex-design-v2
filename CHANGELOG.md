@@ -4,6 +4,7 @@
 
 ### Added
 
+- Add a document-scoped off-canvas Creative Notes workspace with quick capture, search, color coding, pinning, autosave, and a keyboard shortcut.
 - Add an agentic design workflow with progressive model-budgeted skills, live document context, DESIGN.md import/export, deterministic design audits, local generation memory, scoped planner/builder/critic phases, authorized URL reference studies, progress visibility, and onboarding.
 - Add first-class prototype connection support with interactive connection handles, endpoint dragging to reconnect or delete, custom control-point editing for Bezier curves, edge-snapping on candidate target nodes, and a graph-driven preview presentation player.
 - Add Component Set & Component Variant property inspector panel with inline property definition management, variant property value selection, and 1-click variant creation.
@@ -38,6 +39,8 @@
 
 ### Fixes
 
+- Fix fresh development installs failing to start because the Vite OpenType alias targeted a file not published by `opentype.js`.
+- Commit arrow-key nudge history when the key is released, the selection changes, or undo/redo runs so rapid keyboard edits remain correctly ordered and fully undoable.
 - Prevent long Poolside response streams from crashing the Vite development server when the proxy timeout is reached.
 - Request local-font permission only from the explicit user action, prefer bundled fonts, and back off Google Fonts metadata requests after rate limiting.
 - Fix inner shadow rendering for text nodes to be more in line with Figma's behavior

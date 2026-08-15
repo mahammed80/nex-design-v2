@@ -6,6 +6,7 @@ export function createInitialAppEditorState(pageId: string): AppEditorState {
   return {
     ...createDefaultEditorState(pageId),
     showUI: true,
+    showCreativeNotes: false,
     showRulers: true,
     showRemoteCursors: true,
     activeRibbonTab: 'panels',
@@ -24,6 +25,7 @@ export function createInitialAppEditorState(pageId: string): AppEditorState {
 
 export type AppEditorState = EditorState & {
   showUI: boolean
+  showCreativeNotes: boolean
   showRulers: boolean
   showRemoteCursors: boolean
   activeRibbonTab: 'panels' | 'code' | 'ai'

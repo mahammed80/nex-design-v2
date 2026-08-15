@@ -10,6 +10,7 @@ export type KeyboardShortcutActions = {
   escapeOrDeselect: () => void
   toggleAutoLayout: () => void
   toggleUI: () => void
+  toggleCreativeNotes: () => void
   toggleAI: () => void
   exportSelectionPng: () => void
 }

@@ -77,6 +77,11 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
     commandShortcut('ungroup', '$mod+Shift+KeyG', 'selection.ungroup'),
     commandShortcut('redo-shift', '$mod+Shift+KeyZ', 'edit.redo'),
     { id: 'toggle-ui', keys: '$mod+Backslash', run: ({ actions }) => actions.toggleUI() },
+    {
+      id: 'toggle-creative-notes',
+      keys: '$mod+Alt+KeyN',
+      run: ({ actions }) => actions.toggleCreativeNotes()
+    },
     { id: 'toggle-ai', keys: '$mod+KeyJ', run: ({ actions }) => actions.toggleAI() },
     { id: 'close-tab', keys: '$mod+KeyW', run: ({ closeActiveTab }) => closeActiveTab() },
     { id: 'new-tab', keys: ['$mod+KeyN', '$mod+KeyT'], run: ({ createTab }) => createTab() },

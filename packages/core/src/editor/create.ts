@@ -65,6 +65,7 @@ export function createEditor(options?: EditorOptions) {
   void prefetchFigmaSchema()
 
   const state: EditorState = options?.state ?? createDefaultEditorState(_graph.getPages()[0].id)
+  let flushPendingHistory: () => void = () => undefined
 
   function emitEditorEvent<K extends EditorEventName>(
     event: K,
@@ -108,12 +109,15 @@ export function createEditor(options?: EditorOptions) {
 
   function setSelectedIds(ids: Set<string>) {
     const previous = [...state.selectedIds]
-    state.selectedIds = ids
     const selected = [...ids]
-    if (
-      previous.length !== selected.length ||
-      previous.some((id, index) => id !== selected[index])
-    ) {
+    const changed =
+      previous.length !== selected.length || previous.some((id, index) => id !== selected[index])
+
+    if (changed) {
+      flushPendingHistory()
+    }
+    state.selectedIds = ids
+    if (changed) {
       emitEditorEvent('selection:changed', selected, previous)
       requestRender()
     }
@@ -174,9 +178,10 @@ export function createEditor(options?: EditorOptions) {
   const components = createComponentActions(_ctx)
   const clipboard = createClipboardActions(_ctx)
   const colorSpace = createColorSpaceActions(_ctx)
-  const undoActions = createUndoActions(_ctx)
   const text = createTextActions(_ctx)
   const nodes = createNodeActions(_ctx)
+  flushPendingHistory = nodes.flushNudge
+  const undoActions = createUndoActions(_ctx, flushPendingHistory)
   const variables = createVariableActions(_ctx)
   const alignment = createAlignmentActions(_ctx)
   const prototype = createPrototypeActions(_ctx)

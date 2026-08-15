@@ -11,7 +11,10 @@ import {
 } from './history/snapshot'
 import type { EditorContext } from './types'
 
-export function createUndoActions(ctx: EditorContext) {
+export function createUndoActions(
+  ctx: EditorContext,
+  flushPendingHistory: () => void = () => undefined
+) {
   function commitMove(originals: Map<string, Vector>) {
     pushPositionUndo(ctx, 'Move', originals, collectNodePositions(ctx, originals.keys()))
   }
@@ -125,12 +128,14 @@ export function createUndoActions(ctx: EditorContext) {
   }
 
   function undoAction(validateEnteredContainer: () => void) {
+    flushPendingHistory()
     ctx.undo.undo()
     validateEnteredContainer()
     ctx.requestRender()
   }
 
   function redoAction(validateEnteredContainer: () => void) {
+    flushPendingHistory()
     ctx.undo.redo()
     validateEnteredContainer()
     ctx.requestRender()

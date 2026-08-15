@@ -24,4 +24,10 @@ export function bindNudgeKeys(store: EditorStore) {
     store.nudgeSelected(delta[0] * step, delta[1] * step)
     e.preventDefault()
   })
+
+  useEventListener(window, 'keyup', (e: KeyboardEvent) => {
+    if (NUDGE_DELTAS[e.code]) store.flushNudge()
+  })
+
+  useEventListener(window, 'blur', () => store.flushNudge())
 }

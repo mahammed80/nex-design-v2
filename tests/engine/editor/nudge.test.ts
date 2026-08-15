@@ -121,4 +121,53 @@ describe('nudgeSelected', () => {
     expect(getNodeOrThrow(editor.graph, rect.id).x).toBe(100)
     expect(getNodeOrThrow(editor.graph, rect.id).y).toBe(200)
   })
+
+  test('changing selection commits the current nudge before moving another node', () => {
+    const { editor, rect } = setup()
+    const pageId = editor.graph.getPages()[0].id
+    const rect2 = editor.graph.createNode('RECTANGLE', pageId, {
+      name: 'Rect2',
+      x: 300,
+      y: 400,
+      width: 50,
+      height: 50
+    })
+
+    editor.nudgeSelected(5, 0)
+    editor.select([rect2.id])
+    editor.nudgeSelected(0, 7)
+    editor.flushNudge()
+
+    editor.undoAction()
+    expect(getNodeOrThrow(editor.graph, rect2.id).y).toBe(400)
+    expect(getNodeOrThrow(editor.graph, rect.id).x).toBe(105)
+
+    editor.undoAction()
+    expect(getNodeOrThrow(editor.graph, rect.id).x).toBe(100)
+  })
+
+  test('undo commits a pending nudge before reading history', () => {
+    const { editor, rect } = setup()
+
+    editor.nudgeSelected(5, 0)
+    expect(editor.undo.canUndo).toBe(true)
+    editor.undoAction()
+
+    expect(getNodeOrThrow(editor.graph, rect.id).x).toBe(100)
+    expect(editor.undo.canRedo).toBe(true)
+  })
+
+  test('records pending nudge history before a later property edit', () => {
+    const { editor, rect } = setup()
+
+    editor.nudgeSelected(5, 0)
+    editor.updateNodeWithUndo(rect.id, { width: 75 }, 'Resize width')
+
+    editor.undoAction()
+    expect(getNodeOrThrow(editor.graph, rect.id).width).toBe(50)
+    expect(getNodeOrThrow(editor.graph, rect.id).x).toBe(105)
+
+    editor.undoAction()
+    expect(getNodeOrThrow(editor.graph, rect.id).x).toBe(100)
+  })
 })

@@ -83,6 +83,10 @@ export function createKeyboardActions({
     store.state.showUI = !store.state.showUI
   }
 
+  function toggleCreativeNotes() {
+    store.state.showCreativeNotes = !store.state.showCreativeNotes
+  }
+
   function toggleAI() {
     if (isMobile.value) {
       store.state.activeRibbonTab = store.state.activeRibbonTab === 'ai' ? 'panels' : 'ai'
@@ -104,6 +108,7 @@ export function createKeyboardActions({
     escapeOrDeselect,
     toggleAutoLayout,
     toggleUI,
+    toggleCreativeNotes,
     toggleAI,
     exportSelectionPng
   }

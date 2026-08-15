@@ -20,6 +20,7 @@ import { openDb, getProjectFromDb, updateProjectInDb } from '@/app/dashboard/db'
 import { readFigFile } from '@nex-design/core/io/formats/fig'
 
 import CollabPanel from '@/components/CollabPanel/CollabPanel.vue'
+import CreativeNotesPanel from '@/components/CreativeNotes/CreativeNotesPanel.vue'
 import EditorCanvas from '@/components/EditorCanvas.vue'
 import LayersPanel from '@/components/LayersPanel.vue'
 import MobileDrawer from '@/components/MobileDrawer.vue'
@@ -85,11 +86,11 @@ onMounted(async () => {
       if (project) {
         store.state.activeProjectId = project.id
         store.state.documentName = project.name
-        
+
         // Load the document using readFigFile
         const file = new File([project.document], `${project.name}.fig`)
         const graph = await readFigFile(file, { populate: 'first-page' })
-        
+
         store.replaceGraph(graph)
         store.undo.clear()
         store.clearSelection()
@@ -129,7 +130,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div data-test-id="editor-root" class="flex h-screen w-screen flex-col">
+  <div data-test-id="editor-root" class="relative flex h-screen w-screen flex-col">
     <SafariBanner />
     <TabBar />
 
@@ -176,6 +177,16 @@ onUnmounted(() => {
           class="flex shrink-0 items-center justify-between border-b border-border px-1.5 py-1.5"
         >
           <CollabPanel />
+          <button
+            data-test-id="creative-notes-open"
+            class="flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[11px] font-medium text-muted transition-colors hover:bg-hover hover:text-surface"
+            aria-label="Open creative notes"
+            title="Creative Notes (⌘⌥N)"
+            @click="store.state.showCreativeNotes = true"
+          >
+            <icon-lucide-notebook-pen class="size-3.5 text-accent" />
+            Notes
+          </button>
         </div>
         <PropertiesPanel />
       </SplitterPanel>
@@ -214,7 +225,11 @@ onUnmounted(() => {
           >
             <icon-lucide-home class="size-3.5" />
           </router-link>
-          <img src="/logo.png" class="h-5 w-auto invert object-contain opacity-90" alt="NexDesign" />
+          <img
+            src="/logo.png"
+            class="h-5 w-auto invert object-contain opacity-90"
+            alt="NexDesign"
+          />
           <span data-test-id="editor-document-name" class="text-xs text-surface">{{
             store.state.documentName
           }}</span>
@@ -236,5 +251,11 @@ onUnmounted(() => {
         <EditorCanvas />
       </div>
     </div>
+
+    <CreativeNotesPanel
+      v-if="showChrome"
+      :key="`creative-notes-${activeTab?.id}`"
+      :show-launcher="isMobile || !store.state.showUI"
+    />
   </div>
 </template>

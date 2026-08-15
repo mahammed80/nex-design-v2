@@ -7,16 +7,14 @@ const NUDGE_COMMIT_DELAY = 300
 
 export function createNudgeActions(ctx: EditorContext) {
   let nudgeOriginals: Map<string, Vector> | null = null
+  let nudgeFinals: Map<string, Vector> | null = null
   let nudgeCommitTimer: ReturnType<typeof setTimeout> | null = null
 
   function commitNudge() {
     if (!nudgeOriginals) return
-    const originals = nudgeOriginals
     nudgeOriginals = null
+    nudgeFinals = null
     nudgeCommitTimer = null
-
-    const finals = collectNodePositions(ctx, originals.keys())
-    pushPositionUndo(ctx, 'Nudge', originals, finals)
   }
 
   function nudgeSelected(dx: number, dy: number) {
@@ -30,12 +28,15 @@ export function createNudgeActions(ctx: EditorContext) {
     }
     if (movable.length === 0) return
 
-    if (!nudgeOriginals) {
-      nudgeOriginals = new Map()
+    const startsSequence = !nudgeOriginals
+    let startedOriginals: Map<string, Vector> | null = null
+    if (startsSequence) {
+      startedOriginals = new Map()
       for (const id of movable) {
         const node = ctx.graph.getNode(id)
-        if (node) nudgeOriginals.set(id, { x: node.x, y: node.y })
+        if (node) startedOriginals.set(id, { x: node.x, y: node.y })
       }
+      nudgeOriginals = startedOriginals
     }
 
     for (const id of movable) {
@@ -43,6 +44,14 @@ export function createNudgeActions(ctx: EditorContext) {
       if (!node) continue
       ctx.graph.updateNode(id, { x: node.x + dx, y: node.y + dy })
       ctx.runLayoutForNode(id)
+    }
+
+    if (startedOriginals) {
+      nudgeFinals = collectNodePositions(ctx, startedOriginals.keys())
+      pushPositionUndo(ctx, 'Nudge', startedOriginals, nudgeFinals)
+    } else if (nudgeFinals) {
+      const current = collectNodePositions(ctx, nudgeFinals.keys())
+      for (const [id, position] of current) nudgeFinals.set(id, position)
     }
 
     if (nudgeCommitTimer) clearTimeout(nudgeCommitTimer)
