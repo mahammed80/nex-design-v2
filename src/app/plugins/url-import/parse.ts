@@ -185,6 +185,7 @@ function buildTextNode(
   const fontFamily = styleProps.fontFamily ?? defaultFont
   const textAlign = resolveTextAlign(styleProps, isArabic)
   const color = styleProps.color ?? rgbToHex(style.color) ?? defaultTextColor
+  const isSingleLine = text.length < 40 && !text.includes('\n')
 
   return {
     type: 'text',
@@ -193,7 +194,8 @@ function buildTextNode(
       color,
       ...(styleProps.fontSize ? { size: styleProps.fontSize } : { size: 16 }),
       fontFamily,
-      autoResize: 'width',
+      textAutoResize: isSingleLine ? 'width' : 'height',
+      ...(isSingleLine ? {} : { w: 'fill' }),
       ...(styleProps.fontWeight ? { weight: styleProps.fontWeight } : {}),
       ...(textAlign ? { textAlign } : {}),
       ...(styleProps.opacity !== undefined ? { opacity: styleProps.opacity } : {})
@@ -232,8 +234,8 @@ function assignVisualProps(
 
   if (isButtonOrBadge) {
     if (rw > 0) props.w = rw
-  } else if (isParentRowOrGrid && rw > 0 && rw < parentWidth * 0.9) {
-    props.w = rw
+  } else if (isParentRowOrGrid) {
+    props.w = 'fill'
   } else if (!isParentRowOrGrid && (rw >= parentWidth * 0.85 || parentWidth <= 0)) {
     props.w = 'fill'
   } else if (rw > 0) {
