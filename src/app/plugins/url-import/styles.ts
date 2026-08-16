@@ -140,5 +140,3 @@ export function extractStyles(style: CSSStyleDeclaration): ExtractedStyle {
 
   return result
 }
-
-export { rgbToHex, parsePx }
