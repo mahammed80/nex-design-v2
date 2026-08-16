@@ -228,7 +228,7 @@ function assignVisualProps(
   props: Record<string, unknown>,
   styleProps: ReturnType<typeof extractStyles>,
   rect: DOMRect,
-  parentWidth: number,
+  _parentWidth: number,
   isParentRowOrGrid: boolean,
   resolvedBgImage: string | null
 ): void {
@@ -236,16 +236,25 @@ function assignVisualProps(
   const isButtonOrBadge =
     props.name &&
     typeof props.name === 'string' &&
-    (props.name.includes('Button') || props.name.includes('Link') || props.name.includes('Badge'))
+    (props.name.includes('Button') || props.name.includes('Link') || props.name.includes('Badge') || props.name.includes('Chip'))
+
+  const isMediaOrAvatar =
+    props.name &&
+    typeof props.name === 'string' &&
+    (props.name.includes('Avatar') || props.name.includes('Icon') || props.name.includes('Image'))
 
   if (isButtonOrBadge) {
-    if (rw > 0) props.w = rw
-  } else if (isParentRowOrGrid) {
-    props.w = 'fill'
-  } else if (!isParentRowOrGrid && (rw >= parentWidth * 0.85 || parentWidth <= 0)) {
-    props.w = 'fill'
-  } else if (rw > 0) {
+    // Buttons and badges hug their contents + padding for fluid text editing
+    props._counterAxisSizing = 'HUG'
+    props._primaryAxisSizing = 'HUG'
+  } else if (isMediaOrAvatar && rw > 0) {
     props.w = rw
+  } else if (isParentRowOrGrid) {
+    // Multi-column cards and items fill and grow proportionally
+    props.w = 'fill'
+  } else {
+    // Block sections and containers fill parent width for 100% fluid responsive resizing
+    props.w = 'fill'
   }
 
   if (styleProps.bg) props.bg = styleProps.bg
@@ -277,7 +286,7 @@ function assignBlockProps(
   const isSection =
     tag === 'section' || tag === 'main' || tag === 'article' || tag === 'header' || tag === 'footer'
   props.gap = layoutProps.gap ?? (isSection ? 32 : 16)
-  props.items = 'center'
+  props.items = layoutProps.items ?? 'stretch'
 }
 
 function assignLayoutProps(
