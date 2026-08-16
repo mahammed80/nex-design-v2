@@ -1,6 +1,7 @@
 import type { ImageFilter, MaskFilter, Canvas, Paint, Path } from 'canvaskit-wasm'
 
 import * as AiOverlays from '#core/canvas/ai-overlays'
+import { drawDevModeMeasurements } from '#core/canvas/dev-overlay'
 import * as Effects from '#core/canvas/effects'
 import * as Fills from '#core/canvas/fills'
 import * as Labels from '#core/canvas/labels/draw'
@@ -142,6 +143,15 @@ const rendererMethods: ThisType<SkiaRenderer> = {
     overlays: RenderOverlays
   ): void {
     drawPrototypeOverlay(this, canvas, graph, selectedIds, overlays)
+  },
+
+  drawDevModeOverlay(
+    canvas: Canvas,
+    graph: SceneGraph,
+    selectedIds: Set<string>,
+    overlays: RenderOverlays
+  ): void {
+    drawDevModeMeasurements(this, canvas, graph, Array.from(selectedIds), overlays)
   },
 
   drawRulers(canvas: Canvas, graph: SceneGraph, selectedIds: Set<string>): void {

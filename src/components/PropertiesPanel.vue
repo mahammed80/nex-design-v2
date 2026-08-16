@@ -7,7 +7,7 @@ import { useAIChat } from '@/app/ai/chat/use'
 import { useEditorStore } from '@/app/editor/active-store'
 
 import ChatPanel from './ChatPanel.vue'
-import CodePanel from './CodePanel.vue'
+import DevInspectorPanel from './DevMode/DevInspectorPanel.vue'
 import DesignPanel from './DesignPanel.vue'
 import PrototypePanel from './properties/PrototypePanel.vue'
 import ZoomDropdown from './ZoomDropdown.vue'
@@ -61,8 +61,8 @@ watch(
           data-test-id="properties-tab-code"
           class="flex items-center gap-1 rounded px-2.5 py-1 text-xs text-muted hover:text-surface data-[state=active]:font-semibold data-[state=active]:text-surface"
         >
-          <icon-lucide-code class="size-3" />
-          {{ panels.code }}
+          <icon-lucide-code-2 class="size-3 text-accent" />
+          <span>Dev Mode</span>
         </TabsTrigger>
         <TabsTrigger
           value="ai"
@@ -99,7 +99,7 @@ watch(
         :force-mount="true"
         :hidden="activeTab !== 'code'"
       >
-        <CodePanel />
+        <DevInspectorPanel />
       </TabsContent>
 
       <TabsContent

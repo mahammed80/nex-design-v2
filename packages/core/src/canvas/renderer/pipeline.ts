@@ -207,6 +207,7 @@ export function render(
     r.drawPenOverlay(canvas, overlays.penState)
     r.drawRemoteCursors(canvas, graph, overlays.remoteCursors)
     r.drawPrototypeOverlay(canvas, graph, selectedIds, overlays)
+    r.drawDevModeOverlay(canvas, graph, selectedIds, overlays)
     r.drawGuides(canvas, overlays.guides, overlays.selectedGuideId, overlays.guidesVisible)
     p.beginPhase('render:rulers')
     if (r.showRulers) r.drawRulers(canvas, graph, selectedIds)

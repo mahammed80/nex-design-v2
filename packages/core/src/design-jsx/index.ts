@@ -35,3 +35,5 @@ export { renderJSX, renderTreeNode, buildComponent } from './render'
 
 export { sceneNodeToJSX, selectionToJSX, type JSXFormat } from '#core/io/formats/jsx'
 export { default as JSX_REFERENCE } from '#core/tools/prompts/jsx-reference.md'
+
+export * from './codegen'

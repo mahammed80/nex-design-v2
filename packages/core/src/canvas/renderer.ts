@@ -189,6 +189,12 @@ export class SkiaRenderer {
     selectedIds: Set<string>,
     overlays: RenderOverlays
   ) => void
+  declare drawDevModeOverlay: (
+    canvas: Canvas,
+    graph: SceneGraph,
+    selectedIds: Set<string>,
+    overlays: RenderOverlays
+  ) => void
   declare drawRulers: (canvas: Canvas, graph: SceneGraph, selectedIds: Set<string>) => void
   declare drawGuides: (
     canvas: Canvas,
