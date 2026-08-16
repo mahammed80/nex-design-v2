@@ -12,7 +12,7 @@ import { shouldSkipElement } from './filter'
 import { extractBgImageUrl, getImgAlt, getImgSrc, isImageElement, resolveImageUrl } from './image'
 import { extractLayout } from './layout'
 import { extractStyles, parsePx } from './styles'
-import { extractTextContent, isArabicText, isTextLeafElement, semanticName } from './text'
+import { cleanPageTitle, extractTextContent, isArabicText, isTextLeafElement, semanticName } from './text'
 
 export interface ParseOptions {
   selector?: string
@@ -92,7 +92,7 @@ export async function parseHtmlToTree(
     const tree = walkElement(root, 0, maxDepth, baseUrl, win, viewportWidth, false)
     if (!tree) return createFallbackNode(viewportWidth)
 
-    tree.props.name = doc.title ? `Page / ${doc.title.slice(0, 30)}` : 'Imported Page'
+    tree.props.name = cleanPageTitle(doc.title, 'Imported Page')
     tree.props.w = viewportWidth
     if (!tree.props.bg) tree.props.bg = pageBg
     tree.props.flex = 'col'
@@ -259,6 +259,10 @@ function assignLayoutProps(
   style: CSSStyleDeclaration,
   tag: string
 ): void {
+  if (style.position === 'absolute') {
+    props.position = 'absolute'
+  }
+
   const display = style.display
   const isFlexOrGrid =
     display === 'flex' || display === 'inline-flex' || display === 'grid' || display === 'inline-grid'

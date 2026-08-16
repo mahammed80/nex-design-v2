@@ -23,7 +23,7 @@ export function shouldSkipElement(el: Element, style: CSSStyleDeclaration): bool
     return false
   }
 
-  // Skip preloaders, loading splashes, and cookie banners
+  // Skip preloaders, loading splashes, and decorative background particle systems
   const id = el.id.toLowerCase()
   const cls = (typeof el.className === 'string' ? el.className : '').toLowerCase()
   if (
@@ -31,6 +31,8 @@ export function shouldSkipElement(el: Element, style: CSSStyleDeclaration): bool
     cls.includes('preloader') ||
     id.includes('splash') ||
     cls.includes('splash') ||
+    cls.includes('particles') ||
+    id.includes('particles') ||
     cls.includes('cookie-consent')
   ) {
     return true

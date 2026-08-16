@@ -11,7 +11,7 @@ const TAG_NAME_MAP: Record<string, string> = {
   h6: 'Heading 6',
   p: 'Paragraph',
   li: 'List Item',
-  nav: 'Nav',
+  nav: 'Navigation',
   header: 'Header',
   footer: 'Footer',
   main: 'Main',
@@ -19,7 +19,11 @@ const TAG_NAME_MAP: Record<string, string> = {
   article: 'Article',
   aside: 'Aside',
   button: 'Button',
-  a: 'Link'
+  a: 'Link',
+  form: 'Form',
+  input: 'Input',
+  img: 'Image',
+  svg: 'Icon'
 }
 
 export function isArabicText(text: string): boolean {
@@ -37,18 +41,47 @@ export function extractTextContent(el: Element | Node): string {
   return (el.textContent ?? '').replace(/\s+/g, ' ').trim()
 }
 
+export function cleanPageTitle(rawTitle: string, defaultName = 'Imported Page'): string {
+  if (!rawTitle) return defaultName
+  // Split on pipe or dash to get concise name (e.g. "منصة Mr. Reda التعليمية | فيزياء..." -> "منصة Mr. Reda التعليمية")
+  const parts = rawTitle.split(/[|•–—]/)
+  const mainPart = (parts[0] ?? '').trim()
+  return mainPart.length > 0 ? mainPart.slice(0, 40) : defaultName
+}
+
 export function semanticName(el: Element): string {
   const tag = el.tagName.toLowerCase()
+
+  // Section with ID
+  if (tag === 'section' && el.id) {
+    const capitalizedId = el.id.charAt(0).toUpperCase() + el.id.slice(1)
+    return `Section / ${capitalizedId}`
+  }
+
+  // Cards & containers with distinctive classes
+  const cls = typeof el.className === 'string' ? el.className.toLowerCase() : ''
+  if (cls.includes('card')) {
+    const heading = el.querySelector('h1, h2, h3, h4, h5, h6')
+    const headingText = heading ? extractTextContent(heading).slice(0, 24) : ''
+    return headingText ? `Card / ${headingText}` : 'Card'
+  }
+  if (cls.includes('hero')) {
+    return 'Section / Hero'
+  }
+  if (cls.includes('grid')) {
+    return 'Grid / Layout'
+  }
+
   const text = extractTextContent(el)
-  const snippet = text.slice(0, 28).replace(/[^\p{L}\p{N}\s_-]/gu, '').trim()
+  const snippet = text.slice(0, 24).trim()
 
   const knownName = TAG_NAME_MAP[tag]
   if (knownName) {
     return snippet ? `${knownName} / ${snippet}` : knownName
   }
 
-  const id = el.id ? `#${el.id}` : ''
-  const cls = el.classList[0] ? `.${el.classList[0]}` : ''
-  const hint = id || cls
-  return hint ? `${tag}${hint}` : tag
+  if (el.id) return `#${el.id}`
+  const firstClass = el.classList[0]
+  if (firstClass) return `.${firstClass}`
+  return tag
 }

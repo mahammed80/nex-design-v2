@@ -2,6 +2,8 @@ import type { Canvas } from 'canvaskit-wasm'
 
 import { getAbsolutePosition, getWorldMatrix } from '#core/canvas/coordinate'
 import {
+  DEFAULT_FONT_FAMILY,
+  LABEL_FONT_SIZE,
   LABEL_OFFSET_Y,
   SIZE_PILL_PADDING_X,
   SIZE_PILL_PADDING_Y,
@@ -11,6 +13,7 @@ import {
 } from '#core/constants'
 import { rotatedCorners } from '#core/geometry'
 import type { SceneNode, SceneGraph } from '#core/scene-graph'
+import { fontManager } from '#core/text/fonts'
 
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 
@@ -86,7 +89,28 @@ function drawSingleFrameTitle(
   canvas.concat(m)
 
   // After concat(m), local (0,0) is node's top-left in screen space (after rotation etc.)
-  canvas.drawText(node.name, 0, -LABEL_OFFSET_Y, r.auxFill, labelFont)
+  if (r.fontProvider && r.ck.ParagraphStyle && r.ck.ParagraphBuilder) {
+    const arabicFallbacks = fontManager.getArabicFallbackFamilies()
+    const cjkFallbacks = fontManager.getCJKFallbackFamilies()
+    const families = [DEFAULT_FONT_FAMILY, ...arabicFallbacks, ...cjkFallbacks]
+
+    const paraStyle = new r.ck.ParagraphStyle({
+      textStyle: {
+        color: r.auxFill.getColor(),
+        fontFamilies: families,
+        fontSize: LABEL_FONT_SIZE
+      }
+    })
+    const builder = r.ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, r.fontProvider)
+    builder.addText(node.name)
+    const paragraph = builder.build()
+    paragraph.layout(1000)
+    canvas.drawParagraph(paragraph, 0, -LABEL_OFFSET_Y - LABEL_FONT_SIZE)
+    paragraph.delete()
+    builder.delete()
+  } else {
+    canvas.drawText(node.name, 0, -LABEL_OFFSET_Y, r.auxFill, labelFont)
+  }
 
   canvas.restore()
 }
