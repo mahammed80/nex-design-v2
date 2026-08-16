@@ -72,7 +72,7 @@ export function createDocumentSourceActions({
       const renderer = editor.renderer
       if (renderer) {
         const ids = editor.graph.getChildren(state.currentPageId).map((n) => n.id)
-        if (ids.length > 0) {
+        if (ids.length > 0 && typeof (editor as ExportableEditor).renderExportImage === 'function') {
           const renderData = await (editor as ExportableEditor).renderExportImage([], 0.5, 'PNG')
           if (renderData) {
             thumbnail = uint8ArrayToBase64(renderData)

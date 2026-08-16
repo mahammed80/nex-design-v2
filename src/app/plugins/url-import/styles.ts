@@ -23,11 +23,11 @@ export interface ExtractedStyle {
   overflow?: 'hidden' | 'visible'
 }
 
-function parsePx(val: string): number {
+export function parsePx(val: string): number {
   return parseFloat(val) || 0
 }
 
-function rgbToHex(rgb: string): string | null {
+export function rgbToHex(rgb: string): string | null {
   if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return null
   const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
   if (!match) return null

@@ -11,7 +11,7 @@ import type { TreeNode } from '@nex-design/core/design-jsx'
 import { shouldSkipElement } from './filter'
 import { extractBgImageUrl, getImgAlt, getImgSrc, isImageElement, resolveImageUrl } from './image'
 import { extractLayout } from './layout'
-import { extractStyles, parsePx } from './styles'
+import { extractStyles, parsePx, rgbToHex } from './styles'
 import { cleanPageTitle, extractTextContent, isArabicText, isTextLeafElement, semanticName } from './text'
 
 export interface ParseOptions {
@@ -87,9 +87,13 @@ export async function parseHtmlToTree(
 
     const win = iframe.contentWindow ?? window
     const bodyStyle = win.getComputedStyle(doc.body)
-    const pageBg = bodyStyle.backgroundColor || '#0A1F44'
+    const docStyle = win.getComputedStyle(doc.documentElement)
+    const rawBodyBg = rgbToHex(bodyStyle.backgroundColor)
+    const rawDocBg = rgbToHex(docStyle.backgroundColor)
+    const pageBg = rawBodyBg ?? rawDocBg ?? '#FFFFFF'
+    const defaultTextColor = rgbToHex(bodyStyle.color) ?? rgbToHex(docStyle.color) ?? '#111827'
 
-    const tree = walkElement(root, 0, maxDepth, baseUrl, win, viewportWidth, false)
+    const tree = walkElement(root, 0, maxDepth, baseUrl, win, viewportWidth, false, defaultTextColor)
     if (!tree) return createFallbackNode(viewportWidth)
 
     tree.props.name = cleanPageTitle(doc.title, 'Imported Page')
@@ -173,19 +177,21 @@ function resolveTextAlign(
 function buildTextNode(
   text: string,
   style: CSSStyleDeclaration,
-  name: string
+  name: string,
+  defaultTextColor = '#111827'
 ): TreeNode {
   const styleProps = extractStyles(style)
   const isArabic = isArabicText(text)
   const defaultFont = isArabic ? 'Cairo' : 'Inter'
   const fontFamily = styleProps.fontFamily ?? defaultFont
   const textAlign = resolveTextAlign(styleProps, isArabic)
+  const color = styleProps.color ?? rgbToHex(style.color) ?? defaultTextColor
 
   return {
     type: 'text',
     props: {
       name,
-      ...(styleProps.color ? { color: styleProps.color } : { color: '#FFFFFF' }),
+      color,
       ...(styleProps.fontSize ? { size: styleProps.fontSize } : { size: 16 }),
       fontFamily,
       autoResize: 'width',
@@ -322,7 +328,8 @@ function walkChildNodes(
   win: Window,
   currentWidth: number,
   isRowOrGrid: boolean,
-  style: CSSStyleDeclaration
+  style: CSSStyleDeclaration,
+  defaultTextColor: string
 ): TreeNode[] {
   const children: TreeNode[] = []
 
@@ -335,13 +342,14 @@ function walkChildNodes(
         baseUrl,
         win,
         currentWidth,
-        isRowOrGrid
+        isRowOrGrid,
+        defaultTextColor
       )
       if (childTree) children.push(childTree)
     } else if (node.nodeType === Node.TEXT_NODE) {
       const text = (node.textContent ?? '').trim()
       if (text.length > 0) {
-        children.push(buildTextNode(text, style, `Text / ${text.slice(0, 16)}`))
+        children.push(buildTextNode(text, style, `Text / ${text.slice(0, 16)}`, defaultTextColor))
       }
     }
   }
@@ -356,7 +364,8 @@ function walkElement(
   baseUrl: string,
   win: Window,
   parentWidth: number,
-  isParentRowOrGrid: boolean
+  isParentRowOrGrid: boolean,
+  defaultTextColor = '#111827'
 ): TreeNode | null {
   if (depth > maxDepth) return null
 
@@ -373,7 +382,7 @@ function walkElement(
   if (isTextLeafElement(el)) {
     const text = extractTextContent(el)
     if (!text) return null
-    return buildTextNode(text, style, name)
+    return buildTextNode(text, style, name, defaultTextColor)
   }
 
   const currentWidth = Math.round(rect.width) || parentWidth
@@ -401,7 +410,8 @@ function walkElement(
     win,
     currentWidth,
     isRowOrGrid,
-    style
+    style,
+    defaultTextColor
   )
 
   if (children.length === 0 && !props.bg && !props.stroke && !props.imageSrc) {
