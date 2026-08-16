@@ -39,8 +39,6 @@ export function shouldSkipElement(el: Element, style: CSSStyleDeclaration): bool
   }
 
   if (style.display === 'none') return true
-  if (style.visibility === 'hidden') return true
-  if (parseFloat(style.opacity) === 0) return true
 
   // Skip fixed full-screen backdrop overlays
   if (style.position === 'fixed' && parseFloat(style.zIndex) > 1000) return true

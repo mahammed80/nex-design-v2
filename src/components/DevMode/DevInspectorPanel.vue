@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { useSceneComputed } from '@nex-design/vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import BoxModelVisualizer from './BoxModelVisualizer.vue'
 import PropertySection from './PropertySection.vue'
@@ -8,8 +8,9 @@ import AssetExportSection from './AssetExportSection.vue'
 
 const editor = useEditorStore()
 
-const selectedNode = computed(() => {
-  const ids = editor.state.selectedIds
+const selectedNode = useSceneComputed(() => {
+  void editor.state.sceneVersion
+  const ids = Array.from(editor.state.selectedIds)
   if (ids.length === 0) return null
   return editor.graph.getNode(ids[0]) ?? null
 })

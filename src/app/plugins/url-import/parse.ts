@@ -46,9 +46,8 @@ function createHiddenIframe(viewportWidth: number): HTMLIFrameElement {
     min-width: ${viewportWidth}px !important;
     max-width: ${viewportWidth}px !important;
     height: 3000px !important;
-    opacity: 0;
+    opacity: 0.01;
     pointer-events: none;
-    visibility: hidden;
     border: 0;
     z-index: -9999;
   `
