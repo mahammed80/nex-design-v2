@@ -111,17 +111,32 @@ function applyFillSizing(
   }
 }
 
-function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
-  const bg = props.bg ?? props.fill
-  if (typeof bg === 'string') {
-    o.fills = [colorToFill(bg)]
+function applyFillsAndStrokes(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  if (typeof props.imageHash === 'string') {
+    o.fills = [
+      {
+        type: 'IMAGE',
+        imageHash: props.imageHash,
+        imageScaleMode: (props.imageScaleMode as ImageScaleMode) ?? 'FILL',
+        color: { r: 0, g: 0, b: 0, a: 0 },
+        opacity: typeof props.opacity === 'number' ? props.opacity : 1,
+        visible: true
+      }
+    ]
+  } else {
+    const bg = props.bg ?? props.fill
+    if (typeof bg === 'string') {
+      o.fills = [colorToFill(bg)]
+    }
   }
 
   if (typeof props.stroke === 'string') {
     const strokeWidth = (props.strokeWidth as number | undefined) ?? 1
     o.strokes = [parseStroke(props.stroke, strokeWidth)]
   }
+}
 
+function applyCornerRadius(props: Record<string, unknown>, o: Partial<SceneNode>): void {
   const rounded = props.rounded ?? props.cornerRadius
   if (typeof rounded === 'number') {
     o.cornerRadius = rounded
@@ -139,6 +154,11 @@ function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNo
     if (props.roundedBR !== undefined) o.bottomRightRadius = props.roundedBR as number
   }
   if (props.cornerSmoothing !== undefined) o.cornerSmoothing = props.cornerSmoothing as number
+}
+
+function applyVisualOverrides(props: Record<string, unknown>, o: Partial<SceneNode>): void {
+  applyFillsAndStrokes(props, o)
+  applyCornerRadius(props, o)
 
   if (props.opacity !== undefined) o.opacity = props.opacity as number
   if (props.rotate !== undefined) o.rotation = props.rotate as number

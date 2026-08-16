@@ -6,6 +6,7 @@ import OverviewStats from '@/components/Admin/OverviewStats.vue'
 import SubscriptionControl from '@/components/Admin/SubscriptionControl.vue'
 import PluginControl from '@/components/Admin/PluginControl.vue'
 import EmailControl from '@/components/Admin/EmailControl.vue'
+import WorkflowLogsPanel from '@/components/Admin/WorkflowLogsPanel.vue'
 
 const { activeTab } = useAdminStore()
 </script>
@@ -26,6 +27,7 @@ const { activeTab } = useAdminStore()
         <SubscriptionControl v-else-if="activeTab === 'subscriptions' || activeTab === 'subscribers'" />
         <PluginControl v-else-if="activeTab === 'plugins'" />
         <EmailControl v-else-if="activeTab === 'emails'" />
+        <WorkflowLogsPanel v-else-if="activeTab === 'workflows'" />
       </main>
     </div>
   </div>

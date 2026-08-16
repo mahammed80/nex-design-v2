@@ -8,6 +8,7 @@ import Tip from '@/components/ui/Tip.vue'
 import ToolButton from '@/components/Toolbar/ToolButton.vue'
 import ToolFlyout from '@/components/Toolbar/ToolFlyout.vue'
 import { ToolbarItem, useSelectionState } from '@nex-design/vue'
+import UrlImportPanel from '@/app/plugins/url-import/UrlImportPanel.vue'
 
 import type { Tool } from '@nex-design/vue'
 import type { EditorToolDef, Editor } from '@nex-design/core/editor'
@@ -330,6 +331,29 @@ async function insertIcon(iconName: string) {
                 </button>
               </div>
             </div>
+          </PopoverContent>
+        </PopoverPortal>
+      </PopoverRoot>
+
+      <!-- URL to Design Popover -->
+      <PopoverRoot>
+        <PopoverTrigger as-child>
+          <button
+            class="flex size-8 cursor-pointer items-center justify-center rounded-lg bg-transparent text-muted hover:bg-hover hover:text-surface transition-colors"
+            title="Import URL as Design"
+          >
+            <icon-lucide-globe class="size-4.5" />
+          </button>
+        </PopoverTrigger>
+
+        <PopoverPortal>
+          <PopoverContent
+            side="top"
+            :side-offset="8"
+            align="center"
+            class="z-50 w-72 rounded-xl border border-border bg-panel p-3 shadow-xl"
+          >
+            <UrlImportPanel />
           </PopoverContent>
         </PopoverPortal>
       </PopoverRoot>

@@ -12,7 +12,7 @@ export function createHiddenTextArea() {
   textarea.setAttribute('autocapitalize', 'none')
   textarea.spellcheck = false
   textarea.tabIndex = -1
-  textarea.setAttribute('aria-hidden', 'true')
+  textarea.setAttribute('aria-label', 'Canvas text editor input')
   document.body.appendChild(textarea)
   return textarea
 }

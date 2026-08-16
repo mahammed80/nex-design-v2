@@ -19,7 +19,8 @@ export function createInitialAppEditorState(pageId: string): AppEditorState {
     cursorCanvasY: null,
     nodeEditState: null,
     scrubInputFocused: false,
-    activeProjectId: null
+    activeProjectId: null,
+    projectSaveStatus: 'saved'
   }
 }
 
@@ -39,4 +40,5 @@ export type AppEditorState = EditorState & {
   nodeEditState: NodeEditState | null
   scrubInputFocused: boolean
   activeProjectId: string | null
+  projectSaveStatus: 'saved' | 'saving' | 'error'
 }

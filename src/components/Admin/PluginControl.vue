@@ -157,17 +157,23 @@ function handleQuickToggle(plugin: PluginRecord) {
             {{ plugin.description }}
           </p>
 
-          <!-- Permissions tags -->
-          <div class="flex flex-wrap gap-1 pt-1">
+          <!-- Permissions tags & Sandbox Badge -->
+          <div class="flex flex-wrap items-center gap-1 pt-1">
             <span
-              v-for="perm in plugin.permissions.slice(0, 3)"
+              class="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold"
+              :class="plugin.isWebWorkerSandboxRequired !== false ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20' : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'"
+            >
+              {{ plugin.isWebWorkerSandboxRequired !== false ? '🛡️ Web Worker Sandbox' : '⚠️ Direct Execution' }}
+            </span>
+            <span
+              v-for="perm in plugin.permissions.slice(0, 2)"
               :key="perm"
               class="px-2 py-0.5 rounded-md bg-zinc-950 text-[10px] font-mono text-zinc-400 border border-white/5"
             >
               {{ perm }}
             </span>
-            <span v-if="plugin.permissions.length > 3" class="text-[10px] text-zinc-500">
-              +{{ plugin.permissions.length - 3 }} more
+            <span v-if="plugin.permissions.length > 2" class="text-[10px] text-zinc-500">
+              +{{ plugin.permissions.length - 2 }} more
             </span>
           </div>
         </div>

@@ -237,6 +237,16 @@ Release commits are the exception: keep using `Release v0.x.y`.
 - Room IDs use `crypto.getRandomValues()` — no `Math.random()` anywhere in codebase
 - Stale cursors cleaned on peer disconnect via `removeAwarenessStates()`
 
+## Accounts and offline access
+
+- Local project writes always complete before cloud sync is attempted.
+- Linked accounts use `VITE_NEXDESIGN_ACCOUNT_API` for status validation and project sync.
+- Offline editing requires a server-issued ECDSA P-256 lease verified with `VITE_NEXDESIGN_OFFLINE_LEASE_PUBLIC_KEY`.
+- Active leases allow offline editing; expired leases are read-only; suspended, deactivated, and deleted accounts are blocked after their status is known.
+- Account blocking and sign-out never delete local project files.
+- Linked project mutations are appended to the IndexedDB sync outbox and flushed after connectivity returns.
+- Remote APIs must enforce account status independently; client route guards are user experience, not the security boundary.
+
 ## Code conventions
 
 ### File and folder naming

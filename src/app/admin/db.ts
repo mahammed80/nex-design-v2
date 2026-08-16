@@ -1,10 +1,11 @@
 import { useLocalStorage } from '@vueuse/core'
-import type { SubscriptionPlan, Subscriber, PluginRecord, CloudProviderSettings } from './types'
+import type { SubscriptionPlan, Subscriber, PluginRecord, CloudProviderSettings, WorkflowLogRecord } from './types'
 
 const PLANS_STORAGE_KEY = 'nex-design:admin:plans'
 const SUBSCRIBERS_STORAGE_KEY = 'nex-design:admin:subscribers'
 const PLUGINS_STORAGE_KEY = 'nex-design:admin:plugins'
 const CLOUD_SETTINGS_STORAGE_KEY = 'nex-design:admin:cloud-settings'
+const WORKFLOW_LOGS_STORAGE_KEY = 'nex-design:admin:workflow-logs'
 
 const DEFAULT_PLANS: SubscriptionPlan[] = [
   {
@@ -16,6 +17,8 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     maxMembers: 1,
     storageGb: 2,
     aiCredits: 50,
+    allowTopupCredits: false,
+    topupPricePer1k: 5,
     features: ['Basic Canvas Editing', 'Up to 3 Active Projects', 'Community Support', 'Standard Export (PNG/JPG)'],
     cloudSyncEnabled: false,
     cloudBackupIntervalMinutes: 60,
@@ -31,6 +34,8 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     maxMembers: 1,
     storageGb: 50,
     aiCredits: 1000,
+    allowTopupCredits: true,
+    topupPricePer1k: 4,
     features: ['Unlimited Projects', 'AI Co-pilot & Generation', 'Advanced Vector Tools', 'SVG & Code Export', 'Optional Cloud Sync & Backup'],
     cloudSyncEnabled: true,
     cloudBackupIntervalMinutes: 15,
@@ -47,6 +52,8 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     maxMembers: 10,
     storageGb: 500,
     aiCredits: 5000,
+    allowTopupCredits: true,
+    topupPricePer1k: 3,
     features: ['Real-time P2P Collaboration', 'Shared Team Libraries', 'Design Versioning & History', 'Automatic Cloud Relay', 'Role Permissions'],
     cloudSyncEnabled: true,
     cloudBackupIntervalMinutes: 5,
@@ -62,6 +69,8 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
     maxMembers: 100,
     storageGb: 2000,
     aiCredits: 25000,
+    allowTopupCredits: true,
+    topupPricePer1k: 2,
     features: ['Custom SSO / SAML', 'Dedicated Cloudflare Relay', 'Custom AI Provider Adapter', 'Audit Logs & SLA', 'Dedicated Account Manager'],
     cloudSyncEnabled: true,
     cloudBackupIntervalMinutes: 1,
@@ -82,6 +91,7 @@ const DEFAULT_SUBSCRIBERS: Subscriber[] = [
     nextBillingDate: Date.now() + 86400000 * 20,
     storageUsedGb: 14.2,
     aiCreditsUsed: 420,
+    topupCreditsRemaining: 500,
     createdAt: Date.now() - 86400000 * 90
   },
   {
@@ -95,6 +105,7 @@ const DEFAULT_SUBSCRIBERS: Subscriber[] = [
     nextBillingDate: Date.now() + 86400000 * 180,
     storageUsedGb: 120.5,
     aiCreditsUsed: 3100,
+    topupCreditsRemaining: 2000,
     createdAt: Date.now() - 86400000 * 150
   },
   {
@@ -108,6 +119,7 @@ const DEFAULT_SUBSCRIBERS: Subscriber[] = [
     nextBillingDate: Date.now() + 86400000 * 30,
     storageUsedGb: 0.8,
     aiCreditsUsed: 42,
+    topupCreditsRemaining: 0,
     createdAt: Date.now() - 86400000 * 15
   },
   {
@@ -121,6 +133,7 @@ const DEFAULT_SUBSCRIBERS: Subscriber[] = [
     nextBillingDate: Date.now() + 86400000 * 7,
     storageUsedGb: 310.0,
     aiCreditsUsed: 8900,
+    topupCreditsRemaining: 10000,
     createdAt: Date.now() - 86400000 * 7
   }
 ]
@@ -149,6 +162,7 @@ const DEFAULT_PLUGINS: PluginRecord[] = [
     ),
     scriptUrl: 'https://cdn.nexdesign.dev/plugins/ai-component-builder.js',
     permissions: ['scene:read', 'scene:write', 'network:fetch', 'ai:prompt'],
+    isWebWorkerSandboxRequired: true,
     downloadsCount: 14250,
     rating: 4.9,
     createdAt: Date.now() - 86400000 * 120,
@@ -177,6 +191,7 @@ const DEFAULT_PLUGINS: PluginRecord[] = [
     ),
     scriptUrl: 'https://cdn.nexdesign.dev/plugins/svg-optimizer.js',
     permissions: ['scene:read', 'scene:write'],
+    isWebWorkerSandboxRequired: true,
     downloadsCount: 8940,
     rating: 4.8,
     createdAt: Date.now() - 86400000 * 90,
@@ -205,6 +220,7 @@ const DEFAULT_PLUGINS: PluginRecord[] = [
     ),
     scriptUrl: 'https://cdn.nexdesign.dev/plugins/auto-layout.js',
     permissions: ['scene:read', 'scene:write'],
+    isWebWorkerSandboxRequired: true,
     downloadsCount: 6120,
     rating: 4.7,
     createdAt: Date.now() - 86400000 * 60,
@@ -233,6 +249,7 @@ const DEFAULT_PLUGINS: PluginRecord[] = [
     ),
     scriptUrl: 'https://cdn.nexdesign.dev/plugins/jsx-vue-exporter.js',
     permissions: ['scene:read', 'clipboard:write'],
+    isWebWorkerSandboxRequired: true,
     downloadsCount: 18900,
     rating: 4.95,
     createdAt: Date.now() - 86400000 * 180,
@@ -247,12 +264,63 @@ const DEFAULT_CLOUD_SETTINGS: CloudProviderSettings = {
   maxCloudStoragePerUserGb: 50
 }
 
+const DEFAULT_WORKFLOW_LOGS: WorkflowLogRecord[] = [
+  {
+    id: 'wf-log-1',
+    timestamp: Date.now() - 1000 * 60 * 5,
+    sessionType: 'acp',
+    agentRole: 'Design Architect',
+    action: 'design_skeleton',
+    targetNodeId: 'node-root-101',
+    aiCreditsSpent: 15,
+    status: 'success',
+    details: 'Generated multi-section dashboard layout skeleton with 4 content containers.'
+  },
+  {
+    id: 'wf-log-2',
+    timestamp: Date.now() - 1000 * 60 * 12,
+    sessionType: 'in-app',
+    agentRole: 'UI Builder',
+    action: 'design_content',
+    targetNodeId: 'node-hero-202',
+    aiCreditsSpent: 25,
+    status: 'success',
+    details: 'Populated Hero section with heading, secondary description, CTA button, and avatar grid.'
+  },
+  {
+    id: 'wf-log-3',
+    timestamp: Date.now() - 1000 * 60 * 25,
+    sessionType: 'mcp',
+    agentRole: 'Design Auditor',
+    action: 'design_refine',
+    targetNodeId: 'node-root-101',
+    aiCreditsSpent: 10,
+    status: 'success',
+    details: 'Executed deterministic anti-slop pass. Auto-aligned 3 nested flex frames and verified token compliance.'
+  },
+  {
+    id: 'wf-log-4',
+    timestamp: Date.now() - 1000 * 60 * 45,
+    sessionType: 'acp',
+    agentRole: 'Design Architect',
+    action: 'render_jsx',
+    targetNodeId: 'node-card-305',
+    aiCreditsSpent: 20,
+    status: 'failed',
+    details: 'JSX parsing error: unclosed tag inside custom icon wrapper component.'
+  }
+]
+
 export const plansStorage = useLocalStorage<SubscriptionPlan[]>(PLANS_STORAGE_KEY, DEFAULT_PLANS)
 export const subscribersStorage = useLocalStorage<Subscriber[]>(SUBSCRIBERS_STORAGE_KEY, DEFAULT_SUBSCRIBERS)
 export const pluginsStorage = useLocalStorage<PluginRecord[]>(PLUGINS_STORAGE_KEY, DEFAULT_PLUGINS)
 export const cloudSettingsStorage = useLocalStorage<CloudProviderSettings>(
   CLOUD_SETTINGS_STORAGE_KEY,
   DEFAULT_CLOUD_SETTINGS
+)
+export const workflowLogsStorage = useLocalStorage<WorkflowLogRecord[]>(
+  WORKFLOW_LOGS_STORAGE_KEY,
+  DEFAULT_WORKFLOW_LOGS
 )
 
 export function loadSubscriptionPlansFromStorage(): SubscriptionPlan[] {
@@ -285,4 +353,12 @@ export function loadCloudSettingsFromStorage(): CloudProviderSettings {
 
 export function saveCloudSettingsToStorage(settings: CloudProviderSettings): void {
   cloudSettingsStorage.value = settings
+}
+
+export function loadWorkflowLogsFromStorage(): WorkflowLogRecord[] {
+  return workflowLogsStorage.value
+}
+
+export function saveWorkflowLogsToStorage(logs: WorkflowLogRecord[]): void {
+  workflowLogsStorage.value = logs
 }

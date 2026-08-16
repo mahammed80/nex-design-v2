@@ -17,6 +17,7 @@ import {
   createVector,
   fetchIconsTool,
   importSvg,
+  importUrl,
   insertIcon,
   searchIconsTool
 } from './create'
@@ -123,6 +124,7 @@ export const EXTENDED_TOOLS: ToolDef[] = [
   createVector,
   createSlice,
   importSvg,
+  importUrl,
   // Modify (advanced)
   setEffects,
   setOpacity,

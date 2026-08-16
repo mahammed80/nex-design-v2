@@ -4,7 +4,15 @@
 
 ### Added
 
-- Add a document-scoped off-canvas Creative Notes workspace with quick capture, search, color coding, pinning, autosave, and a keyboard shortcut.
+- Add URL to Design plugin — paste any web URL in the toolbar globe-button popover to fetch the page server-side (CORS-safe), translate DOM elements into fully editable Auto Layout frames, text layers, and image fills, and render them directly onto the canvas. Supports CSS selector scoping (e.g. `header`, `.hero`), recent URL history, and is also available as the `import_url` tool in AI chat, MCP, and CLI eval.
+- Add `import_url` ToolDef (`packages/core/src/tools/create/url-import.ts`) with params: `url`, `selector`, `parent_id`, `x`, `y`, `max_depth`, `viewport_w`. Registered in `EXTENDED_TOOLS`.
+- Add `html-to-design` translation engine (`packages/core/src/tools/create/html-to-design/`) — pure browser DOM walker that converts computed CSS styles to NexDesign TreeNode IR (Auto Layout, fills, strokes, typography, border radius, shadows, images).
+- Add `/api/url-fetch` server-side fetch proxy (Vite dev middleware + Cloudflare Pages function) that bypasses CORS to fetch any HTTP URL with a 15 s timeout and 2 MB size limit.
+- Add `UrlImportPanel.vue` editor toolbar popover with URL input, CSS selector scoping, animated status (fetching/parsing/rendering/done/error), success details, and localStorage recent URL history.
+
+- Add local profile login, profile-scoped projects, automatic project saving, and durable Tauri app-data storage with IndexedDB migration and browser fallback.
+- Add offline-first linked-account foundations with server status revalidation, expiring offline leases, deactivation locking, device-aware API contracts, and a durable project sync outbox.
+- Add local desktop profile details and dashboard project `.fig` export so complete designs can be sent to another NexDesign or Figma user.
 - Add an agentic design workflow with progressive model-budgeted skills, live document context, DESIGN.md import/export, deterministic design audits, local generation memory, scoped planner/builder/critic phases, authorized URL reference studies, progress visibility, and onboarding.
 - Add first-class prototype connection support with interactive connection handles, endpoint dragging to reconnect or delete, custom control-point editing for Bezier curves, edge-snapping on candidate target nodes, and a graph-driven preview presentation player.
 - Add Component Set & Component Variant property inspector panel with inline property definition management, variant property value selection, and 1-click variant creation.
@@ -24,6 +32,7 @@
 
 ### Changed
 
+- Extract dashboard account state and project persistence into shared composables with an IndexedDB repository boundary, and split sidebar, recent-file, project-card, and template-library presentation into focused components.
 - Fix the built-in design agent to Poolside Laguna S 2.1, remove user-facing provider/model/endpoint selection, and route inference through a server-only, rate-limited credential proxy.
 - Refactor the editor architecture across core, app, Vue SDK, CLI, MCP, docs, and desktop into smaller domain modules with structural lint rules to keep package boundaries explicit.
 - Add targeted core subpath exports and package-local import aliases for cleaner app, Vue SDK, CLI, and MCP imports.

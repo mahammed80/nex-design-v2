@@ -35,7 +35,7 @@ export default defineConfig({
     }
   ],
   webServer: {
-    command: 'bun run dev',
+    command: 'npx vite',
     port: 1420,
     reuseExistingServer: true
   }

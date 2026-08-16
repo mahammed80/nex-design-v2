@@ -10,6 +10,8 @@ export interface SubscriptionPlan {
   maxMembers: number
   storageGb: number
   aiCredits: number
+  allowTopupCredits: boolean
+  topupPricePer1k: number
   features: string[]
   cloudSyncEnabled: boolean
   cloudBackupIntervalMinutes: number
@@ -29,6 +31,7 @@ export interface Subscriber {
   nextBillingDate: number
   storageUsedGb: number
   aiCreditsUsed: number
+  topupCreditsRemaining: number
   createdAt: number
 }
 
@@ -57,10 +60,23 @@ export interface PluginRecord {
   manifestJson: string
   scriptUrl?: string
   permissions: string[]
+  isWebWorkerSandboxRequired: boolean
   downloadsCount: number
   rating: number
   createdAt: number
   updatedAt: number
+}
+
+export interface WorkflowLogRecord {
+  id: string
+  timestamp: number
+  sessionType: 'acp' | 'mcp' | 'in-app'
+  agentRole: string
+  action: string
+  targetNodeId?: string
+  aiCreditsSpent: number
+  status: 'success' | 'failed' | 'running'
+  details: string
 }
 
 export interface AdminStats {
@@ -69,4 +85,7 @@ export interface AdminStats {
   activeSubscribers: number
   activePlugins: number
   totalDownloads: number
+  totalAiRequests: number
+  failedAuditRate: number
+  pendingSyncCount: number
 }

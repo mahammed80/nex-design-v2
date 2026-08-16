@@ -11,7 +11,8 @@ export function drawNodeFill(
   node: SceneNode,
   rect: Float32Array,
   hasRadius: boolean,
-  fill?: Fill
+  fill?: Fill,
+  graph?: SceneGraph
 ): void {
   switch (node.type) {
     case 'VECTOR': {
@@ -34,7 +35,7 @@ export function drawNodeFill(
       }
       break
     case 'TEXT':
-      r.renderText(canvas, node, fill)
+      r.renderText(canvas, node, graph, fill)
       break
     case 'LINE':
       canvas.drawLine(0, 0, node.width, node.height, r.fillPaint)

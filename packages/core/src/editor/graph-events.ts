@@ -16,9 +16,11 @@ export function createGraphEventSubscription(options: GraphEventOptions) {
   let unbindGraphEvents: (() => void) | null = null
 
   function onNodeUpdated(id: string, changes: Partial<SceneNode>) {
+    const node = options.getGraph().getNode(id)
     for (const renderer of options.getRenderers()) {
       if ('vectorNetwork' in changes) renderer.invalidateVectorPath(id)
       renderer.invalidateNodePicture(id)
+      if (node?.parentId) renderer.invalidateNodePicture(node.parentId)
     }
     options.emitEditorEvent('node:updated', id, changes)
     options.scheduleComponentSync(id)

@@ -39,6 +39,12 @@ const navItems: NavItem[] = [
     label: 'Email Templates & Logs',
     badge: '7 Events',
     icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'
+  },
+  {
+    id: 'workflows',
+    label: 'Workflow & Audits',
+    badge: 'Telemetry',
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z'
   }
 ]
 
@@ -62,14 +68,14 @@ function selectTab(id: AdminTab) {
           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition"
           :class="[
             activeTab === item.id
-              ? 'bg-gradient-to-r from-violet-600/20 to-indigo-600/10 text-white border border-violet-500/30 shadow-inner'
+              ? 'bg-gradient-to-r from-rose-600/20 to-red-600/10 text-white border border-rose-500/30 shadow-inner'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5 border border-transparent'
           ]"
         >
           <div class="flex items-center gap-3">
             <svg
               class="w-4 h-4 transition"
-              :class="activeTab === item.id ? 'text-violet-400' : 'text-zinc-500'"
+              :class="activeTab === item.id ? 'text-rose-400' : 'text-zinc-500'"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -84,7 +90,7 @@ function selectTab(id: AdminTab) {
             class="px-2 py-0.5 text-[10px] font-semibold rounded-full"
             :class="[
               activeTab === item.id
-                ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                 : 'bg-zinc-800 text-zinc-400'
             ]"
           >
@@ -97,7 +103,7 @@ function selectTab(id: AdminTab) {
     <!-- Admin info footer -->
     <div class="p-3 rounded-xl bg-zinc-900/50 border border-white/5 text-xs">
       <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-full bg-violet-600/30 border border-violet-500/30 flex items-center justify-center font-bold text-violet-300">
+        <div class="w-8 h-8 rounded-full bg-rose-600/30 border border-rose-500/30 flex items-center justify-center font-bold text-rose-300">
           A
         </div>
         <div>

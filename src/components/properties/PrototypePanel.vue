@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import PrototypePreview from '@/components/PrototypePreview.vue'
-import type { SceneNode } from '@nex-design/core/scene-graph'
 import type {
+  SceneNode,
   TriggerType,
   ActionType,
   TransitionType,

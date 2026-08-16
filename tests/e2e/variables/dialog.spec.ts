@@ -9,7 +9,7 @@ test.describe.configure({ mode: 'serial' })
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage()
-  await page.goto('/')
+  await page.goto('/demo')
   canvas = new CanvasHelper(page)
   await canvas.waitForInit()
 })
@@ -107,8 +107,9 @@ test('color swatch opens color picker', async () => {
 
   const swatch = page
     .locator('[data-test-id="variable-row"]')
-    .first()
+    .filter({ hasText: 'SwatchVar' })
     .locator('[data-test-id="color-picker-swatch"]')
+    .first()
   await expect(swatch).toBeVisible({ timeout: 3000 })
   await swatch.click()
   await expect(page.locator('[data-test-id="color-picker-popover"]')).toBeVisible({ timeout: 5000 })

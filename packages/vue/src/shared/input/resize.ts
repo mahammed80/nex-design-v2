@@ -3,6 +3,7 @@ export { tryStartResize } from '#vue/shared/input/resize/start'
 import type { Editor } from '@nex-design/core/editor'
 import type { SceneNode } from '@nex-design/core/scene-graph'
 
+import { resolveResizeModeChanges } from '#vue/shared/input/resize/mode'
 import { calculateResizeRect } from '#vue/shared/input/resize/rect'
 import { scaleVectorNetworkForResize } from '#vue/shared/input/resize/vector'
 import type { DragResize } from '#vue/shared/input/types'
@@ -14,10 +15,15 @@ export function applyResize(
   constrain: boolean,
   editor: Editor
 ) {
+  const node = editor.graph.getNode(d.nodeId)
+  if (!node) return
+
+  const modeChanges = resolveResizeModeChanges(node, d.handle, editor.graph)
+
   const { origRect } = d
   const newRect = calculateResizeRect(d.handle, origRect, cx - d.startX, cy - d.startY, constrain)
 
-  const changes: Partial<SceneNode> = { ...newRect }
+  const changes: Partial<SceneNode> = { ...modeChanges, ...newRect }
 
   const resizedVectorNetwork = scaleVectorNetworkForResize(
     d.origVectorNetwork,

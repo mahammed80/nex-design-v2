@@ -1,6 +1,7 @@
-  <script setup lang="ts">
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDashboardAccounts } from '@/app/dashboard/accounts/use'
 import CollabAvatarStack from '@/components/CollabPanel/CollabAvatarStack.vue'
 import CollabSharePopover from '@/components/CollabPanel/CollabSharePopover.vue'
 import { provideCollabPanel } from '@/components/CollabPanel/context'
@@ -9,21 +10,19 @@ provideCollabPanel()
 
 const router = useRouter()
 
-const activeAccount = ref(localStorage.getItem('nex-design:active-account') || localStorage.getItem('nex-design:user-name') || 'Mohamed')
-const accounts = ref<string[]>(JSON.parse(localStorage.getItem('nex-design:accounts') || '[]'))
-
-if (accounts.value.length === 0) {
-  accounts.value = [activeAccount.value]
-  localStorage.setItem('nex-design:accounts', JSON.stringify(accounts.value))
-}
+const {
+  accounts,
+  activeAccount,
+  addAccount: persistAccount,
+  signOut: clearAccount,
+  switchAccount: persistActiveAccount
+} = useDashboardAccounts()
 
 const isAddAccountOpen = ref(false)
 const newAccountName = ref('')
 
 function switchAccount(name: string) {
-  activeAccount.value = name
-  localStorage.setItem('nex-design:active-account', name)
-  localStorage.setItem('nex-design:user-name', name)
+  persistActiveAccount(name)
   window.location.reload()
 }
 
@@ -35,17 +34,13 @@ function openAddAccount() {
 function addAccount() {
   const name = newAccountName.value.trim()
   if (!name) return
-  if (!accounts.value.includes(name)) {
-    accounts.value.push(name)
-    localStorage.setItem('nex-design:accounts', JSON.stringify(accounts.value))
-  }
+  persistAccount(name)
   isAddAccountOpen.value = false
-  switchAccount(name)
+  window.location.reload()
 }
 
 function signOut() {
-  localStorage.removeItem('nex-design:active-account')
-  localStorage.removeItem('nex-design:user-name')
+  clearAccount()
   router.push('/landing')
 }
 </script>
@@ -65,16 +60,24 @@ function signOut() {
       >
         {{ activeAccount[0] }}
       </button>
-      
+
       <!-- Dropdown Menu -->
-      <div class="absolute right-0 top-full mt-1.5 w-44 rounded-lg border border-border bg-panel p-1 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover/editor-account:opacity-100 group-hover/editor-account:translate-y-0 group-hover/editor-account:pointer-events-auto transition-all duration-150 z-50 text-surface before:absolute before:inset-x-0 before:h-2 before:bottom-full">
-        <div class="px-2 py-1 text-[9px] font-semibold text-muted uppercase tracking-wider border-b border-border mb-1">Accounts</div>
+      <div
+        class="absolute right-0 top-full mt-1.5 w-44 rounded-lg border border-border bg-panel p-1 shadow-xl opacity-0 translate-y-1 pointer-events-none group-hover/editor-account:opacity-100 group-hover/editor-account:translate-y-0 group-hover/editor-account:pointer-events-auto transition-all duration-150 z-50 text-surface before:absolute before:inset-x-0 before:h-2 before:bottom-full"
+      >
+        <div
+          class="px-2 py-1 text-[9px] font-semibold text-muted uppercase tracking-wider border-b border-border mb-1"
+        >
+          Accounts
+        </div>
         <!-- Active Account name display -->
-        <div class="px-2 py-1 text-xs font-bold truncate text-surface bg-hover/30 rounded mb-1">{{ activeAccount }}</div>
-        
+        <div class="px-2 py-1 text-xs font-bold truncate text-surface bg-hover/30 rounded mb-1">
+          {{ activeAccount }}
+        </div>
+
         <!-- List other accounts -->
         <button
-          v-for="acc in accounts.filter(a => a !== activeAccount)"
+          v-for="acc in accounts.filter((a) => a !== activeAccount)"
           :key="acc"
           @click="switchAccount(acc)"
           type="button"
@@ -108,11 +111,15 @@ function signOut() {
         v-if="isAddAccountOpen"
         class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       >
-        <div class="w-full max-w-sm rounded-xl border border-border bg-panel p-6 shadow-2xl animate-scale-up text-surface">
+        <div
+          class="w-full max-w-sm rounded-xl border border-border bg-panel p-6 shadow-2xl animate-scale-up text-surface"
+        >
           <h3 class="text-sm font-bold text-[#fafafa] mb-4">Add Account</h3>
           <div class="space-y-4">
             <div class="flex flex-col gap-1.5">
-              <label class="text-[10px] font-semibold text-muted uppercase tracking-wider">Account Name</label>
+              <label class="text-[10px] font-semibold text-muted uppercase tracking-wider"
+                >Account Name</label
+              >
               <input
                 v-model="newAccountName"
                 type="text"

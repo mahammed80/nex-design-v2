@@ -10,6 +10,8 @@ type DocumentIOState = EditorState & {
   documentName: string
   loading: boolean
   autosaveEnabled: boolean
+  activeProjectId?: string | null
+  projectSaveStatus: 'saved' | 'saving' | 'error'
 }
 
 type ViewportSize = {

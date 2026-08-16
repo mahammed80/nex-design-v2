@@ -1,6 +1,9 @@
 import type { Editor, EditorState } from '@nex-design/core/editor'
 import { exportFigFile } from '@nex-design/core/io/formats/fig'
 
+import { getActiveProfileId } from '@/app/dashboard/accounts/session'
+import { uint8ArrayToBase64 } from '@/app/dashboard/db'
+import { createProjectRepository } from '@/app/dashboard/projects/repository'
 import { createAutosave } from '@/app/document/autosave'
 import {
   documentNameFromFigPath,
@@ -9,12 +12,16 @@ import {
 } from '@/app/document/io/names'
 import { createSaveActions } from '@/app/document/io/save'
 import { createDocumentSourceState } from '@/app/document/io/source-state'
-import { openDb, updateProjectInDb, uint8ArrayToBase64 } from '@/app/dashboard/db'
 
 type DocumentSourceState = EditorState & {
   documentName: string
   autosaveEnabled: boolean
   activeProjectId?: string | null
+  projectSaveStatus: 'saved' | 'saving' | 'error'
+}
+
+type ExportableEditor = Editor & {
+  renderExportImage: (ids: string[], scale: number, format: 'PNG') => Promise<Uint8Array | null>
 }
 
 export { createDocumentSourceState }
@@ -52,6 +59,9 @@ export function createDocumentSourceActions({
   setLastWriteTime,
   getRenderer
 }: DocumentSourceOptions) {
+  const activeProfileId = getActiveProfileId()
+  const projectRepository = activeProfileId ? createProjectRepository(activeProfileId) : null
+
   function buildFigFile() {
     return exportFigFile(editor.graph, undefined, getRenderer() ?? undefined, state.currentPageId)
   }
@@ -63,7 +73,7 @@ export function createDocumentSourceActions({
       if (renderer) {
         const ids = editor.graph.getChildren(state.currentPageId).map((n) => n.id)
         if (ids.length > 0) {
-          const renderData = await (editor as any).renderExportImage([], 0.5, 'PNG')
+          const renderData = await (editor as ExportableEditor).renderExportImage([], 0.5, 'PNG')
           if (renderData) {
             thumbnail = uint8ArrayToBase64(renderData)
           }
@@ -73,8 +83,8 @@ export function createDocumentSourceActions({
       console.warn('Failed to generate thumbnail', e)
     }
 
-    const db = await openDb()
-    await updateProjectInDb(db, projectId, {
+    if (!projectRepository) throw new Error('Cannot save a project without an active local profile')
+    await projectRepository.update(projectId, {
       document: data,
       thumbnail,
       updatedAt: Date.now()
@@ -98,9 +108,10 @@ export function createDocumentSourceActions({
     saveProjectToDb
   })
 
-  const { disposeAutosave } = createAutosave({
+  const { disposeAutosave, flushAutosave } = createAutosave({
     state,
     getSavedVersion,
+    setSavedVersion,
     hasWritableSource: () => !!getFileHandle() || !!getFilePath() || !!state.activeProjectId,
     saveCurrentDocument: async () => {
       if (state.activeProjectId) {
@@ -108,6 +119,9 @@ export function createDocumentSourceActions({
       } else {
         await writeFile(await buildFigFile())
       }
+    },
+    onSaveStatus: (status) => {
+      state.projectSaveStatus = status
     }
   })
 
@@ -144,6 +158,7 @@ export function createDocumentSourceActions({
   function disposeDocumentIO() {
     stopWatchingFile()
     disposeAutosave()
+    void flushAutosave()
   }
 
   return {

@@ -7,7 +7,8 @@ import type {
   PluginStatus,
   SubscriptionStatus,
   AdminStats,
-  CloudProviderSettings
+  CloudProviderSettings,
+  WorkflowLogRecord
 } from './types'
 import {
   loadSubscriptionPlansFromStorage,
@@ -17,10 +18,12 @@ import {
   loadPluginsFromStorage,
   savePluginsToStorage,
   loadCloudSettingsFromStorage,
-  saveCloudSettingsToStorage
+  saveCloudSettingsToStorage,
+  loadWorkflowLogsFromStorage,
+  saveWorkflowLogsToStorage
 } from './db'
 
-export type AdminTab = 'overview' | 'subscriptions' | 'subscribers' | 'plugins' | 'emails'
+export type AdminTab = 'overview' | 'subscriptions' | 'subscribers' | 'plugins' | 'emails' | 'workflows'
 
 // Active section tab state
 const activeTab = ref<AdminTab>('overview')
@@ -43,6 +46,12 @@ const pluginSearchQuery = ref('')
 const pluginCategoryFilter = ref<PluginCategory | 'all'>('all')
 const pluginStatusFilter = ref<PluginStatus | 'all'>('all')
 const pluginSortBy = ref<'popular' | 'newest' | 'name' | 'rating'>('popular')
+
+// Workflow Logs state
+const workflowLogs = ref<WorkflowLogRecord[]>(loadWorkflowLogsFromStorage())
+const workflowSearchQuery = ref('')
+const workflowSessionFilter = ref<'acp' | 'mcp' | 'in-app' | 'all'>('all')
+const workflowStatusFilter = ref<'success' | 'failed' | 'running' | 'all'>('all')
 
 // Computed Stats
 const stats = computed<AdminStats>(() => {
@@ -69,13 +78,18 @@ const stats = computed<AdminStats>(() => {
   ).length
 
   const totalDownloads = plugins.value.reduce((acc, p) => acc + p.downloadsCount, 0)
+  const failedRuns = workflowLogs.value.filter((l) => l.status === 'failed').length
+  const failedRate = workflowLogs.value.length > 0 ? (failedRuns / workflowLogs.value.length) * 100 : 0
 
   return {
     totalRevenue: Math.round(mrr * 12),
     mrr: Math.round(mrr),
     activeSubscribers: activeSubs,
     activePlugins: activePlugs,
-    totalDownloads
+    totalDownloads,
+    totalAiRequests: workflowLogs.value.length * 12,
+    failedAuditRate: Math.round(failedRate * 10) / 10,
+    pendingSyncCount: 3
   }
 })
 
@@ -140,6 +154,31 @@ const filteredPlugins = computed(() => {
   return result
 })
 
+// Filtered Workflow Logs
+const filteredWorkflowLogs = computed(() => {
+  let result = [...workflowLogs.value]
+
+  if (workflowSearchQuery.value.trim()) {
+    const q = workflowSearchQuery.value.toLowerCase()
+    result = result.filter(
+      (l) =>
+        l.agentRole.toLowerCase().includes(q) ||
+        l.action.toLowerCase().includes(q) ||
+        l.details.toLowerCase().includes(q)
+    )
+  }
+
+  if (workflowSessionFilter.value !== 'all') {
+    result = result.filter((l) => l.sessionType === workflowSessionFilter.value)
+  }
+
+  if (workflowStatusFilter.value !== 'all') {
+    result = result.filter((l) => l.status === workflowStatusFilter.value)
+  }
+
+  return result.sort((a, b) => b.timestamp - a.timestamp)
+})
+
 // Actions: Subscriptions & Plans
 function addSubscriptionPlan(planData: Omit<SubscriptionPlan, 'id' | 'createdAt'>) {
   const array = new Uint8Array(8)
@@ -191,6 +230,14 @@ function updateSubscriberPlan(id: string, planId: string) {
   }
 }
 
+function topupSubscriberCredits(id: string, amount: number) {
+  const index = subscribers.value.findIndex((s) => s.id === id)
+  if (index !== -1) {
+    subscribers.value[index].topupCreditsRemaining += amount
+    saveSubscribersToStorage(subscribers.value)
+  }
+}
+
 // Actions: Plugins
 function createPlugin(
   pluginData: Omit<PluginRecord, 'id' | 'downloadsCount' | 'rating' | 'createdAt' | 'updatedAt'>
@@ -230,9 +277,30 @@ function togglePluginStatus(id: string, newStatus: PluginStatus) {
   updatePlugin(id, { status: newStatus })
 }
 
+function togglePluginSandbox(id: string, required: boolean) {
+  updatePlugin(id, { isWebWorkerSandboxRequired: required })
+}
+
 function deletePlugin(id: string) {
   plugins.value = plugins.value.filter((p) => p.id !== id)
   savePluginsToStorage(plugins.value)
+}
+
+// Actions: Workflow Logs
+function addWorkflowLog(logData: Omit<WorkflowLogRecord, 'id' | 'timestamp'>) {
+  const array = new Uint8Array(6)
+  crypto.getRandomValues(array)
+  const hex = Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('')
+  const id = `wf-log-${hex}`
+
+  const newLog: WorkflowLogRecord = {
+    ...logData,
+    id,
+    timestamp: Date.now()
+  }
+
+  workflowLogs.value.unshift(newLog)
+  saveWorkflowLogsToStorage(workflowLogs.value)
 }
 
 export function useAdminStore() {
@@ -253,6 +321,12 @@ export function useAdminStore() {
     pluginSortBy,
     filteredPlugins,
 
+    workflowLogs,
+    workflowSearchQuery,
+    workflowSessionFilter,
+    workflowStatusFilter,
+    filteredWorkflowLogs,
+
     stats,
 
     addSubscriptionPlan,
@@ -261,10 +335,14 @@ export function useAdminStore() {
     updateCloudSettings,
     updateSubscriberStatus,
     updateSubscriberPlan,
+    topupSubscriberCredits,
 
     createPlugin,
     updatePlugin,
     togglePluginStatus,
-    deletePlugin
+    togglePluginSandbox,
+    deletePlugin,
+
+    addWorkflowLog
   }
 }

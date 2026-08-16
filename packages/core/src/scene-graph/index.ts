@@ -365,7 +365,10 @@ export class SceneGraph {
     'styleRuns',
     'fills',
     'width',
-    'height'
+    'height',
+    'textAutoResize',
+    'opacity',
+    'strokes'
   ])
 
   updateNode(id: string, changes: Partial<SceneNode>): void {

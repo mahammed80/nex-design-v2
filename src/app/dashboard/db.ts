@@ -1,15 +1,21 @@
 const DB_NAME = 'nexx_design_db'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE_NAME = 'projects'
 
 export interface ProjectRecord {
   id: string
+  profileId: string
   name: string
   thumbnail: string // Base64 dataURL
   starred: boolean
   createdAt: number
   updatedAt: number
   document: Uint8Array // Serialized FIG file binary bytes
+  remoteId?: string
+  localRevision?: number
+  remoteRevision?: number
+  syncStatus?: 'local' | 'pending' | 'syncing' | 'synced' | 'conflict' | 'error'
+  lastSyncedAt?: number | null
 }
 
 export function openDb(): Promise<IDBDatabase> {
@@ -20,7 +26,13 @@ export function openDb(): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const db = request.result
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+        store.createIndex('profileId', 'profileId', { unique: false })
+      } else {
+        const store = request.transaction?.objectStore(STORE_NAME)
+        if (store && !store.indexNames.contains('profileId')) {
+          store.createIndex('profileId', 'profileId', { unique: false })
+        }
       }
     }
   })
@@ -61,23 +73,21 @@ export function updateProjectInDb(
   id: string,
   updates: Partial<Omit<ProjectRecord, 'id'>>
 ): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const project = await getProjectFromDb(db, id)
-      if (!project) {
-        reject(new Error(`Project ${id} not found`))
-        return
-      }
-      const updatedRecord = { ...project, ...updates }
-      const transaction = db.transaction(STORE_NAME, 'readwrite')
-      const store = transaction.objectStore(STORE_NAME)
-      const request = store.put(updatedRecord)
-      request.onerror = () => reject(request.error)
-      request.onsuccess = () => resolve()
-    } catch (e) {
-      reject(e)
-    }
-  })
+  return getProjectFromDb(db, id).then(
+    (project) =>
+      new Promise((resolve, reject) => {
+        if (!project) {
+          reject(new Error(`Project ${id} not found`))
+          return
+        }
+        const updatedRecord = { ...project, ...updates }
+        const transaction = db.transaction(STORE_NAME, 'readwrite')
+        const store = transaction.objectStore(STORE_NAME)
+        const request = store.put(updatedRecord)
+        request.onerror = () => reject(request.error)
+        request.onsuccess = () => resolve()
+      })
+  )
 }
 
 export function deleteProjectInDb(db: IDBDatabase, id: string): Promise<void> {

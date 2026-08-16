@@ -27,7 +27,7 @@ function handleSignIn() {
   <div class="space-y-5">
     <div class="space-y-1">
       <h2 class="text-lg font-bold text-white tracking-tight">Sign in to NexDesign</h2>
-      <p class="text-xs text-zinc-400">Enter your account credentials to access your workspace</p>
+      <p class="text-xs text-zinc-400">Enter your credentials to access your workspace</p>
     </div>
 
     <!-- Error Alert -->
@@ -44,7 +44,7 @@ function handleSignIn() {
           type="email"
           required
           placeholder="name@company.com"
-          class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition"
+          class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500 transition"
         />
       </div>
 
@@ -53,8 +53,8 @@ function handleSignIn() {
           <label class="block text-zinc-400 font-medium">Password</label>
           <button
             type="button"
-            @click="$emit('switchView', 'forgot_password')"
-            class="text-[11px] text-violet-400 hover:underline"
+            @click="emit('switchView', 'forgot_password')"
+            class="text-[11px] text-rose-400 hover:underline"
           >
             Forgot password?
           </button>
@@ -65,7 +65,7 @@ function handleSignIn() {
             :type="showPassword ? 'text' : 'password'"
             required
             placeholder="••••••••••••"
-            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-violet-500 transition"
+            class="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-rose-500 transition"
           />
           <button
             type="button"
@@ -79,14 +79,14 @@ function handleSignIn() {
 
       <div class="flex items-center justify-between pt-1">
         <label class="flex items-center gap-2 text-zinc-300 cursor-pointer">
-          <input v-model="rememberMe" type="checkbox" class="rounded bg-zinc-950 border-white/10 text-violet-600 w-4 h-4" />
+          <input v-model="rememberMe" type="checkbox" class="rounded bg-zinc-950 border-white/10 text-rose-600 w-4 h-4" />
           <span>Remember this device</span>
         </label>
       </div>
 
       <button
         type="submit"
-        class="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 font-semibold text-white shadow-lg shadow-violet-600/20 transition"
+        class="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 font-semibold text-white shadow-lg shadow-rose-600/20 transition"
       >
         Sign In
       </button>
@@ -131,7 +131,7 @@ function handleSignIn() {
     <!-- Toggle to Sign Up -->
     <div class="text-center text-xs text-zinc-400 pt-2">
       Don't have an account yet?
-      <button @click="$emit('switchView', 'signup')" class="text-violet-400 font-semibold hover:underline ml-1">
+      <button @click="emit('switchView', 'signup')" class="text-rose-400 font-semibold hover:underline ml-1">
         Create one now
       </button>
     </div>

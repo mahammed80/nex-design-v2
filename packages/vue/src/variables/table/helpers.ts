@@ -94,6 +94,20 @@ function createVariableModeColumns(options: VariablesTableOptions): ColumnDef<Va
         })
       }
 
+      if (variable.type === 'BOOLEAN') {
+        const isTrue = value === true || String(value).toLowerCase() === 'true'
+        return h(
+          'button',
+          {
+            class: `cursor-pointer rounded-full px-2.5 py-0.5 text-[10px] font-semibold border-none outline-none ${
+              isTrue ? 'bg-green-500/20 text-green-400' : 'bg-surface/10 text-muted'
+            }`,
+            onClick: () => options.updateVariableValue(variable.id, mode.modeId, !isTrue)
+          },
+          isTrue ? 'true' : 'false'
+        )
+      }
+
       return h(
         EditableRoot,
         {

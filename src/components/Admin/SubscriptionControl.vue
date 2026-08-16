@@ -16,7 +16,8 @@ const {
   deleteSubscriptionPlan,
   updateCloudSettings,
   updateSubscriberStatus,
-  updateSubscriberPlan
+  updateSubscriberPlan,
+  topupSubscriberCredits
 } = useAdminStore()
 
 const activeSubTab = ref<'plans' | 'subscribers' | 'cloud'>('plans')
@@ -413,15 +414,23 @@ function savePlan() {
                 <td class="py-3.5 px-4 text-zinc-400">
                   <div>{{ sub.storageUsedGb }} GB storage</div>
                   <div class="text-[11px] text-violet-400">{{ sub.aiCreditsUsed }} AI credits used</div>
+                  <div class="text-[10px] text-emerald-400 font-mono">+{{ sub.topupCreditsRemaining || 0 }} Top-up Credits</div>
                 </td>
 
-                <td class="py-3.5 px-4 text-right">
+                <td class="py-3.5 px-4 text-right flex items-center justify-end gap-2">
+                  <button
+                    @click="topupSubscriberCredits(sub.id, 1000)"
+                    class="px-2.5 py-1 rounded-lg text-[11px] font-medium border border-violet-500/30 bg-violet-600/10 text-violet-300 hover:bg-violet-600/20 transition"
+                    title="Top-up 1,000 AI Credits via Web Admin"
+                  >
+                    +1k Top-up
+                  </button>
                   <button
                     @click="updateSubscriberStatus(sub.id, sub.status === 'active' ? 'canceled' : 'active')"
                     class="px-3 py-1 rounded-lg text-[11px] font-medium border transition"
                     :class="sub.status === 'active' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'"
                   >
-                    {{ sub.status === 'active' ? 'Revoke Subscription' : 'Activate' }}
+                    {{ sub.status === 'active' ? 'Revoke' : 'Activate' }}
                   </button>
                 </td>
               </tr>

@@ -14,6 +14,7 @@ import { poolsideProxyPlugin } from './vite/poolside-proxy'
 import { nexDesignPwaPlugin } from './vite/pwa'
 import { rawMarkdownPlugin } from './vite/raw-markdown'
 import { createDevServerOptions } from './vite/server'
+import { urlFetchProxyPlugin } from './vite/url-fetch-proxy'
 
 const host = process.env.TAURI_DEV_HOST
 
@@ -34,6 +35,7 @@ export default defineConfig(async ({ command, mode }) => {
       Components({ resolvers: [IconsResolver({ prefix: 'icon' })] }),
       nexDesignAutomationPlugin(command, host),
       poolsideProxyPlugin(env.POOLSIDE_API_KEY ?? ''),
+      urlFetchProxyPlugin(),
       vue(),
       nexDesignPwaPlugin()
     ],

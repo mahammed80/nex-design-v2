@@ -12,6 +12,9 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { toast } from '@/app/shell/ui'
 import { useAppTheme } from '@/app/shell/theme'
 import { scheduleStartupUpdateCheck } from '@/app/shell/updater'
+import { useEventListener } from '@vueuse/core'
+import { validateLinkedAccount } from '@/app/dashboard/accounts/api'
+import { flushProjectSyncOutbox } from '@/app/dashboard/sync/client'
 
 useHead({ titleTemplate: (title) => (title ? `${title} — NexDesign` : 'NexDesign') })
 
@@ -23,6 +26,15 @@ useAppTheme()
 onMounted(() => {
   toast.setupGlobalErrorHandler()
   scheduleStartupUpdateCheck(dialogs)
+  void validateLinkedAccount()
+    .then(() => flushProjectSyncOutbox())
+    .catch((error: unknown) => console.warn('Account startup validation failed', error))
+})
+
+useEventListener(window, 'online', () => {
+  void validateLinkedAccount()
+    .then(() => flushProjectSyncOutbox())
+    .catch((error: unknown) => console.warn('Account reconnection validation failed', error))
 })
 </script>
 

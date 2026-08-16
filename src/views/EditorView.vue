@@ -16,7 +16,8 @@ import { isTauri } from '@/app/tauri/env'
 import { createDemoShapes } from '@/app/demo/document'
 import { useEditorStore } from '@/app/editor/active-store'
 import { createTab, activeTab, getActiveStore, tabCount } from '@/app/tabs'
-import { openDb, getProjectFromDb, updateProjectInDb } from '@/app/dashboard/db'
+import { getActiveProfileId } from '@/app/dashboard/accounts/session'
+import { createProjectRepository } from '@/app/dashboard/projects/repository'
 import { readFigFile } from '@nex-design/core/io/formats/fig'
 
 import CollabPanel from '@/components/CollabPanel/CollabPanel.vue'
@@ -38,6 +39,8 @@ const createdInitialTab = tabCount() === 0
 const firstTab = createdInitialTab ? createTab() : (activeTab.value ?? createTab())
 const store = useEditorStore()
 const { isMobile } = useViewportKind()
+const activeProfileId = getActiveProfileId()
+const projectRepository = activeProfileId ? createProjectRepository(activeProfileId) : null
 
 if (createdInitialTab && route.meta.demo && !('test' in params)) {
   createDemoShapes(firstTab.store)
@@ -67,8 +70,7 @@ watch(
   () => store.state.documentName,
   async (newName) => {
     if (store.state.activeProjectId && newName) {
-      const db = await openDb()
-      await updateProjectInDb(db, store.state.activeProjectId, {
+      await projectRepository?.update(store.state.activeProjectId, {
         name: newName,
         updatedAt: Date.now()
       })
@@ -81,10 +83,10 @@ onMounted(async () => {
   if (projectId) {
     store.state.loading = true
     try {
-      const db = await openDb()
-      const project = await getProjectFromDb(db, projectId)
+      const project = await projectRepository?.get(projectId)
       if (project) {
         store.state.activeProjectId = project.id
+        store.state.autosaveEnabled = true
         store.state.documentName = project.name
 
         // Load the document using readFigFile
@@ -133,6 +135,17 @@ onUnmounted(() => {
   <div data-test-id="editor-root" class="relative flex h-screen w-screen flex-col">
     <SafariBanner />
     <TabBar />
+    <div
+      v-if="store.state.activeProjectId"
+      class="pointer-events-none fixed top-2 right-3 z-50 rounded-full border border-border bg-panel/90 px-2.5 py-1 text-[10px] text-muted shadow-sm backdrop-blur"
+      role="status"
+    >
+      <span v-if="store.state.projectSaveStatus === 'saving'">Saving locally…</span>
+      <span v-else-if="store.state.projectSaveStatus === 'error'" class="text-red-400"
+        >Local save failed</span
+      >
+      <span v-else>Saved locally</span>
+    </div>
 
     <!-- Desktop layout -->
     <SplitterGroup

@@ -10,17 +10,23 @@ import type { SkiaRenderer, RenderOverlays } from './renderer'
 
 function drawVisibleFills(
   r: SkiaRenderer,
+  canvas: Canvas,
   node: SceneNode,
   graph: SceneGraph,
   draw: (fill: Fill) => void
 ): void {
+  let drewAny = false
   for (let fi = 0; fi < node.fills.length; fi++) {
     const fill = node.fills[fi]
     if (!fill.visible) continue
     if (!r.applyFill(fill, node, graph, fi)) continue
     r.fillPaint.setAlphaf(fill.opacity)
     draw(fill)
+    drewAny = true
     r.fillPaint.setShader(null)
+  }
+  if (!drewAny && node.type === 'TEXT') {
+    r.renderText(canvas, node, graph)
   }
 }
 
@@ -480,7 +486,7 @@ export function renderShapeUncached(
   const shadowChild = getShadowShapeChild(node, graph)
   r.renderEffects(canvas, node, rect, hasRadius, 'behind', shadowChild)
 
-  drawVisibleFills(r, node, graph, (fill) => r.drawNodeFill(canvas, node, rect, hasRadius, fill))
+  drawVisibleFills(r, canvas, node, graph, (fill) => r.drawNodeFill(canvas, node, rect, hasRadius, fill, graph))
 
   const sg = node.strokeGeometry.length > 0 ? r.getStrokeGeometry(node) : null
   const vectorPaths = node.type === 'VECTOR' ? r.getVectorPaths(node) : null
@@ -537,13 +543,19 @@ function drawGradientText(
   return true
 }
 
-export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fill?: Fill): void {
+export function renderText(
+  r: SkiaRenderer,
+  canvas: Canvas,
+  node: SceneNode,
+  graph?: SceneGraph,
+  fill?: Fill
+): void {
   const text = node.text
   if (!text) return
 
   canvas.save()
   const shouldClipText = node.textAutoResize === 'NONE' || node.textAutoResize === 'TRUNCATE'
-  if (shouldClipText) {
+  if (shouldClipText && node.width > 0 && node.height > 0) {
     canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, false)
   }
 
@@ -563,7 +575,22 @@ export function renderText(r: SkiaRenderer, canvas: Canvas, node: SceneNode, fil
     }
   }
   if (r.fontsLoaded && r.fontProvider) {
-    const paragraph = r.buildParagraph(node, r.fillPaint.getColor())
+    const sg = graph ?? r.activeGraph
+    let textColor4f: Float32Array
+    if (fill) {
+      const c = sg ? r.resolveFillColor(fill, 0, node, sg) : fill.color
+      textColor4f = r.ck.Color4f(c.r, c.g, c.b, c.a * fill.opacity)
+    } else {
+      const visibleFill = node.fills.find((f) => f.visible)
+      if (visibleFill) {
+        const c = sg ? r.resolveFillColor(visibleFill, 0, node, sg) : visibleFill.color
+        textColor4f = r.ck.Color4f(c.r, c.g, c.b, c.a * visibleFill.opacity)
+      } else {
+        textColor4f = r.ck.Color4f(0, 0, 0, 1)
+      }
+    }
+
+    const paragraph = r.buildParagraph(node, textColor4f)
     canvas.drawParagraph(paragraph, 0, paragraphY)
     paragraph.delete()
   } else if (r.textFont) {

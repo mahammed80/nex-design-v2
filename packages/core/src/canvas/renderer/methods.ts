@@ -187,8 +187,8 @@ const rendererMethods: ThisType<SkiaRenderer> = {
     renderShadowEffects(this, canvas, node, rect, hasRadius, pass, shadowShapeChild)
   },
 
-  renderText(canvas: Canvas, node: SceneNode, fill?: Fill): void {
-    SceneRender.renderText(this, canvas, node, fill)
+  renderText(canvas: Canvas, node: SceneNode, graph?: SceneGraph, fill?: Fill): void {
+    SceneRender.renderText(this, canvas, node, graph, fill)
   },
 
   drawNodeFill(
@@ -196,9 +196,10 @@ const rendererMethods: ThisType<SkiaRenderer> = {
     node: SceneNode,
     rect: Float32Array,
     hasRadius: boolean,
-    fill?: Fill
+    fill?: Fill,
+    graph?: SceneGraph
   ): void {
-    Fills.drawNodeFill(this, canvas, node, rect, hasRadius, fill)
+    Fills.drawNodeFill(this, canvas, node, rect, hasRadius, fill, graph)
   },
 
   applyFill(fill: Fill, node: SceneNode, graph: SceneGraph, fillIndex = 0): boolean {

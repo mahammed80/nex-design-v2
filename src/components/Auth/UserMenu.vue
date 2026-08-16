@@ -54,7 +54,7 @@ function handleSignOut(userId: string) {
       @click="isOpen = !isOpen"
       class="flex items-center gap-2 p-1.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-800/80 border border-white/10 text-xs transition"
     >
-      <div class="w-7 h-7 rounded-full bg-violet-600/30 border border-violet-500/40 overflow-hidden flex items-center justify-center font-bold text-violet-300 text-xs shrink-0">
+      <div class="w-7 h-7 rounded-full bg-rose-600/30 border border-rose-500/40 overflow-hidden flex items-center justify-center font-bold text-rose-300 text-xs shrink-0">
         <img v-if="currentUser.avatar" :src="currentUser.avatar" :alt="currentUser.name" class="w-full h-full object-cover" />
         <span v-else>{{ currentUser.name[0] }}</span>
       </div>
@@ -62,7 +62,7 @@ function handleSignOut(userId: string) {
       <div class="hidden sm:flex flex-col text-left">
         <span class="font-semibold text-white leading-tight flex items-center gap-1.5">
           {{ currentUser.name }}
-          <span class="text-[9px] px-1 py-0.2 rounded bg-violet-500/20 text-violet-300 font-extrabold uppercase border border-violet-500/30">
+          <span class="text-[9px] px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 font-extrabold uppercase border border-rose-500/30">
             {{ currentUser.planId.replace('plan-', '') }}
           </span>
         </span>
@@ -86,7 +86,7 @@ function handleSignOut(userId: string) {
         </div>
 
         <div class="flex items-center gap-3 p-2 rounded-xl bg-zinc-950/60 border border-white/5">
-          <div class="w-9 h-9 rounded-full bg-violet-600/30 border border-violet-500/30 overflow-hidden flex items-center justify-center font-bold text-violet-300 shrink-0">
+          <div class="w-9 h-9 rounded-full bg-rose-600/30 border border-rose-500/30 overflow-hidden flex items-center justify-center font-bold text-rose-300 shrink-0">
             <img v-if="currentUser.avatar" :src="currentUser.avatar" :alt="currentUser.name" class="w-full h-full object-cover" />
             <span v-else>{{ currentUser.name[0] }}</span>
           </div>
@@ -109,7 +109,7 @@ function handleSignOut(userId: string) {
           :key="acc.id"
           @click="handleSwitchAccount(acc.id)"
           class="w-full flex items-center justify-between p-2 rounded-xl text-left transition"
-          :class="acc.id === currentUser.id ? 'bg-violet-600/10 text-violet-300 font-semibold border border-violet-500/20' : 'text-zinc-300 hover:bg-white/5'"
+          :class="acc.id === currentUser.id ? 'bg-rose-600/10 text-rose-300 font-semibold border border-rose-500/20' : 'text-zinc-300 hover:bg-white/5'"
         >
           <div class="flex items-center gap-2.5 min-w-0">
             <div class="w-6 h-6 rounded-full bg-zinc-800 border border-white/10 overflow-hidden flex items-center justify-center font-bold text-[10px] shrink-0">
@@ -122,7 +122,7 @@ function handleSignOut(userId: string) {
             </div>
           </div>
 
-          <span v-if="acc.id === currentUser.id" class="text-violet-400 font-bold text-sm ml-2">✓</span>
+          <span v-if="acc.id === currentUser.id" class="text-rose-400 font-bold text-sm ml-2">✓</span>
         </button>
       </div>
 
@@ -132,7 +132,7 @@ function handleSignOut(userId: string) {
           @click="handleAddAccount"
           class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-300 hover:bg-white/5 hover:text-white transition"
         >
-          <svg class="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
           </svg>
           Add Another Account
@@ -151,9 +151,9 @@ function handleSignOut(userId: string) {
 
         <button
           @click="handleGoAdmin"
-          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-300 hover:bg-violet-600/10 hover:text-violet-300 transition"
+          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-300 hover:bg-rose-600/10 hover:text-rose-300 transition"
         >
-          <svg class="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
           Admin Portal
