@@ -89,6 +89,10 @@ export function applySizeOverrides(
     o.layoutPositioning = 'ABSOLUTE'
   }
 
+  // Escape-hatch: url-import parser can directly set axis sizing via _counterAxisSizing / _primaryAxisSizing
+  if (props._counterAxisSizing) o.counterAxisSizing = props._counterAxisSizing as SceneNode['counterAxisSizing']
+  if (props._primaryAxisSizing) o.primaryAxisSizing = props._primaryAxisSizing as SceneNode['primaryAxisSizing']
+
   return { w, h }
 }
 
@@ -103,9 +107,16 @@ function applyFillSizing(
   if (dim !== 'fill') return
   const isPrimary = axis === 'width' ? isRow : isCol
   const isCross = axis === 'width' ? isCol : isRow
-  if (isGrid || isCross) o.layoutAlignSelf = 'STRETCH'
-  else if (isPrimary) o.layoutGrow = 1
-  else {
+  if (isGrid || isCross) {
+    o.layoutAlignSelf = 'STRETCH'
+    // Also fix the child's own sizing axis so Yoga doesn't HUG and collapse width.
+    // Without this, STRETCH is set on the parent side but the child's counterAxisSizing
+    // defaults to HUG — causing the thin-strip rendering bug.
+    if (axis === 'width') o.counterAxisSizing = 'FIXED'
+    else o.primaryAxisSizing = 'FIXED'
+  } else if (isPrimary) {
+    o.layoutGrow = 1
+  } else {
     o.layoutGrow = 1
     o.layoutAlignSelf = 'STRETCH'
   }
@@ -281,7 +292,11 @@ function applyAutoLayoutSizing(
   o.layoutMode = (isVertical ? 'VERTICAL' : 'HORIZONTAL') as LayoutMode
 
   o.primaryAxisSizing = 'HUG'
-  o.counterAxisSizing = 'HUG'
+  // If STRETCH was already set (from a fill='fill' on the cross axis), don't
+  // override with HUG — preserve whatever applyFillSizing set.
+  if (o.counterAxisSizing !== 'FIXED') {
+    o.counterAxisSizing = 'HUG'
+  }
 
   const primaryDim = isVertical ? h : w
   const counterDim = isVertical ? w : h

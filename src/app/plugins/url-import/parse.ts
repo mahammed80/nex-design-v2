@@ -77,8 +77,8 @@ export async function parseHtmlToTree(
     doc.write(injectedHtml)
     doc.close()
 
-    // Wait for remote stylesheets, Google Fonts, and layout computation
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    // Wait for remote stylesheets, Google Fonts, JS-injected styles (React, Next.js, etc.), and layout computation
+    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     const targetEl = selector && selector !== 'body' ? doc.querySelector(selector) : doc.body
     const root = targetEl ?? doc.body
@@ -95,11 +95,17 @@ export async function parseHtmlToTree(
     const tree = walkElement(root, 0, maxDepth, baseUrl, win, viewportWidth, false, defaultTextColor)
     if (!tree) return createFallbackNode(viewportWidth)
 
+    // Set the root frame to fixed full-page width and strip accidental HUG sizing
     tree.props.name = cleanPageTitle(doc.title, 'Imported Page')
     tree.props.w = viewportWidth
+    tree.props.h = undefined // let height be determined by content
     if (!tree.props.bg) tree.props.bg = pageBg
     tree.props.flex = 'col'
     tree.props.gap = 0
+    tree.props.items = 'start'
+    // Explicitly tell layout engine: this root frame has FIXED width (1440) and HUG height
+    tree.props._counterAxisSizing = 'FIXED'
+    tree.props._primaryAxisSizing = 'HUG'
 
     return tree
   } finally {
