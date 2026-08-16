@@ -150,6 +150,16 @@ function handleSignOut(userId: string) {
         </button>
 
         <button
+          @click="() => { isOpen = false; router.push('/setup') }"
+          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-300 hover:bg-accent/10 hover:text-accent transition cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+          Studio Setup Wizard
+        </button>
+
+        <button
           @click="handleGoAdmin"
           class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-zinc-300 hover:bg-rose-600/10 hover:text-rose-300 transition"
         >

@@ -8,11 +8,13 @@ import AdminDashboardView from './views/AdminDashboardView.vue'
 import EditorView from './views/EditorView.vue'
 import LandingView from './views/LandingView.vue'
 import LoginView from './views/LoginView.vue'
+import SetupView from './views/SetupView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', component: DashboardView },
+    { path: '/setup', component: SetupView },
     { path: '/admin', component: AdminDashboardView },
     { path: '/login', component: LoginView },
     { path: '/account-locked', component: AccountLockedView },
@@ -30,6 +32,7 @@ router.beforeEach(async (to) => {
   const isPublicRoute =
     to.path === '/login' ||
     to.path === '/landing' ||
+    to.path === '/setup' ||
     to.path === '/account-locked' ||
     to.path.startsWith('/share/')
   if (!isPublicRoute && !getActiveProfileId()) return '/login'
