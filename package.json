@@ -120,5 +120,11 @@
     "vue-tsc": "^3.2.5",
     "workbox-window": "^7.4.0",
     "ws": "^8.19.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild"
+    ]
   }
 }
