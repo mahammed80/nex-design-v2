@@ -364,6 +364,17 @@ function walkChildNodes(
   return children
 }
 
+function isDarkColor(hex: string): boolean {
+  if (!hex.startsWith('#')) return false
+  const raw = hex.replace('#', '')
+  if (raw.length < 6) return false
+  const r = parseInt(raw.slice(0, 2), 16)
+  const g = parseInt(raw.slice(2, 4), 16)
+  const b = parseInt(raw.slice(4, 6), 16)
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  return luminance < 0.5
+}
+
 function walkElement(
   el: Element,
   depth: number,
@@ -409,6 +420,11 @@ function walkElement(
     baseUrl
   )
 
+  let currentTextColor = defaultTextColor
+  if (typeof props.bg === 'string' && props.bg) {
+    currentTextColor = isDarkColor(props.bg) ? '#FFFFFF' : '#111827'
+  }
+
   const children = walkChildNodes(
     el,
     depth,
@@ -418,7 +434,7 @@ function walkElement(
     currentWidth,
     isRowOrGrid,
     style,
-    defaultTextColor
+    currentTextColor
   )
 
   if (children.length === 0 && !props.bg && !props.stroke && !props.imageSrc) {

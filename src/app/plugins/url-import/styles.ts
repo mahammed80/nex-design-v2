@@ -113,10 +113,19 @@ function extractTextProps(style: CSSStyleDeclaration, result: ExtractedStyle): v
   result.textAlign = parseTextAlign(style.textAlign)
 }
 
+function extractGradientFallbackColor(bgImage: string): string | null {
+  if (!bgImage || !bgImage.includes('gradient')) return null
+  const hexMatch = bgImage.match(/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/)
+  if (hexMatch) return hexMatch[0]
+  const rgbMatch = bgImage.match(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*[\d.]+\s*)?\)/)
+  if (rgbMatch) return rgbToHex(rgbMatch[0])
+  return null
+}
+
 export function extractStyles(style: CSSStyleDeclaration): ExtractedStyle {
   const result: ExtractedStyle = {}
 
-  const bg = rgbToHex(style.backgroundColor)
+  const bg = rgbToHex(style.backgroundColor) || extractGradientFallbackColor(style.backgroundImage)
   if (bg) result.bg = bg
 
   extractBorder(style, result)
