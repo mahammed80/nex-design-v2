@@ -33,9 +33,10 @@ export function drawHoverHighlight(
   const node = graph.getNode(hoveredNodeId)
   if (!node) return
 
-  r.auxStroke.setStrokeWidth(1 / r.zoom)
+  r.auxStroke.setStrokeWidth(Math.max(1.5 / r.zoom, 1 / r.zoom))
   r.auxStroke.setColor(r.isComponentType(node.type) ? r.compColor() : r.selColor())
   r.auxStroke.setPathEffect(null)
+  r.auxFill.setColor(r.ck.Color4f(0.08, 0.6, 1.0, 0.06))
 
   const chain = getNodeTransformChain(graph, node)
 
@@ -50,6 +51,7 @@ export function drawHoverHighlight(
     }
   }
 
+  r.strokeNodeShape(canvas, node, r.auxFill)
   r.strokeNodeShape(canvas, node, r.auxStroke)
   canvas.restore()
 }

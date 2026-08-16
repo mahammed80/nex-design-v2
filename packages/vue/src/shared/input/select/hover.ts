@@ -47,9 +47,12 @@ function updateHoveredNode(
   editor: Editor,
   fns: Pick<HitTestFns, 'hitTestInScope' | 'hitTestSectionTitle' | 'hitTestComponentLabel'>
 ) {
+  const isDevMode = editor.state.mode === 'DEVELOPER'
+  const isDeep = isDevMode || editor.state.enteredContainerId !== null
   const hit =
     fns.hitTestSectionTitle(cx, cy) ??
     fns.hitTestComponentLabel(cx, cy) ??
+    fns.hitTestInScope(cx, cy, isDeep) ??
     fns.hitTestInScope(cx, cy, false)
   const editNodeId = getNodeEditState(editor)?.nodeId
   editor.setHoveredNode(
