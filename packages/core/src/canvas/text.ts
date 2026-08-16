@@ -196,10 +196,21 @@ export function buildParagraph(
 
   const truncateOpts = buildTruncateOpts(node, baseFontSize)
 
+  const DEFAULT_ARABIC_FALLBACKS = [
+    'Cairo',
+    'Noto Sans Arabic',
+    'Tajawal',
+    'Noto Naskh Arabic',
+    'Amiri',
+    'Tahoma',
+    'Arial'
+  ]
+
   const fontFamilies = (primary: string) => {
     const families = [primary]
     if (primary !== DEFAULT_FONT_FAMILY) families.push(DEFAULT_FONT_FAMILY)
     families.push(...arabicFallbacks)
+    families.push(...DEFAULT_ARABIC_FALLBACKS)
     families.push(...cjkFallbacks)
     return [...new Set(families)]
   }

@@ -188,12 +188,27 @@ function buildTextNode(
       ...(styleProps.color ? { color: styleProps.color } : { color: '#FFFFFF' }),
       ...(styleProps.fontSize ? { size: styleProps.fontSize } : { size: 16 }),
       fontFamily,
+      autoResize: 'width',
       ...(styleProps.fontWeight ? { weight: styleProps.fontWeight } : {}),
       ...(textAlign ? { textAlign } : {}),
       ...(styleProps.opacity !== undefined ? { opacity: styleProps.opacity } : {})
     },
     children: [text]
   }
+}
+
+function assignBorderAndCornerProps(
+  props: Record<string, unknown>,
+  styleProps: ReturnType<typeof extractStyles>
+): void {
+  if (styleProps.rounded) props.rounded = styleProps.rounded
+  if (styleProps.roundedTL) props.roundedTL = styleProps.roundedTL
+  if (styleProps.roundedTR) props.roundedTR = styleProps.roundedTR
+  if (styleProps.roundedBL) props.roundedBL = styleProps.roundedBL
+  if (styleProps.roundedBR) props.roundedBR = styleProps.roundedBR
+  if (styleProps.stroke) props.stroke = styleProps.stroke
+  if (styleProps.strokeWidth) props.strokeWidth = styleProps.strokeWidth
+  if (styleProps.shadow) props.shadow = styleProps.shadow
 }
 
 function assignVisualProps(
@@ -205,9 +220,14 @@ function assignVisualProps(
   resolvedBgImage: string | null
 ): void {
   const rw = Math.round(rect.width)
+  const isButtonOrBadge =
+    props.name &&
+    typeof props.name === 'string' &&
+    (props.name.includes('Button') || props.name.includes('Link') || props.name.includes('Badge'))
 
-  // In a row or grid, children maintain their distinct column width
-  if (isParentRowOrGrid && rw > 0 && rw < parentWidth * 0.9) {
+  if (isButtonOrBadge) {
+    if (rw > 0) props.w = rw
+  } else if (isParentRowOrGrid && rw > 0 && rw < parentWidth * 0.9) {
     props.w = rw
   } else if (!isParentRowOrGrid && (rw >= parentWidth * 0.85 || parentWidth <= 0)) {
     props.w = 'fill'
@@ -217,16 +237,10 @@ function assignVisualProps(
 
   if (styleProps.bg) props.bg = styleProps.bg
   if (resolvedBgImage) props.imageSrc = resolvedBgImage
-  if (styleProps.rounded) props.rounded = styleProps.rounded
-  if (styleProps.roundedTL) props.roundedTL = styleProps.roundedTL
-  if (styleProps.roundedTR) props.roundedTR = styleProps.roundedTR
-  if (styleProps.roundedBL) props.roundedBL = styleProps.roundedBL
-  if (styleProps.roundedBR) props.roundedBR = styleProps.roundedBR
-  if (styleProps.stroke) props.stroke = styleProps.stroke
-  if (styleProps.strokeWidth) props.strokeWidth = styleProps.strokeWidth
   if (styleProps.opacity !== undefined) props.opacity = styleProps.opacity
-  if (styleProps.shadow) props.shadow = styleProps.shadow
   if (styleProps.overflow === 'hidden') props.overflow = 'hidden'
+
+  assignBorderAndCornerProps(props, styleProps)
 }
 
 function assignFlexGridProps(

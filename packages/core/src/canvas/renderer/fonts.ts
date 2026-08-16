@@ -45,11 +45,19 @@ export async function loadFonts(r: SkiaRenderer): Promise<void> {
   r.fontsLoaded = true
   r.invalidateAllPictures()
 
-  void fontManager.ensureCJKFallback().then((families) => {
-    if (!r.isDestroyed() && families.length > 0) r.invalidateAllPictures()
-  })
-  void fontManager.ensureArabicFallback().then((families) => {
-    if (!r.isDestroyed() && families.length > 0) r.invalidateAllPictures()
+  void Promise.allSettled([
+    fontManager.loadFont('Cairo', 'Regular'),
+    fontManager.loadFont('Cairo', 'Bold'),
+    fontManager.loadFont('Noto Sans Arabic', 'Regular'),
+    fontManager.loadFont('Noto Sans Arabic', 'Bold'),
+    fontManager.loadFont('Tajawal', 'Regular'),
+    fontManager.loadFont('Tajawal', 'Bold'),
+    fontManager.ensureArabicFallback(),
+    fontManager.ensureCJKFallback()
+  ]).then(() => {
+    if (!r.isDestroyed()) {
+      r.invalidateAllPictures()
+    }
   })
 }
 
