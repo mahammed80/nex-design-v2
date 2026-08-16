@@ -1,14 +1,41 @@
 /**
- * pipeline.ts — Image processing and font loading pipeline for URL Import.
+ * pipeline.ts — Image processing, font loading, and viewport rendering pipeline for URL Import.
  */
 
 import type { SceneGraph } from '@nex-design/core/scene-graph'
 
 import { fetchImageBytes } from './image'
 
+const URL_FETCH_PROXY = '/api/url-fetch'
+
 export interface TreeLikeNode {
   props?: Record<string, unknown>
   children?: unknown[]
+}
+
+export async function fetchPageHtml(normalizedUrl: string): Promise<{
+  html: string
+  baseUrl: string
+  statusCode: number
+}> {
+  const proxyResp = await fetch(URL_FETCH_PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: normalizedUrl })
+  })
+
+  if (!proxyResp.ok) {
+    const err = (await proxyResp.json().catch(() => ({ error: `HTTP ${proxyResp.status}` }))) as {
+      error?: string
+    }
+    throw new Error(err.error ?? `HTTP ${proxyResp.status}`)
+  }
+
+  return proxyResp.json() as Promise<{
+    html: string
+    baseUrl: string
+    statusCode: number
+  }>
 }
 
 /**
@@ -109,4 +136,50 @@ export async function finalizeImportedTreeFonts(
   } catch (fontErr) {
     console.warn('[url-import] Font loading error:', fontErr)
   }
+}
+
+export interface ImportOptions {
+  selector?: string
+  baseUrl?: string
+  viewportWidth: number
+  offsetX?: number
+  pageId: string
+  loadFont?: (family: string, style?: string) => Promise<unknown>
+  requestRepaint?: () => void
+}
+
+export async function executeSingleViewportImport(
+  html: string,
+  graph: SceneGraph,
+  opts: ImportOptions
+): Promise<{ id: string; name: string }> {
+  const { parseHtmlToTree } = (await import('./parse')) as {
+    parseHtmlToTree: (h: string, options?: object) => Promise<object>
+  }
+
+  const tree = (await parseHtmlToTree(html, {
+    selector: opts.selector || 'body',
+    maxDepth: 15,
+    baseUrl: opts.baseUrl,
+    viewportWidth: opts.viewportWidth
+  })) as TreeLikeNode
+
+  await downloadAndStoreTreeImages(tree, graph)
+
+  const { renderTree } = (await import('@nex-design/core/design-jsx')) as {
+    renderTree: (
+      g: object,
+      t: object,
+      options?: { parentId?: string; x?: number; y?: number }
+    ) => Promise<{ id: string; name: string; type: string; childIds: string[] }>
+  }
+
+  const rendered = await renderTree(graph, tree, {
+    parentId: opts.pageId,
+    x: opts.offsetX ?? 0,
+    y: 0
+  })
+
+  await finalizeImportedTreeFonts(graph, rendered.id, opts.loadFont, opts.requestRepaint)
+  return rendered
 }

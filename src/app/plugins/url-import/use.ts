@@ -1,19 +1,34 @@
 /**
- * use.ts — Composable for the URL Import panel.
+ * use.ts — Composable for URL & HTML to Design.
  *
- * Manages URL input state, history, fetch lifecycle, and error handling.
- * Delegates HTML parsing, image downloading, rendering, and font loading.
+ * Supports 3 industry-standard import methods:
+ * 1. Web URL (with Desktop, Laptop, Tablet, Mobile breakpoints & multi-import)
+ * 2. Direct Code Snippet (HTML / CSS / Tailwind / JSX)
+ * 3. Captured DOM JSON / .h2d snapshot
  */
 
 import { ref, computed } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 
 import { useEditorStore } from '@/app/editor/active-store'
-import { downloadAndStoreTreeImages, finalizeImportedTreeFonts } from './pipeline'
+import { executeSingleViewportImport, fetchPageHtml } from './pipeline'
 
-const URL_FETCH_PROXY = '/api/url-fetch'
-
+export type ImportTab = 'url' | 'code' | 'json'
 export type ImportStatus = 'idle' | 'fetching' | 'parsing' | 'rendering' | 'done' | 'error'
+
+export interface ViewportOption {
+  id: string
+  label: string
+  width: number
+  icon: string
+}
+
+export const VIEWPORT_OPTIONS: ViewportOption[] = [
+  { id: 'desktop', label: 'Desktop', width: 1440, icon: 'monitor' },
+  { id: 'laptop', label: 'Laptop', width: 1200, icon: 'laptop' },
+  { id: 'tablet', label: 'Tablet', width: 768, icon: 'tablet' },
+  { id: 'mobile', label: 'Mobile', width: 390, icon: 'smartphone' }
+]
 
 export interface ImportResult {
   id: string
@@ -29,8 +44,14 @@ const MAX_HISTORY = 10
 export function useUrlImport() {
   const editor = useEditorStore()
 
+  const activeTab = ref<ImportTab>('url')
   const url = ref('')
   const selector = ref('')
+  const rawCode = ref('')
+  const rawJson = ref('')
+  const selectedViewport = ref<number>(1440)
+  const multiViewport = ref(false)
+
   const status = ref<ImportStatus>('idle')
   const errorMsg = ref('')
   const result = ref<ImportResult | null>(null)
@@ -46,11 +67,11 @@ export function useUrlImport() {
   const statusLabel = computed(() => {
     switch (status.value) {
       case 'fetching':
-        return 'Fetching page…'
+        return 'Fetching webpage…'
       case 'parsing':
-        return 'Parsing layout & images…'
+        return 'Analyzing DOM, layout & assets…'
       case 'rendering':
-        return 'Rendering to canvas…'
+        return 'Generating editable layers…'
       case 'done':
         return `Done — ${result.value?.totalNodes ?? 0} layers created`
       case 'error':
@@ -71,109 +92,111 @@ export function useUrlImport() {
     result.value = null
   }
 
-  async function fetchPageHtml(normalizedUrl: string) {
-    status.value = 'fetching'
-    const proxyResp = await fetch(URL_FETCH_PROXY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: normalizedUrl })
-    })
+  function countGraphNodes(id: string): number {
+    const n = editor.graph.getNode(id)
+    if (!n) return 0
+    return 1 + n.childIds.reduce((sum: number, cid: string) => sum + countGraphNodes(cid), 0)
+  }
 
-    if (!proxyResp.ok) {
-      const err = (await proxyResp.json().catch(() => ({ error: `HTTP ${proxyResp.status}` }))) as {
-        error?: string
+  async function runImport(html: string, baseUrl: string, isMulti: boolean, srcLabel: string) {
+    let renderedLast: { id: string; name: string } | null = null
+    const pageId = editor.state.currentPageId
+
+    const opts = {
+      selector: selector.value.trim() || 'body',
+      baseUrl,
+      pageId,
+      loadFont: editor.loadFont,
+      requestRepaint: () => {
+        editor.requestRender?.()
+        editor.requestRepaint?.()
       }
-      throw new Error(err.error ?? `HTTP ${proxyResp.status}`)
     }
 
-    return proxyResp.json() as Promise<{
-      html: string
-      baseUrl: string
-      statusCode: number
-    }>
+    if (isMulti) {
+      const viewports = [1440, 768, 390]
+      let currentX = 0
+      for (const vp of viewports) {
+        const rendered = await executeSingleViewportImport(html, editor.graph, {
+          ...opts,
+          viewportWidth: vp,
+          offsetX: currentX
+        })
+        renderedLast = rendered
+        const node = editor.graph.getNode(rendered.id)
+        currentX += (node?.width ?? vp) + 80
+      }
+    } else {
+      renderedLast = await executeSingleViewportImport(html, editor.graph, {
+        ...opts,
+        viewportWidth: selectedViewport.value,
+        offsetX: 0
+      })
+    }
+
+    if (renderedLast) {
+      const rootNode = editor.graph.getNode(renderedLast.id)
+      result.value = {
+        id: renderedLast.id,
+        name: renderedLast.name,
+        totalNodes: countGraphNodes(renderedLast.id),
+        width: rootNode?.width ?? selectedViewport.value,
+        height: rootNode?.height ?? 0,
+        sourceUrl: srcLabel
+      }
+      editor.select([renderedLast.id])
+      editor.zoomToFit()
+    }
   }
 
   async function importUrl() {
     const targetUrl = url.value.trim()
     if (!targetUrl) return
-
     const normalizedUrl = targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`
     reset()
 
     try {
-      // 1. Fetch HTML
+      status.value = 'fetching'
       const fetchResult = await fetchPageHtml(normalizedUrl)
-
-      // 2. Parse HTML → TreeNode using hidden desktop iframe
       status.value = 'parsing'
-      const { parseHtmlToTree } = (await import('./parse')) as {
-        parseHtmlToTree: (html: string, opts?: object) => Promise<object>
-      }
-
-      const tree = (await parseHtmlToTree(fetchResult.html, {
-        selector: selector.value.trim() || 'body',
-        maxDepth: 15,
-        baseUrl: fetchResult.baseUrl,
-        viewportWidth: 1440
-      })) as { props?: Record<string, unknown>; children?: unknown[] }
-
-      // 3. Download and register all raster images
-      await downloadAndStoreTreeImages(tree, editor.graph)
-
-      // 4. Render TreeNode → SceneGraph nodes
-      status.value = 'rendering'
-      const { renderTree } = (await import('@nex-design/core/design-jsx')) as {
-        renderTree: (
-          graph: object,
-          tree: object,
-          opts?: { parentId?: string; x?: number; y?: number }
-        ) => Promise<{ id: string; name: string; type: string; childIds: string[] }>
-      }
-
-      const pageId = editor.state.currentPageId
-      const rendered = await renderTree(editor.graph, tree, {
-        parentId: pageId,
-        x: 0,
-        y: 0
-      })
-
-      // 5. Finalize fonts (Google Fonts download, clear picture caches, and repaint)
-      await finalizeImportedTreeFonts(
-        editor.graph,
-        rendered.id,
-        editor.loadFont,
-        () => {
-          editor.requestRender?.()
-          editor.requestRepaint?.()
-        }
-      )
-
-      const rootNode = editor.graph.getNode(rendered.id)
-
-      function countNodes(id: string): number {
-        const n = editor.graph.getNode(id)
-        if (!n) return 0
-        return 1 + n.childIds.reduce((sum: number, cid: string) => sum + countNodes(cid), 0)
-      }
-
-      result.value = {
-        id: rendered.id,
-        name: rendered.name,
-        totalNodes: countNodes(rendered.id),
-        width: rootNode?.width ?? 0,
-        height: rootNode?.height ?? 0,
-        sourceUrl: normalizedUrl
-      }
-
+      await runImport(fetchResult.html, fetchResult.baseUrl, multiViewport.value, normalizedUrl)
       status.value = 'done'
       addToHistory(normalizedUrl)
-
-      // Select and zoom to the imported frame
-      editor.select([rendered.id])
-      editor.zoomToFit()
     } catch (error) {
       status.value = 'error'
       errorMsg.value = error instanceof Error ? error.message : 'Import failed'
+    }
+  }
+
+  async function importCode() {
+    const code = rawCode.value.trim()
+    if (!code) return
+    reset()
+
+    try {
+      status.value = 'parsing'
+      await runImport(code, '', false, 'HTML Code Snippet')
+      status.value = 'done'
+    } catch (error) {
+      status.value = 'error'
+      errorMsg.value = error instanceof Error ? error.message : 'Code import failed'
+    }
+  }
+
+  async function importJson() {
+    const jsonStr = rawJson.value.trim()
+    if (!jsonStr) return
+    reset()
+
+    try {
+      status.value = 'parsing'
+      const parsed = JSON.parse(jsonStr) as { html?: string; code?: string }
+      const htmlContent = parsed.html || parsed.code || jsonStr
+      await runImport(htmlContent, '', false, 'JSON Snapshot')
+      status.value = 'done'
+    } catch (error) {
+      status.value = 'error'
+      errorMsg.value = error instanceof Error ? error.message : 'Invalid JSON snapshot'
     }
   }
 
@@ -187,8 +210,13 @@ export function useUrlImport() {
   }
 
   return {
+    activeTab,
     url,
     selector,
+    rawCode,
+    rawJson,
+    selectedViewport,
+    multiViewport,
     status,
     statusLabel,
     errorMsg,
@@ -196,6 +224,8 @@ export function useUrlImport() {
     history,
     isLoading,
     importUrl,
+    importCode,
+    importJson,
     tryHistoryItem,
     clearHistory,
     reset
