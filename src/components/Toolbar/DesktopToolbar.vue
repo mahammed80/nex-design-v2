@@ -349,9 +349,9 @@ async function insertIcon(iconName: string) {
         <PopoverPortal>
           <PopoverContent
             side="top"
-            :side-offset="8"
+            :side-offset="10"
             align="center"
-            class="z-50 w-72 rounded-xl border border-border bg-panel p-3 shadow-xl"
+            class="z-50 w-[420px] max-w-[90vw] rounded-2xl border border-border bg-panel p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150"
           >
             <UrlImportPanel />
           </PopoverContent>

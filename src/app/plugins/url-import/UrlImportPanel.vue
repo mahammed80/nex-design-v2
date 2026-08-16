@@ -30,27 +30,27 @@ function onUrlKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 w-80">
+  <div class="flex flex-col gap-3.5 w-full select-none">
     <!-- Header with Tabs -->
-    <div class="flex items-center justify-between border-b border-border/50 pb-2">
-      <div class="flex items-center gap-1">
+    <div class="flex items-center justify-between border-b border-border/60 pb-2.5">
+      <div class="flex items-center gap-1.5">
         <button
-          class="px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer"
-          :class="activeTab === 'url' ? 'bg-accent/15 text-accent font-semibold' : 'text-muted hover:text-surface'"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+          :class="activeTab === 'url' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-muted hover:text-surface hover:bg-hover'"
           @click="activeTab = 'url'"
         >
           Web URL
         </button>
         <button
-          class="px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer"
-          :class="activeTab === 'code' ? 'bg-accent/15 text-accent font-semibold' : 'text-muted hover:text-surface'"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+          :class="activeTab === 'code' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-muted hover:text-surface hover:bg-hover'"
           @click="activeTab = 'code'"
         >
           HTML Code
         </button>
         <button
-          class="px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer"
-          :class="activeTab === 'json' ? 'bg-accent/15 text-accent font-semibold' : 'text-muted hover:text-surface'"
+          class="px-2.5 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+          :class="activeTab === 'json' ? 'bg-accent text-white shadow-sm font-semibold' : 'text-muted hover:text-surface hover:bg-hover'"
           @click="activeTab = 'json'"
         >
           JSON / .h2d
@@ -59,7 +59,7 @@ function onUrlKeydown(e: KeyboardEvent) {
 
       <button
         v-if="status === 'done' || status === 'error'"
-        class="text-[11px] text-muted hover:text-surface transition-colors cursor-pointer"
+        class="text-[11px] font-medium text-muted hover:text-surface transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-hover"
         @click="reset"
       >
         Clear
@@ -69,39 +69,39 @@ function onUrlKeydown(e: KeyboardEvent) {
     <!-- Viewport Breakpoint Selector -->
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between text-[11px] text-muted">
-        <span>Viewport Device</span>
-        <label v-if="activeTab === 'url'" class="flex items-center gap-1 cursor-pointer hover:text-surface transition-colors">
+        <span class="font-medium">Viewport Device</span>
+        <label v-if="activeTab === 'url'" class="flex items-center gap-1.5 cursor-pointer hover:text-surface transition-colors">
           <input
             v-model="multiViewport"
             type="checkbox"
-            class="rounded border-border size-3 accent-accent cursor-pointer"
+            class="rounded border-border size-3.5 accent-accent cursor-pointer"
           />
           <span>Multi-breakpoint</span>
         </label>
       </div>
 
-      <div class="grid grid-cols-4 gap-1">
+      <div class="grid grid-cols-4 gap-1.5">
         <button
           v-for="vp in VIEWPORT_OPTIONS"
           :key="vp.id"
           :disabled="multiViewport"
-          class="flex flex-col items-center justify-center py-1.5 px-1 rounded-md border text-[11px] font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-xs font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           :class="
             selectedViewport === vp.width && !multiViewport
-              ? 'border-accent bg-accent/10 text-accent shadow-sm'
+              ? 'border-accent bg-accent/15 text-accent shadow-sm'
               : 'border-border bg-input/40 text-muted hover:bg-hover hover:text-surface'
           "
           @click="selectedViewport = vp.width"
         >
-          <span>{{ vp.label }}</span>
-          <span class="text-[9px] opacity-60">{{ vp.width }}px</span>
+          <span class="leading-tight">{{ vp.label }}</span>
+          <span class="text-[10px] opacity-70 font-mono mt-0.5">{{ vp.width }}px</span>
         </button>
       </div>
     </div>
 
     <!-- TAB 1: WEB URL IMPORT -->
-    <div v-if="activeTab === 'url'" class="flex flex-col gap-2">
-      <div class="flex gap-1.5">
+    <div v-if="activeTab === 'url'" class="flex flex-col gap-2.5">
+      <div class="flex gap-2">
         <div class="relative flex-1">
           <icon-lucide-globe
             class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted pointer-events-none"
@@ -114,13 +114,13 @@ function onUrlKeydown(e: KeyboardEvent) {
             autocomplete="off"
             spellcheck="false"
             :disabled="isLoading"
-            class="w-full pl-8 pr-2 py-1.5 rounded-lg border border-border bg-input text-xs text-surface outline-none placeholder:text-muted focus:border-accent transition-colors disabled:opacity-50"
+            class="w-full pl-8 pr-2.5 py-2 rounded-lg border border-border bg-input text-xs text-surface outline-none placeholder:text-muted focus:border-accent transition-colors disabled:opacity-50"
             @keydown="onUrlKeydown"
           />
         </div>
         <button
           :disabled="!url.trim() || isLoading"
-          class="flex items-center justify-center px-3 rounded-lg bg-accent text-white font-medium text-xs cursor-pointer transition-all hover:bg-accent/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 gap-1.5"
+          class="flex items-center justify-center px-4 py-2 rounded-lg bg-accent text-white font-semibold text-xs cursor-pointer transition-all hover:bg-accent/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shrink-0 gap-1.5 shadow-sm"
           title="Import URL"
           @click="() => importUrl()"
         >
@@ -130,30 +130,30 @@ function onUrlKeydown(e: KeyboardEvent) {
       </div>
 
       <!-- Scoped selector -->
-      <div class="flex items-center gap-1.5">
-        <icon-lucide-hash class="size-3 text-muted shrink-0" />
+      <div class="flex items-center gap-2">
+        <icon-lucide-hash class="size-3.5 text-muted shrink-0" />
         <input
           v-model="selector"
           type="text"
           placeholder="Optional CSS selector (e.g. #hero, .pricing)"
           :disabled="isLoading"
-          class="flex-1 px-2 py-1 rounded border border-border bg-input text-[11px] text-surface outline-none placeholder:text-muted focus:border-accent transition-colors disabled:opacity-50"
+          class="flex-1 px-2.5 py-1.5 rounded-lg border border-border bg-input text-xs text-surface outline-none placeholder:text-muted focus:border-accent transition-colors disabled:opacity-50"
         />
       </div>
     </div>
 
     <!-- TAB 2: HTML / CODE IMPORT -->
-    <div v-else-if="activeTab === 'code'" class="flex flex-col gap-2">
+    <div v-else-if="activeTab === 'code'" class="flex flex-col gap-2.5">
       <textarea
         v-model="rawCode"
         placeholder="Paste raw HTML / Tailwind / JSX code snippet here (from ChatGPT, v0, etc.)..."
         rows="4"
         :disabled="isLoading"
-        class="w-full p-2 rounded-lg border border-border bg-input text-xs text-surface font-mono outline-none placeholder:text-muted focus:border-accent transition-colors resize-none disabled:opacity-50"
+        class="w-full p-2.5 rounded-lg border border-border bg-input text-xs text-surface font-mono outline-none placeholder:text-muted focus:border-accent transition-colors resize-none disabled:opacity-50"
       />
       <button
         :disabled="!rawCode.trim() || isLoading"
-        class="flex items-center justify-center py-1.5 rounded-lg bg-accent text-white font-medium text-xs cursor-pointer transition-all hover:bg-accent/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed gap-1.5"
+        class="flex items-center justify-center py-2 rounded-lg bg-accent text-white font-semibold text-xs cursor-pointer transition-all hover:bg-accent/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed gap-1.5 shadow-sm"
         @click="() => importCode()"
       >
         <icon-lucide-code class="size-3.5" />
@@ -162,17 +162,17 @@ function onUrlKeydown(e: KeyboardEvent) {
     </div>
 
     <!-- TAB 3: JSON / EXTENSION IMPORT -->
-    <div v-else-if="activeTab === 'json'" class="flex flex-col gap-2">
+    <div v-else-if="activeTab === 'json'" class="flex flex-col gap-2.5">
       <textarea
         v-model="rawJson"
         placeholder="Paste captured DOM JSON or .h2d snapshot from private/authenticated pages..."
         rows="4"
         :disabled="isLoading"
-        class="w-full p-2 rounded-lg border border-border bg-input text-xs text-surface font-mono outline-none placeholder:text-muted focus:border-accent transition-colors resize-none disabled:opacity-50"
+        class="w-full p-2.5 rounded-lg border border-border bg-input text-xs text-surface font-mono outline-none placeholder:text-muted focus:border-accent transition-colors resize-none disabled:opacity-50"
       />
       <button
         :disabled="!rawJson.trim() || isLoading"
-        class="flex items-center justify-center py-1.5 rounded-lg bg-accent text-white font-medium text-xs cursor-pointer transition-all hover:bg-accent/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed gap-1.5"
+        class="flex items-center justify-center py-2 rounded-lg bg-accent text-white font-semibold text-xs cursor-pointer transition-all hover:bg-accent/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed gap-1.5 shadow-sm"
         @click="() => importJson()"
       >
         <icon-lucide-file-json class="size-3.5" />
@@ -183,17 +183,17 @@ function onUrlKeydown(e: KeyboardEvent) {
     <!-- Status Area -->
     <div
       v-if="status !== 'idle'"
-      class="rounded-lg px-2.5 py-2 text-xs transition-all"
+      class="rounded-xl p-3 text-xs transition-all border"
       :class="{
-        'bg-accent/10 text-accent': isLoading,
-        'bg-green-500/10 text-green-400': status === 'done',
-        'bg-red-500/10 text-red-400': status === 'error'
+        'border-accent/30 bg-accent/10 text-accent': isLoading,
+        'border-emerald-500/30 bg-emerald-500/10 text-emerald-400': status === 'done',
+        'border-red-500/30 bg-red-500/10 text-red-400': status === 'error'
       }"
     >
       <div class="flex items-center gap-2">
         <svg
           v-if="isLoading"
-          class="size-3 shrink-0 animate-spin"
+          class="size-3.5 shrink-0 animate-spin"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -201,15 +201,14 @@ function onUrlKeydown(e: KeyboardEvent) {
         >
           <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
         </svg>
-        <icon-lucide-check v-else-if="status === 'done'" class="size-3 shrink-0" />
-        <icon-lucide-alert-circle v-else-if="status === 'error'" class="size-3 shrink-0" />
-        <span class="leading-snug font-medium">{{ statusLabel }}</span>
+        <icon-lucide-check-circle v-else-if="status === 'done'" class="size-4 shrink-0 text-emerald-400" />
+        <icon-lucide-alert-circle v-else-if="status === 'error'" class="size-4 shrink-0 text-red-400" />
+        <span class="leading-snug font-semibold">{{ statusLabel }}</span>
       </div>
 
       <!-- Success details -->
-      <div v-if="status === 'done' && result" class="mt-1.5 text-[10px] text-muted leading-relaxed">
-        <span>{{ result.width }}×{{ result.height }}px</span>
-        <span class="mx-1 opacity-50">·</span>
+      <div v-if="status === 'done' && result" class="mt-1.5 text-[11px] text-surface/80 font-mono flex items-center gap-2">
+        <span class="px-1.5 py-0.5 rounded bg-surface/10 text-surface">{{ result.width }}×{{ result.height }}px</span>
         <span>{{ result.totalNodes }} layers created</span>
       </div>
     </div>
