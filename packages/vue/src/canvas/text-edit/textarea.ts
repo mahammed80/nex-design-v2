@@ -8,6 +8,7 @@ export function createHiddenTextArea() {
   textarea.style.cssText =
     'position:fixed;opacity:0;width:1px;height:1px;padding:0;border:0;top:50%;left:50%;overflow:hidden;resize:none;'
   textarea.autocomplete = 'off'
+  textarea.dir = 'auto'
   textarea.setAttribute('autocorrect', 'off')
   textarea.setAttribute('autocapitalize', 'none')
   textarea.spellcheck = false
