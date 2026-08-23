@@ -4,11 +4,14 @@ import { createApp } from 'vue'
 import './app.css'
 import { preloadFonts } from '@/app/editor/fonts'
 import { IS_TAURI } from '@/constants'
+import { migrateLegacyLocalProfile } from '@/app/dashboard/accounts/session'
 
 import App from './App.vue'
 import router from './router'
 import { vReveal } from '@/directives/reveal'
 
+// Run once at startup — not on every navigation guard.
+migrateLegacyLocalProfile()
 preloadFonts()
 const head = createHead()
 const app = createApp(App)
@@ -20,3 +23,4 @@ if (!IS_TAURI) {
     registerSW({ immediate: true })
   })
 }
+

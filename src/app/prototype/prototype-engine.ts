@@ -89,67 +89,87 @@ export class TriggerManager {
 
   constructor(private engine: PrototypeEngine) {}
 
+  private handleHoverStart(nodeId: string, node: SceneNode) {
+    const reactions = this.findReactions(node, 'ON_HOVER')
+    for (const r of reactions) {
+      const changedInstances = this.engine.actionManager.executeReaction(node.id, r)
+      if (changedInstances && changedInstances.size > 0) {
+        this.hoverActiveInstances.set(nodeId, changedInstances)
+      }
+    }
+  }
+
+  private handleHoverEnd(nodeId: string) {
+    const instances = this.hoverActiveInstances.get(nodeId)
+    if (instances) {
+      for (const instId of instances) {
+        this.engine.stateManager.revertInstanceVariant(instId)
+      }
+      this.hoverActiveInstances.delete(nodeId)
+    }
+  }
+
+  private handlePressStart(nodeId: string, node: SceneNode) {
+    const reactions = this.findReactions(node, 'ON_PRESS')
+    for (const r of reactions) {
+      const changedInstances = this.engine.actionManager.executeReaction(node.id, r)
+      if (changedInstances && changedInstances.size > 0) {
+        this.pressActiveInstances.set(nodeId, changedInstances)
+      }
+    }
+  }
+
+  private handlePressEnd(nodeId: string) {
+    const instances = this.pressActiveInstances.get(nodeId)
+    if (instances) {
+      for (const instId of instances) {
+        this.engine.stateManager.revertInstanceVariant(instId)
+      }
+      this.pressActiveInstances.delete(nodeId)
+    }
+  }
+
+  private fireReactions(node: SceneNode, triggerType: string) {
+    const reactions = this.findReactions(node, triggerType)
+    for (const r of reactions) {
+      this.engine.actionManager.executeReaction(node.id, r)
+    }
+  }
+
+  /** Trigger types that carry a drag direction field. */
+  private static readonly DRAG_TRIGGERS = new Set(['ON_DRAG'])
+
   handleEvent(nodeId: string, eventType: string) {
     const node = this.engine.stateManager.getNode(nodeId)
     if (!node) return
 
     if (eventType === 'hover-start') {
-      const reactions = this.findReactions(node, 'ON_HOVER')
-      for (const r of reactions) {
-        const changedInstances = this.engine.actionManager.executeReaction(node.id, r)
-        if (changedInstances && changedInstances.size > 0) {
-          this.hoverActiveInstances.set(nodeId, changedInstances)
-        }
-      }
+      this.handleHoverStart(nodeId, node)
     } else if (eventType === 'hover-end') {
-      const instances = this.hoverActiveInstances.get(nodeId)
-      if (instances) {
-        for (const instId of instances) {
-          this.engine.stateManager.revertInstanceVariant(instId)
-        }
-        this.hoverActiveInstances.delete(nodeId)
-      }
+      this.handleHoverEnd(nodeId)
     } else if (eventType === 'press-start') {
-      const reactions = this.findReactions(node, 'ON_PRESS')
-      for (const r of reactions) {
-        const changedInstances = this.engine.actionManager.executeReaction(node.id, r)
-        if (changedInstances && changedInstances.size > 0) {
-          this.pressActiveInstances.set(nodeId, changedInstances)
-        }
-      }
+      this.handlePressStart(nodeId, node)
     } else if (eventType === 'press-end') {
-      const instances = this.pressActiveInstances.get(nodeId)
-      if (instances) {
-        for (const instId of instances) {
-          this.engine.stateManager.revertInstanceVariant(instId)
-        }
-        this.pressActiveInstances.delete(nodeId)
-      }
+      this.handlePressEnd(nodeId)
     } else if (eventType === 'click') {
-      const reactions = this.findReactions(node, 'ON_CLICK')
-      for (const r of reactions) {
-        this.engine.actionManager.executeReaction(node.id, r)
-      }
+      this.fireReactions(node, 'ON_CLICK')
     } else if (eventType === 'mouse-enter') {
-      const reactions = this.findReactions(node, 'MOUSE_ENTER')
-      for (const r of reactions) {
-        this.engine.actionManager.executeReaction(node.id, r)
-      }
+      this.fireReactions(node, 'MOUSE_ENTER')
     } else if (eventType === 'mouse-leave') {
-      const reactions = this.findReactions(node, 'MOUSE_LEAVE')
-      for (const r of reactions) {
-        this.engine.actionManager.executeReaction(node.id, r)
-      }
+      this.fireReactions(node, 'MOUSE_LEAVE')
     } else if (eventType.startsWith('drag-')) {
       const direction = eventType.split('-')[1]
+      // Triggers may carry a `direction` field not present in the base type.
+      interface DragTrigger { direction?: string }
       const reactions = this.findReactions(node, 'ON_DRAG').filter(
-        (r) => ((r.trigger as any).direction || 'left').toLowerCase() === direction.toLowerCase()
+        (r) => ((r.trigger as DragTrigger).direction ?? 'left').toLowerCase() === direction.toLowerCase()
       )
       for (const r of reactions) {
         this.engine.actionManager.executeReaction(node.id, r)
       }
     }
   }
+
 
   private findReactions(node: SceneNode, type: string): Reaction[] {
     let current: SceneNode | undefined = node
@@ -180,7 +200,9 @@ export class ActionManager {
         if (action.destinationId) {
           const transType = action.transition?.type ?? 'INSTANT'
           const duration = action.transition?.duration ?? 300
-          const direction = action.transition?.direction as any
+          // `direction` is a runtime extension not in the base transition type.
+          interface TransitionWithDirection { direction?: string }
+          const direction = (action.transition as TransitionWithDirection | undefined)?.direction
           this.engine.navigationManager.navigate(action.destinationId, transType, direction, duration)
           this.engine.presentation.state.transitionEasing = action.transition?.easing ?? 'EASE_IN_AND_OUT'
         }
@@ -249,7 +271,7 @@ export class ActionManager {
     const modeId =
       this.engine.editor.graph.activeMode.get(variable.collectionId) ?? collection?.defaultModeId
     if (!modeId) return
-    variable.valuesByMode[modeId] = structuredClone(action.variableValue) as any
+    variable.valuesByMode[modeId] = structuredClone(action.variableValue) as typeof variable.valuesByMode[string]
     this.engine.editor.requestRender()
   }
 }
@@ -269,7 +291,8 @@ export class ConnectionManager {
 }
 
 export class AnimationManager {
-  constructor(_engine: PrototypeEngine) {}
+  // No constructor needed — AnimationManager is stateless and engine-independent.
+
 
   getEasingCSS(easing: string): string {
     switch (easing) {

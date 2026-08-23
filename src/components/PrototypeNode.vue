@@ -53,15 +53,12 @@ function applyTextStyle(n: SceneNode, s: Record<string, string>) {
   s.alignItems =
     n.textAlignVertical === 'CENTER'
       ? 'center'
-      : n.textAlignVertical === 'BOTTOM'
-        ? 'flex-end'
-        : 'flex-start'
+      : (n.textAlignVertical === 'BOTTOM' ? 'flex-end' : 'flex-start')
   s.justifyContent =
     n.textAlignHorizontal === 'CENTER'
       ? 'center'
-      : n.textAlignHorizontal === 'RIGHT'
-        ? 'flex-end'
-        : 'flex-start'
+      : (n.textAlignHorizontal === 'RIGHT' ? 'flex-end' : 'flex-start')
+
   s.whiteSpace = 'pre-wrap'
   s.wordBreak = 'break-word'
 

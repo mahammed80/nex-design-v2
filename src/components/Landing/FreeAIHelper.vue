@@ -62,8 +62,8 @@ const currentLogs = ref<string[]>([])
 const layoutState = ref<string>('glass')
 const activeLogIndex = ref(-1)
 
-let typingTimeout: any = null
-let loggingInterval: any = null
+let typingTimeout: ReturnType<typeof setTimeout> | null = null
+let loggingInterval: ReturnType<typeof setInterval> | null = null
 
 function selectPrompt(index: number) {
   if (isThinking.value) return

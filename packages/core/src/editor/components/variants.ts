@@ -284,7 +284,7 @@ export function createVariantActions(ctx: EditorContext) {
     const runSwitch = (_fromId: string, toId: string) => {
       const inst = ctx.graph.getNode(instanceId)
       if (inst) {
-        for (const cid of [...inst.childIds]) {
+        for (const cid of inst.childIds) {
           ctx.graph.deleteNode(cid)
         }
       }
@@ -681,7 +681,7 @@ export function createVariantActions(ctx: EditorContext) {
     ctx.undo.push({
       label: 'Insert instance',
       forward: () => {
-        ctx.graph.createInstance(defaultVariant!.id, pageId, { ...instance })
+        if (defaultVariant) ctx.graph.createInstance(defaultVariant.id, pageId, { ...instance })
         ctx.setSelectedIds(new Set([instanceId]))
       },
       inverse: () => {

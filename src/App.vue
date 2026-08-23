@@ -12,7 +12,7 @@ import { useEditorStore } from '@/app/editor/active-store'
 import { toast } from '@/app/shell/ui'
 import { useAppTheme } from '@/app/shell/theme'
 import { scheduleStartupUpdateCheck } from '@/app/shell/updater'
-import { useEventListener } from '@vueuse/core'
+import { useEventListener, useDebounceFn } from '@vueuse/core'
 import { validateLinkedAccount } from '@/app/dashboard/accounts/api'
 import { flushProjectSyncOutbox } from '@/app/dashboard/sync/client'
 
@@ -31,12 +31,16 @@ onMounted(() => {
     .catch((error: unknown) => console.warn('Account startup validation failed', error))
 })
 
-useEventListener(window, 'online', () => {
+// Debounced to 500 ms so a brief network blip doesn't fire duplicate validations.
+const handleOnline = useDebounceFn(() => {
   void validateLinkedAccount()
     .then(() => flushProjectSyncOutbox())
     .catch((error: unknown) => console.warn('Account reconnection validation failed', error))
-})
+}, 500)
+
+useEventListener(window, 'online', handleOnline)
 </script>
+
 
 <template>
   <TooltipProvider :delay-duration="400">

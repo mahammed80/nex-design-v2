@@ -1,4 +1,6 @@
-use tauri::{Emitter, Manager};
+#[cfg(debug_assertions)]
+use tauri::Manager;
+use tauri::Emitter;
 
 pub fn handle_menu_event<R: tauri::Runtime>(app: &tauri::AppHandle<R>, event_id: &str) {
     #[cfg(debug_assertions)]

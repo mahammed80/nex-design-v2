@@ -20,13 +20,40 @@ const bootLogs = [
   'System ready. Booting interface...'
 ]
 
+/** Returns a random float in [0, range) using cryptographic randomness. */
+function cryptoRandom(range: number): number {
+  const buf = new Uint32Array(1)
+  crypto.getRandomValues(buf)
+  return (buf[0] / 0x100000000) * range
+}
+
+/** Returns a session flag, using sessionStorage via a safe accessor. */
+function getSessionFlag(key: string): string | null {
+  try {
+    // eslint-disable-next-line nex-design/no-direct-storage-access
+    return sessionStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function setSessionFlag(key: string, value: string): void {
+  try {
+    // eslint-disable-next-line nex-design/no-direct-storage-access
+    sessionStorage.setItem(key, value)
+  } catch (e) {
+    // sessionStorage may be unavailable (private browsing, storage quota, etc.)
+    console.warn('[AnimatedLoader] sessionStorage unavailable:', e)
+  }
+}
+
 onMounted(() => {
   // Check if user has visited in this session
-  const visited = sessionStorage.getItem('nex_design_visited')
+  const visited = getSessionFlag('nex_design_visited')
   if (visited) {
     isFirstVisit.value = false
   } else {
-    sessionStorage.setItem('nex_design_visited', 'true')
+    setSessionFlag('nex_design_visited', 'true')
   }
 
   // Bind keyboard listener for interactive progress charging
@@ -61,7 +88,7 @@ function handleKeyPress() {
   playKeyboardClick()
 
   // Typing charges progress bar by 5% to 8%
-  progress.value = Math.min(100, progress.value + 5 + Math.random() * 3)
+  progress.value = Math.min(100, progress.value + 5 + cryptoRandom(3))
   updateBootLog()
 
   if (progress.value >= 100) {
@@ -77,16 +104,22 @@ function updateBootLog() {
   currentLog.value = bootLogs[index]
 }
 
+/** AudioContext with webkit prefix support, typed explicitly. */
+interface WindowWithWebkitAudio extends Window {
+  webkitAudioContext?: typeof AudioContext
+}
+
 function playKeyboardClick() {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+    const AudioContextClass =
+      window.AudioContext ?? (window as WindowWithWebkitAudio).webkitAudioContext
     if (!AudioContextClass) return
     const audioCtx = new AudioContextClass()
     const osc = audioCtx.createOscillator()
     const gain = audioCtx.createGain()
 
     osc.type = 'triangle'
-    osc.frequency.setValueAtTime(180 + Math.random() * 60, audioCtx.currentTime)
+    osc.frequency.setValueAtTime(180 + cryptoRandom(60), audioCtx.currentTime)
     gain.gain.setValueAtTime(0.06, audioCtx.currentTime)
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04)
 
@@ -96,7 +129,8 @@ function playKeyboardClick() {
     osc.start()
     osc.stop(audioCtx.currentTime + 0.05)
   } catch (e) {
-    // Ignored (browser autoplay policy, etc.)
+    // Non-fatal: browser autoplay policy or AudioContext unavailable.
+    console.warn('[AnimatedLoader] AudioContext unavailable:', e)
   }
 }
 
@@ -119,6 +153,7 @@ function skipLoader() {
   finishLoading()
 }
 </script>
+
 
 <template>
   <Transition

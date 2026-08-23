@@ -212,7 +212,7 @@ function updateTrigger(idx: number, type: TriggerType) {
   })
 }
 
-function updateDragDirection(idx: number, direction: any) {
+function updateDragDirection(idx: number, direction: string) {
   if (!editor || !activeSelection.value) return
   const node = activeSelection.value.node
   const realIdx = activeSelection.value.indices[idx]
@@ -364,7 +364,8 @@ function removeInteraction(idx: number) {
   const realIdx = activeSelection.value.indices[idx]
 
   if (activeSelection.value.type === 'connection') {
-    editor.removeConnection(activeSelection.value.connectionId!)
+    const connId = activeSelection.value.connectionId
+    if (connId) editor.removeConnection(connId)
   } else {
     editor.removeReaction(node.id, realIdx)
   }

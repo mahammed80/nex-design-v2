@@ -1,14 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { resolveAccountAccess } from './app/dashboard/accounts/guard'
-import { getActiveProfileId, migrateLegacyLocalProfile } from './app/dashboard/accounts/session'
-import AccountLockedView from './views/AccountLockedView.vue'
-import DashboardView from './views/DashboardView.vue'
-import AdminDashboardView from './views/AdminDashboardView.vue'
-import EditorView from './views/EditorView.vue'
-import LandingView from './views/LandingView.vue'
-import LoginView from './views/LoginView.vue'
-import SetupView from './views/SetupView.vue'
+import { getActiveProfileId } from './app/dashboard/accounts/session'
+
+// All route components are loaded lazily so only the first-visited view's
+// code is parsed at startup — significantly improving initial load time.
+const AccountLockedView = () => import('./views/AccountLockedView.vue')
+const DashboardView = () => import('./views/DashboardView.vue')
+const AdminDashboardView = () => import('./views/AdminDashboardView.vue')
+const EditorView = () => import('./views/EditorView.vue')
+const LandingView = () => import('./views/LandingView.vue')
+const LoginView = () => import('./views/LoginView.vue')
+const SetupView = () => import('./views/SetupView.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -28,7 +31,7 @@ const router = createRouter({
 let isInitialLoad = true
 
 router.beforeEach(async (to) => {
-  migrateLegacyLocalProfile()
+  // migrateLegacyLocalProfile() is called once at app startup in main.ts — not here.
   const isPublicRoute =
     to.path === '/login' ||
     to.path === '/landing' ||
@@ -52,3 +55,4 @@ router.beforeEach(async (to) => {
 })
 
 export default router
+

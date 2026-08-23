@@ -18,7 +18,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["devtools"] }
+# devtools feature removed — the toggle in menu_events.rs is already
+# #[cfg(debug_assertions)]-gated, so release builds stay lean.
+tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -31,4 +33,22 @@ font-kit = "0.14.3"
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs", branch = "dev" }
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+
+# ── Release profile: maximum Windows performance ─────────────────────────────
+# lto=true        — whole-program link-time optimisation across all crates
+# codegen-units=1 — single LLVM codegen unit: more inlining, smaller binary
+# panic=abort     — removes unwinding machinery (~50–100 KB saved on Windows)
+# strip=symbols   — strips debug symbols from the .exe
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+
+# ── Dev profile: faster incremental builds ────────────────────────────────────
+# opt-level=1 gives minimal optimisations without the full compile cost of
+# level 3, making repeated cargo build cycles noticeably faster.
+[profile.dev]
+opt-level = 1
 

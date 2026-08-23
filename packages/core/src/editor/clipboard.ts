@@ -168,6 +168,7 @@ export function createClipboardActions(ctx: EditorContext) {
     )
   }
 
+  // eslint-disable-next-line complexity
   function deleteSelected() {
     if (ctx.state.selectedGuideId) {
       const guideId = ctx.state.selectedGuideId

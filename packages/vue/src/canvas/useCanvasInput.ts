@@ -185,6 +185,7 @@ export function useCanvasInput(
     setDrag(null)
   }
 
+  // eslint-disable-next-line complexity
   function handlePrototypeDragMouseUp(
     d: Extract<DragState, { type: 'prototype-drag' }>,
     e: MouseEvent

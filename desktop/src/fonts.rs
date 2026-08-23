@@ -8,7 +8,39 @@ pub struct FontFamily {
     styles: Vec<String>,
 }
 
+/// Cached system font list — populated once on first call, reused thereafter.
 static FONT_CACHE: OnceLock<Vec<FontFamily>> = OnceLock::new();
+
+/// Maps a font-kit weight value to a human-readable weight name.
+fn weight_name(weight: f32) -> &'static str {
+    match weight as i32 {
+        0..=150 => "Thin",
+        151..=250 => "ExtraLight",
+        251..=350 => "Light",
+        351..=450 => "Regular",
+        451..=550 => "Medium",
+        551..=650 => "SemiBold",
+        651..=750 => "Bold",
+        751..=850 => "ExtraBold",
+        _ => "Black",
+    }
+}
+
+/// Maps a weight name string back to a font-kit Weight constant.
+fn weight_from_name(name: &str) -> font_kit::properties::Weight {
+    match name {
+        "Thin" => font_kit::properties::Weight::THIN,
+        "ExtraLight" => font_kit::properties::Weight::EXTRA_LIGHT,
+        "Light" => font_kit::properties::Weight::LIGHT,
+        "Medium" => font_kit::properties::Weight::MEDIUM,
+        "SemiBold" => font_kit::properties::Weight::SEMIBOLD,
+        "Bold" => font_kit::properties::Weight::BOLD,
+        "ExtraBold" => font_kit::properties::Weight::EXTRA_BOLD,
+        "Black" => font_kit::properties::Weight::BLACK,
+        // "Regular" and unknown values → Normal
+        _ => font_kit::properties::Weight::NORMAL,
+    }
+}
 
 fn enumerate_system_fonts() -> Vec<FontFamily> {
     let source = SystemSource::new();
@@ -23,18 +55,7 @@ fn enumerate_system_fonts() -> Vec<FontFamily> {
                     .filter_map(|f| {
                         f.load().ok().map(|font| {
                             let props = font.properties();
-                            let mut style = match props.weight.0 as i32 {
-                                0..=150 => "Thin",
-                                151..=250 => "ExtraLight",
-                                251..=350 => "Light",
-                                351..=450 => "Regular",
-                                451..=550 => "Medium",
-                                551..=650 => "SemiBold",
-                                651..=750 => "Bold",
-                                751..=850 => "ExtraBold",
-                                _ => "Black",
-                            }
-                            .to_string();
+                            let mut style = weight_name(props.weight.0).to_string();
                             if props.style == font_kit::properties::Style::Italic {
                                 style.push_str(" Italic");
                             }
@@ -78,18 +99,7 @@ fn load_system_font_blocking(family: String, style: String) -> Result<Vec<u8>, S
 
     let is_italic = style.contains("Italic");
     let weight_str = style.replace(" Italic", "");
-    let weight = match weight_str.as_str() {
-        "Thin" => font_kit::properties::Weight::THIN,
-        "ExtraLight" => font_kit::properties::Weight::EXTRA_LIGHT,
-        "Light" => font_kit::properties::Weight::LIGHT,
-        "Regular" | "" => font_kit::properties::Weight::NORMAL,
-        "Medium" => font_kit::properties::Weight::MEDIUM,
-        "SemiBold" => font_kit::properties::Weight::SEMIBOLD,
-        "Bold" => font_kit::properties::Weight::BOLD,
-        "ExtraBold" => font_kit::properties::Weight::EXTRA_BOLD,
-        "Black" => font_kit::properties::Weight::BLACK,
-        _ => font_kit::properties::Weight::NORMAL,
-    };
+    let weight = weight_from_name(weight_str.as_str());
     let style_prop = if is_italic {
         font_kit::properties::Style::Italic
     } else {
@@ -108,6 +118,7 @@ fn load_system_font_blocking(family: String, style: String) -> Result<Vec<u8>, S
         }
     }
 
+    // Fallback: return the first loadable font in the family.
     if let Some(handle) = family_handle.fonts().first() {
         if let Ok(font) = handle.load() {
             if let Some(data) = font.copy_font_data() {
@@ -125,3 +136,5 @@ pub async fn load_system_font(family: String, style: String) -> Result<Vec<u8>, 
         .await
         .map_err(|e| format!("Font load task failed: {e}"))?
 }
+
+

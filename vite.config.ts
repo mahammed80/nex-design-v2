@@ -41,8 +41,38 @@ export default defineConfig(async ({ command, mode }) => {
     ],
     clearScreen: false,
     build: {
-      chunkSizeWarningLimit: 2500
+      // WebView2 (Windows) is Chromium-based and supports ESNext natively.
+      // Using 'esnext' skips unnecessary transpilation and produces smaller output.
+      target: 'esnext',
+      // esbuild is faster than terser and produces equivalent output for modern targets.
+      minify: 'esbuild',
+      rollupOptions: {
+        output: {
+          // Split heavy vendor deps into separate cacheable chunks.
+          // The Tauri WebView2 process can parse these in parallel on startup.
+          manualChunks(id: string) {
+            if (id.includes('@ai-sdk/') || id.includes('/node_modules/ai/')) {
+              return 'vendor-ai'
+            }
+            if (
+              id.includes('/node_modules/yjs/') ||
+              id.includes('/node_modules/y-indexeddb/') ||
+              id.includes('/node_modules/y-protocols/') ||
+              id.includes('/node_modules/lib0/')
+            ) {
+              return 'vendor-yjs'
+            }
+            if (id.includes('/node_modules/reka-ui/')) {
+              return 'vendor-reka'
+            }
+            if (id.includes('@tauri-apps/')) {
+              return 'vendor-tauri'
+            }
+          }
+        }
+      }
     },
+
     server: createDevServerOptions(host)
   }
 })

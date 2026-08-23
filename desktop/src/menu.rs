@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use tauri::menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
+use tauri::menu::{MenuBuilder, MenuItemBuilder, Submenu, SubmenuBuilder};
 
 #[derive(Deserialize)]
 struct MenuGroup {

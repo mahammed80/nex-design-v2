@@ -8,11 +8,18 @@ use fig_container::build_fig_file;
 use fonts::{list_system_fonts, load_system_font};
 use menu::install_app_menu;
 use menu_events::handle_menu_event;
+#[cfg(target_os = "macos")]
 use window::show_main_window;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(debug_assertions)]
+    if let Err(e) = fix_path_env::fix() {
+        eprintln!("[startup] fix_path_env failed: {e}");
+    }
+    #[cfg(not(debug_assertions))]
     let _ = fix_path_env::fix();
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             build_fig_file,
@@ -31,16 +38,17 @@ pub fn run() {
         .setup(|app| Ok(install_app_menu(app)?))
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app, event| {
+        .run(|_app, _event| {
             #[cfg(target_os = "macos")]
             if let tauri::RunEvent::Reopen {
                 has_visible_windows,
                 ..
-            } = event
+            } = _event
             {
                 if !has_visible_windows {
-                    show_main_window(app);
+                    show_main_window(_app);
                 }
             }
         });
 }
+
