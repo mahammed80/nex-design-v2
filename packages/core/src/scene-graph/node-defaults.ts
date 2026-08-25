@@ -108,6 +108,7 @@ export function createDefaultNode(
     pointCount: 5,
     starInnerRadius: 0.38,
     componentId: null,
+    componentLineageId: null,
     overrides: {},
     componentPropertyDefinitions: [],
     componentPropertyValues: {},

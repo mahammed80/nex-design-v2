@@ -1,9 +1,24 @@
+import { GUEST_TRIAL_DURATION_MS, IS_BROWSER } from '@/constants'
+
+import { getAccountStorage } from './storage'
+
+export type LocalProfileKind = 'local' | 'guest'
+
 export interface LocalProfile {
   id: string
   name: string
   createdAt: number
+  kind?: LocalProfileKind
+  trialExpiresAt?: number
   remoteAccountId?: string
   email?: string
+}
+
+export interface GuestTrialStatus {
+  active: boolean
+  expiresAt: number
+  remainingMs: number
+  remainingDays: number
 }
 
 const PROFILES_KEY = 'nex-design:profiles-v1'
@@ -44,6 +59,40 @@ export function createLocalProfile(name: string): LocalProfile {
   persistProfiles([...listLocalProfiles(), profile])
   setActiveProfile(profile.id)
   return profile
+}
+
+export function createGuestProfile(now = Date.now()): LocalProfile {
+  const existing = listLocalProfiles().find((profile) => profile.kind === 'guest')
+  if (existing) {
+    setActiveProfile(existing.id)
+    return existing
+  }
+
+  const profile: LocalProfile = {
+    id: crypto.randomUUID(),
+    name: 'Guest',
+    kind: 'guest',
+    createdAt: now,
+    trialExpiresAt: now + GUEST_TRIAL_DURATION_MS
+  }
+  persistProfiles([...listLocalProfiles(), profile])
+  setActiveProfile(profile.id)
+  return profile
+}
+
+export function getGuestTrialStatus(
+  profile: LocalProfile | null = getActiveProfile(),
+  now = Date.now()
+): GuestTrialStatus | null {
+  if (profile?.kind !== 'guest') return null
+  const expiresAt = profile.trialExpiresAt ?? profile.createdAt + GUEST_TRIAL_DURATION_MS
+  const remainingMs = Math.max(0, expiresAt - now)
+  return {
+    active: remainingMs > 0,
+    expiresAt,
+    remainingMs,
+    remainingDays: Math.ceil(remainingMs / (24 * 60 * 60 * 1000))
+  }
 }
 
 export function getActiveProfileId(): string | null {
@@ -91,6 +140,3 @@ export function migrateLegacyLocalProfile(): LocalProfile | null {
   }
   return createLocalProfile(legacyName)
 }
-import { IS_BROWSER } from '@/constants'
-
-import { getAccountStorage } from './storage'

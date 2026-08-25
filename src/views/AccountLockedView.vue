@@ -11,6 +11,8 @@ const router = useRouter()
 const checking = ref(false)
 const reason = computed(() => String(route.query.reason ?? 'deactivated'))
 const message = computed(() => {
+  if (reason.value === 'trial-expired')
+    return 'Your seven-day guest trial has ended. Link or create an account to continue editing. Your local projects remain safe.'
   if (reason.value === 'lease-expired')
     return 'Connect to the internet so this device can validate your account.'
   if (reason.value === 'suspended')

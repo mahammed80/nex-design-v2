@@ -5,8 +5,14 @@ import {
   type AccountAccessDecision
 } from './access'
 import { isAccountApiConfigured, validateLinkedAccount } from './api'
+import { getActiveProfile, getGuestTrialStatus } from './session'
 
 export async function resolveAccountAccess(): Promise<AccountAccessDecision> {
+  const guestTrial = getGuestTrialStatus(getActiveProfile())
+  if (guestTrial && !guestTrial.active) {
+    return { mode: 'read-only', reason: 'trial-expired' }
+  }
+
   let session = readLinkedAccountSession()
   let validatedOnline = false
   if (session && navigator.onLine) {

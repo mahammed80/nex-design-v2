@@ -397,6 +397,7 @@ export interface SceneNode {
   starInnerRadius: number
 
   componentId: string | null
+  componentLineageId: string | null
   overrides: Record<string, unknown>
   componentPropertyDefinitions: ComponentPropertyDefinition[]
   componentPropertyValues: Record<string, string>
@@ -430,7 +431,6 @@ export type TriggerType =
   | 'MOUSE_UP'
   | 'AFTER_DELAY'
   | 'ON_DRAG'
-
 
 export type ActionType =
   | 'BACK'

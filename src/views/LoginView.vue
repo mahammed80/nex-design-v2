@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import {
+  createGuestProfile,
   createLocalProfile,
   listLocalProfiles,
   setActiveProfile
@@ -26,10 +27,21 @@ function createProfile() {
     error.value = cause instanceof Error ? cause.message : 'Could not create the profile'
   }
 }
+
+function continueAsGuest() {
+  try {
+    const profile = createGuestProfile()
+    openProfile(profile.id)
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : 'Could not start the guest trial'
+  }
+}
 </script>
 
 <template>
-  <main class="flex min-h-screen flex-col items-center justify-center bg-[#09090b] p-6 text-[#fafafa]">
+  <main
+    class="flex min-h-screen flex-col items-center justify-center bg-[#09090b] p-6 text-[#fafafa]"
+  >
     <section
       class="w-full max-w-md rounded-2xl border border-[#27272a] bg-[#111113] p-7 shadow-2xl space-y-5"
     >
@@ -89,7 +101,30 @@ function createProfile() {
         <p v-if="error" class="mt-2 text-xs text-rose-400">{{ error }}</p>
       </form>
 
-      <div class="border-t border-white/5 pt-4 flex items-center justify-between text-xs text-[#71717a]">
+      <div class="flex items-center gap-3">
+        <div class="h-px flex-1 bg-white/10" />
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">or</span>
+        <div class="h-px flex-1 bg-white/10" />
+      </div>
+
+      <button
+        type="button"
+        data-test-id="start-guest-trial"
+        class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/20"
+        @click="continueAsGuest"
+      >
+        <icon-lucide-clock-3 class="size-4" />
+        Continue as guest — 7 days free
+      </button>
+
+      <p class="text-center text-[10px] leading-4 text-[#71717a]">
+        Guest projects stay on this device. Link an account before the trial expires to keep
+        editing.
+      </p>
+
+      <div
+        class="border-t border-white/5 pt-4 flex items-center justify-between text-xs text-[#71717a]"
+      >
         <span class="flex items-center gap-1.5">
           <icon-lucide-hard-drive class="size-3.5 text-rose-400" />
           Local-only workspace profile

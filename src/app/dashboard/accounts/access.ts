@@ -25,7 +25,14 @@ export interface LinkedAccountSession {
 
 export interface AccountAccessDecision {
   mode: AccountAccessMode
-  reason: 'active' | 'offline' | 'lease-expired' | 'suspended' | 'deactivated' | 'deleted'
+  reason:
+    | 'active'
+    | 'offline'
+    | 'trial-expired'
+    | 'lease-expired'
+    | 'suspended'
+    | 'deactivated'
+    | 'deleted'
 }
 
 const SESSION_KEY = 'nex-design:linked-account-session-v1'

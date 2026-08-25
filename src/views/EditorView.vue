@@ -30,6 +30,7 @@ import PropertiesPanel from '@/components/PropertiesPanel.vue'
 import SafariBanner from '@/components/SafariBanner.vue'
 import TabBar from '@/components/TabBar.vue'
 import Toolbar from '@/components/Toolbar/Toolbar.vue'
+import ToolTutorial from '@/components/ToolTutorial/ToolTutorial.vue'
 
 const route = useRoute()
 const params = useUrlSearchParams('history')
@@ -270,5 +271,6 @@ onUnmounted(() => {
       :key="`creative-notes-${activeTab?.id}`"
       :show-launcher="isMobile || !store.state.showUI"
     />
+    <ToolTutorial v-if="showChrome && store.state.showUI" />
   </div>
 </template>

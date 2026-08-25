@@ -64,6 +64,7 @@ import type { Color } from '@nex-design/core/types'
 export const TRYSTERO_APP_ID = 'nexdesign'
 export const ROOM_ID_LENGTH = 8
 export const ROOM_ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789'
+export const GUEST_TRIAL_DURATION_MS = 7 * 24 * 60 * 60 * 1000
 
 export const PEER_COLORS: Color[] = [
   { r: 0.96, g: 0.26, b: 0.21, a: 1 },

@@ -266,7 +266,7 @@ export function createVariantActions(ctx: EditorContext) {
         const childValues = child.componentPropertyValues
         for (const [k, v] of Object.entries(currentValues)) {
           if (childValues[k] === v) {
-            score += (k === propertyName) ? 10 : 1
+            score += k === propertyName ? 10 : 1
           }
         }
         if (score > bestScore) {
@@ -282,14 +282,7 @@ export function createVariantActions(ctx: EditorContext) {
     const prevComponentId = instance.componentId
 
     const runSwitch = (_fromId: string, toId: string) => {
-      const inst = ctx.graph.getNode(instanceId)
-      if (inst) {
-        for (const cid of inst.childIds) {
-          ctx.graph.deleteNode(cid)
-        }
-      }
-      ctx.graph.updateNode(instanceId, { componentId: toId })
-      ctx.graph.populateInstanceChildren(instanceId, toId)
+      ctx.graph.switchInstanceComponent(instanceId, toId)
     }
 
     runSwitch(prevComponentId, target.id)
@@ -338,7 +331,8 @@ export function createVariantActions(ctx: EditorContext) {
     const refChild = refChildId ? ctx.graph.getNode(refChildId) : undefined
     const childCount = componentSet.childIds.length + 1
 
-    const propValues = customValues || generateVariantProps(componentSet.componentPropertyDefinitions, childCount)
+    const propValues =
+      customValues || generateVariantProps(componentSet.componentPropertyDefinitions, childCount)
     const name = buildVariantName(propValues) || `Variant ${childCount}`
 
     let createdId: string | undefined
@@ -353,7 +347,12 @@ export function createVariantActions(ctx: EditorContext) {
         fills: refChild?.fills
           ? copyFills(refChild.fills)
           : [
-              { type: 'SOLID', color: { r: 0.95, g: 0.95, b: 0.98, a: 1 }, opacity: 1, visible: true }
+              {
+                type: 'SOLID',
+                color: { r: 0.95, g: 0.95, b: 0.98, a: 1 },
+                opacity: 1,
+                visible: true
+              }
             ],
         strokes: refChild?.strokes ? copyStrokes(refChild.strokes) : [],
         effects: refChild?.effects ? copyEffects(refChild.effects) : [],
@@ -367,7 +366,15 @@ export function createVariantActions(ctx: EditorContext) {
           for (const childId of srcNode.childIds) {
             const childNode = ctx.graph.getNode(childId)
             if (!childNode) continue
-            const { id: _, parentId: _p, childIds: _c, fills, strokes, effects, ...rest } = childNode
+            const {
+              id: _,
+              parentId: _p,
+              childIds: _c,
+              fills,
+              strokes,
+              effects,
+              ...rest
+            } = childNode
             const clonedChild = ctx.graph.createNode(childNode.type, parentId, {
               ...rest,
               fills: fills ? copyFills(fills) : [],
@@ -452,7 +459,7 @@ export function createVariantActions(ctx: EditorContext) {
       createdSetId = compSet.id
 
       ctx.graph.reparentNode(componentId, compSet.id)
-      
+
       ctx.graph.updateNode(componentId, {
         x: padding,
         y: padding,
@@ -593,11 +600,7 @@ export function createVariantActions(ctx: EditorContext) {
     ctx.requestRender()
   }
 
-  function deleteVariantValue(
-    componentSetId: string,
-    propertyName: string,
-    valueToDelete: string
-  ) {
+  function deleteVariantValue(componentSetId: string, propertyName: string, valueToDelete: string) {
     const compSet = ctx.graph.getNode(componentSetId)
     if (compSet?.type !== 'COMPONENT_SET') return
 

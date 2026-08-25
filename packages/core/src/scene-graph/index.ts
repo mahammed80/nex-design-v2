@@ -566,6 +566,10 @@ export class SceneGraph {
     Instances.populateInstanceChildren(this, instanceId, componentId)
   }
 
+  switchInstanceComponent(instanceId: string, componentId: string): void {
+    Instances.switchInstanceComponent(this, instanceId, componentId)
+  }
+
   syncInstances(componentId: string): void {
     Instances.syncInstances(this, componentId)
   }

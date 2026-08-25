@@ -40,6 +40,44 @@ const INSTANCE_SYNC_PROPS: (keyof SceneNode)[] = [
   'borderLeftWeight'
 ]
 
+const INSTANCE_CHILD_SYNC_PROPS = [
+  ...INSTANCE_SYNC_PROPS,
+  'name',
+  'x',
+  'y',
+  'text',
+  'fontSize',
+  'fontWeight',
+  'fontFamily',
+  'textDirection',
+  'visible'
+] satisfies (keyof SceneNode)[]
+
+function sourceLineage(node: SceneNode): string {
+  return node.componentLineageId ?? node.id
+}
+
+function ensureSourceLineage(graph: SceneGraph, sourceId: string): void {
+  const source = graph.nodes.get(sourceId)
+  if (!source) return
+  if (!source.componentLineageId) source.componentLineageId = source.id
+  for (const childId of source.childIds) ensureSourceLineage(graph, childId)
+}
+
+export function instanceOverrideKey(lineageId: string, property: keyof SceneNode): string {
+  return `${lineageId}:${property}`
+}
+
+function hasOverride(
+  overrides: Record<string, unknown>,
+  instanceNode: SceneNode,
+  property: keyof SceneNode
+): boolean {
+  const lineageId = instanceNode.componentLineageId ?? instanceNode.componentId
+  if (lineageId && instanceOverrideKey(lineageId, property) in overrides) return true
+  return `${instanceNode.id}:${property}` in overrides
+}
+
 function copyProp(
   target: Partial<SceneNode> | SceneNode,
   source: SceneNode,
@@ -74,7 +112,8 @@ function cloneChildrenWithMapping(
     const { id: _, parentId: _p, childIds: _c, ...rest } = src
     const clone = graph.createNode(src.type, destParentId, {
       ...rest,
-      componentId: childId
+      componentId: childId,
+      componentLineageId: sourceLineage(src)
     })
 
     if (src.childIds.length > 0) {
@@ -106,7 +145,8 @@ function syncChildren(
       const { id: _, parentId: _p, childIds: _c, ...rest } = src
       const clone = graph.createNode(src.type, instParentId, {
         ...rest,
-        componentId: compChildId
+        componentId: compChildId,
+        componentLineageId: sourceLineage(src)
       })
       if (src.childIds.length > 0) {
         cloneChildrenWithMapping(graph, compChildId, clone.id)
@@ -120,22 +160,10 @@ function syncChildren(
     const instChild = instChildMap.get(compChildId)
     if (!compChild || !instChild) continue
 
-    for (const key of INSTANCE_SYNC_PROPS) {
-      const overrideKey = `${instChild.id}:${key}`
-      if (overrideKey in overrides) continue
-      copyProp(instChild, compChild, key)
-    }
-
-    for (const key of [
-      'name',
-      'text',
-      'fontSize',
-      'fontWeight',
-      'fontFamily',
-      'textDirection'
-    ] as const) {
-      const overrideKey = `${instChild.id}:${key}`
-      if (overrideKey in overrides) continue
+    instChild.componentId = compChild.id
+    instChild.componentLineageId = sourceLineage(compChild)
+    for (const key of INSTANCE_CHILD_SYNC_PROPS) {
+      if (hasOverride(overrides, instChild, key)) continue
       copyProp(instChild, compChild, key)
     }
 
@@ -162,8 +190,13 @@ export function createInstance(
 ): SceneNode | null {
   const component = graph.nodes.get(componentId)
   if (component?.type !== 'COMPONENT') return null
+  ensureSourceLineage(graph, componentId)
 
-  const props: Partial<SceneNode> = { name: component.name, componentId }
+  const props: Partial<SceneNode> = {
+    name: component.name,
+    componentId,
+    componentLineageId: sourceLineage(component)
+  }
   for (const key of INSTANCE_SYNC_PROPS) {
     copyProp(props, component, key)
   }
@@ -183,7 +216,80 @@ export function populateInstanceChildren(
   const instance = graph.nodes.get(instanceId)
   const component = graph.nodes.get(componentId)
   if (!instance || !component || instance.type !== 'INSTANCE') return
+  ensureSourceLineage(graph, componentId)
   cloneChildrenWithMapping(graph, componentId, instanceId)
+}
+
+function reconcileChildren(
+  graph: SceneGraph,
+  sourceParentId: string,
+  instanceParentId: string,
+  overrides: Record<string, unknown>
+): void {
+  const sourceParent = graph.nodes.get(sourceParentId)
+  const instanceParent = graph.nodes.get(instanceParentId)
+  if (!sourceParent || !instanceParent) return
+
+  const existingByLineage = new Map<string, SceneNode>()
+  for (const childId of instanceParent.childIds) {
+    const child = graph.nodes.get(childId)
+    const lineageId = child?.componentLineageId ?? child?.componentId
+    if (child && lineageId) existingByLineage.set(lineageId, child)
+  }
+
+  const retainedIds: string[] = []
+  for (const sourceChildId of sourceParent.childIds) {
+    const sourceChild = graph.nodes.get(sourceChildId)
+    if (!sourceChild) continue
+    const lineageId = sourceLineage(sourceChild)
+    let instanceChild = existingByLineage.get(lineageId)
+
+    if (!instanceChild) {
+      const { id: _, parentId: _parent, childIds: _children, ...rest } = sourceChild
+      instanceChild = graph.createNode(sourceChild.type, instanceParentId, {
+        ...rest,
+        componentId: sourceChild.id,
+        componentLineageId: lineageId,
+        childIds: []
+      })
+    } else {
+      instanceChild.componentId = sourceChild.id
+      instanceChild.componentLineageId = lineageId
+      for (const key of INSTANCE_CHILD_SYNC_PROPS) {
+        if (hasOverride(overrides, instanceChild, key)) continue
+        copyProp(instanceChild, sourceChild, key)
+      }
+    }
+
+    retainedIds.push(instanceChild.id)
+    reconcileChildren(graph, sourceChild.id, instanceChild.id, overrides)
+  }
+
+  for (const childId of instanceParent.childIds) {
+    if (!retainedIds.includes(childId)) graph.deleteNode(childId)
+  }
+  instanceParent.childIds = retainedIds
+}
+
+export function switchInstanceComponent(
+  graph: SceneGraph,
+  instanceId: string,
+  componentId: string
+): void {
+  const instance = graph.nodes.get(instanceId)
+  const component = graph.nodes.get(componentId)
+  if (instance?.type !== 'INSTANCE' || component?.type !== 'COMPONENT') return
+
+  ensureSourceLineage(graph, componentId)
+  graph.updateNode(instanceId, {
+    componentId,
+    componentLineageId: sourceLineage(component)
+  })
+  for (const key of INSTANCE_SYNC_PROPS) {
+    if (hasOverride(instance.overrides, instance, key)) continue
+    copyProp(instance, component, key)
+  }
+  reconcileChildren(graph, componentId, instanceId, instance.overrides)
 }
 
 export function syncInstances(graph: SceneGraph, componentId: string): void {
@@ -192,7 +298,7 @@ export function syncInstances(graph: SceneGraph, componentId: string): void {
 
   for (const instance of getInstances(graph, componentId)) {
     for (const key of INSTANCE_SYNC_PROPS) {
-      if (key in instance.overrides) continue
+      if (hasOverride(instance.overrides, instance, key)) continue
       copyProp(instance, component, key)
     }
 

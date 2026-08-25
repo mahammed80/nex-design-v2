@@ -4,6 +4,10 @@
 
 ### Added
 
+- Add a locally persisted seven-day guest profile trial with route-level expiry enforcement, dashboard countdown, and account-upgrade messaging.
+
+- Add interactive, progress-tracked tutorials for every canvas tool with toolbar highlighting and real move, draw, text, pen, and pan practice tasks.
+
 - Add URL to Design plugin — paste any web URL in the toolbar globe-button popover to fetch the page server-side (CORS-safe), translate DOM elements into fully editable Auto Layout frames, text layers, and image fills, and render them directly onto the canvas. Supports CSS selector scoping (e.g. `header`, `.hero`), recent URL history, and is also available as the `import_url` tool in AI chat, MCP, and CLI eval.
 - Add `import_url` ToolDef (`packages/core/src/tools/create/url-import.ts`) with params: `url`, `selector`, `parent_id`, `x`, `y`, `max_depth`, `viewport_w`. Registered in `EXTENDED_TOOLS`.
 - Add `html-to-design` translation engine (`packages/core/src/tools/create/html-to-design/`) — pure browser DOM walker that converts computed CSS styles to NexDesign TreeNode IR (Auto Layout, fills, strokes, typography, border radius, shadows, images).
@@ -47,6 +51,8 @@
 - Add font settings controls for local font access, fallback font predownloads, and downloaded font cache management.
 
 ### Fixes
+
+- Preserve lineage-based root and descendant instance overrides during component synchronization, variant switching, and undo/redo instead of rebuilding instance children with new identities.
 
 - Fix fresh development installs failing to start because the Vite OpenType alias targeted a file not published by `opentype.js`.
 - Commit arrow-key nudge history when the key is released, the selection changes, or undo/redo runs so rapid keyboard edits remain correctly ordered and fully undoable.
