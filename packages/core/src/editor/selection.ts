@@ -1,5 +1,7 @@
+import { createAlignmentActions } from './selection/alignment'
 import { createSelectionContainerActions } from './selection/container'
 import { createSelectionHitTestActions } from './selection/hit-test'
+import { createMatchingActions } from './selection/matching'
 import { createSelectionOverlayActions } from './selection/overlays'
 import { createSelectionReadActions } from './selection/read'
 import type { EditorContext } from './types'
@@ -27,7 +29,9 @@ export function createSelectionActions(ctx: EditorContext) {
     ctx.setSelectedIds(new Set(children.map((n) => n.id)))
   }
 
+  const alignmentActions = createAlignmentActions(ctx)
   const containerActions = createSelectionContainerActions(ctx)
+  const matchingActions = createMatchingActions(ctx)
   const hitTestActions = createSelectionHitTestActions(ctx, select, clearSelection)
   const overlayActions = createSelectionOverlayActions(ctx)
   const readActions = createSelectionReadActions(ctx)
@@ -36,6 +40,8 @@ export function createSelectionActions(ctx: EditorContext) {
     select,
     clearSelection,
     selectAll,
+    ...alignmentActions,
+    ...matchingActions,
     ...overlayActions,
     ...containerActions,
     ...readActions,

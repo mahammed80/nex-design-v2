@@ -111,6 +111,7 @@ export class SkiaRenderer {
   viewportWidth = 0
   viewportHeight = 0
   showRulers = true
+  outlineMode = false
   pageColor = CANVAS_BG_COLOR
   rulerTheme: RulerTheme | null = null
   pageId: string | null = null
@@ -363,8 +364,6 @@ export class SkiaRenderer {
     return c
   }
 
-
-
   // Static Sets allocated once — Set.has() is ~3x faster than a chain of ===
   // comparisons in V8's JIT when there are 3+ branches.
   private static readonly COMPONENT_TYPES = new Set(['COMPONENT', 'COMPONENT_SET', 'INSTANCE'])
@@ -385,8 +384,6 @@ export class SkiaRenderer {
   isRectangularType(type: string): boolean {
     return SkiaRenderer.RECTANGULAR_TYPES.has(type)
   }
-
-
 
   effectOverflow(node: SceneNode): number {
     let expand = 0

@@ -3,13 +3,18 @@ import { computed, ref } from 'vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import PrototypePreview from '@/components/PrototypePreview.vue'
+import { colorToHex, parseColor } from '@nex-design/core/color'
 import type {
-  SceneNode,
-  TriggerType,
   ActionType,
   TransitionType,
-  EasingType
+  EasingType,
+  SceneNode,
+  TriggerType,
+  Variable,
+  VariableValue
 } from '@nex-design/core/scene-graph'
+
+type PrototypeDragDirection = 'left' | 'right' | 'up' | 'down'
 
 const editor = useEditorStore()
 const previewOpen = ref(false)
@@ -126,6 +131,43 @@ const scrollTargetOptions = computed(() => {
   return result
 })
 
+const variableOptions = computed(() => {
+  return [...editor.graph.variables.values()].map((variable) => {
+    const collection = editor.graph.variableCollections.get(variable.collectionId)
+    return {
+      value: variable.id,
+      label: collection ? `${collection.name} / ${variable.name}` : variable.name
+    }
+  })
+})
+
+function getVariable(variableId: string | undefined): Variable | undefined {
+  return variableId ? editor.graph.variables.get(variableId) : undefined
+}
+
+function getVariableDefaultValue(variable: Variable): VariableValue {
+  const collection = editor.graph.variableCollections.get(variable.collectionId)
+  const modeId = editor.graph.activeMode.get(variable.collectionId) ?? collection?.defaultModeId
+  const value = modeId ? variable.valuesByMode[modeId] : undefined
+  if (value !== undefined) return structuredClone(value)
+  if (variable.type === 'BOOLEAN') return false
+  if (variable.type === 'FLOAT') return 0
+  if (variable.type === 'COLOR') return parseColor('#000000')
+  return ''
+}
+
+function displayVariableValue(variable: Variable | undefined, value: unknown): string | number {
+  if (!variable) return ''
+  if (variable.type === 'COLOR' && isColorValue(value)) return colorToHex(value)
+  if (variable.type === 'FLOAT' && typeof value === 'number') return value
+  return typeof value === 'string' ? value : ''
+}
+
+function isColorValue(value: unknown): value is Extract<VariableValue, { r: number }> {
+  if (!value || typeof value !== 'object') return false
+  return 'r' in value && 'g' in value && 'b' in value && 'a' in value
+}
+
 // Starting frame state
 const isStartFrame = computed({
   get() {
@@ -135,7 +177,10 @@ const isStartFrame = computed({
   },
   set(val: boolean) {
     if (!editor || !activeSelection.value || activeSelection.value.type !== 'node') return
-    editor.setPrototypeStartNode(editor.state.currentPageId, val ? activeSelection.value.node.id : null)
+    editor.setPrototypeStartNode(
+      editor.state.currentPageId,
+      val ? activeSelection.value.node.id : null
+    )
   }
 })
 
@@ -153,6 +198,8 @@ const actionOptions = [
   { value: 'NAVIGATE', label: 'Navigate to' },
   { value: 'CHANGE_TO', label: 'Change to' },
   { value: 'OPEN_OVERLAY', label: 'Open overlay' },
+  { value: 'SWAP_OVERLAY', label: 'Swap overlay' },
+  { value: 'SET_VARIABLE', label: 'Set variable' },
   { value: 'CLOSE', label: 'Close overlay' },
   { value: 'SCROLL_TO', label: 'Scroll to' },
   { value: 'BACK', label: 'Back' }
@@ -212,7 +259,7 @@ function updateTrigger(idx: number, type: TriggerType) {
   })
 }
 
-function updateDragDirection(idx: number, direction: string) {
+function updateDragDirection(idx: number, direction: PrototypeDragDirection) {
   if (!editor || !activeSelection.value) return
   const node = activeSelection.value.node
   const realIdx = activeSelection.value.indices[idx]
@@ -239,7 +286,9 @@ function updateAction(idx: number, type: ActionType) {
   const r = activeSelection.value.reactions[idx]
   const updatedActions = [...r.actions]
 
-  const needsDest = ['NAVIGATE', 'OPEN_OVERLAY', 'SWAP_OVERLAY', 'SCROLL_TO', 'CHANGE_TO'].includes(type)
+  const needsDest = ['NAVIGATE', 'OPEN_OVERLAY', 'SWAP_OVERLAY', 'SCROLL_TO', 'CHANGE_TO'].includes(
+    type
+  )
   let defaultDest = ''
   if (type === 'CHANGE_TO') {
     defaultDest = getVariantOptions(node)[0]?.value ?? ''
@@ -248,6 +297,10 @@ function updateAction(idx: number, type: ActionType) {
   } else {
     defaultDest = targetFrameOptions.value[0]?.value ?? ''
   }
+  const defaultVariable =
+    type === 'SET_VARIABLE' && variableOptions.value[0]
+      ? getVariable(variableOptions.value[0].value)
+      : undefined
 
   updatedActions[0] = {
     ...updatedActions[0],
@@ -258,9 +311,41 @@ function updateAction(idx: number, type: ActionType) {
       : undefined,
     transition: ['NAVIGATE', 'OPEN_OVERLAY', 'SWAP_OVERLAY', 'CHANGE_TO'].includes(type)
       ? { type: 'INSTANT', duration: 300, easing: 'EASE_IN_AND_OUT' }
-      : undefined
+      : undefined,
+    variableId: defaultVariable?.id,
+    variableValue: defaultVariable ? getVariableDefaultValue(defaultVariable) : undefined
   }
   editor.updateReaction(node.id, realIdx, { actions: updatedActions })
+}
+
+function updateVariable(idx: number, variableId: string) {
+  const variable = getVariable(variableId)
+  if (!editor || !activeSelection.value || !variable) return
+  const node = activeSelection.value.node
+  const realIdx = activeSelection.value.indices[idx]
+  const reaction = activeSelection.value.reactions[idx]
+  const actions = [...reaction.actions]
+  actions[0] = {
+    ...actions[0],
+    variableId,
+    variableValue: getVariableDefaultValue(variable)
+  }
+  editor.updateReaction(node.id, realIdx, { actions })
+}
+
+function updateVariableValue(
+  idx: number,
+  variable: Variable | undefined,
+  value: string | number | boolean
+) {
+  if (!editor || !activeSelection.value || !variable) return
+  const node = activeSelection.value.node
+  const realIdx = activeSelection.value.indices[idx]
+  const reaction = activeSelection.value.reactions[idx]
+  const actions = [...reaction.actions]
+  const variableValue = variable.type === 'COLOR' ? parseColor(String(value)) : value
+  actions[0] = { ...actions[0], variableValue }
+  editor.updateReaction(node.id, realIdx, { actions })
 }
 
 function updateOverlayPosition(
@@ -443,7 +528,11 @@ function removeInteraction(idx: number) {
         >
           <div class="flex items-center justify-between">
             <span class="font-bold text-[11px] uppercase tracking-wider text-muted">
-              {{ activeSelection.type === 'connection' ? 'Selected Connection' : `Interaction ${idx + 1}` }}
+              {{
+                activeSelection.type === 'connection'
+                  ? 'Selected Connection'
+                  : `Interaction ${idx + 1}`
+              }}
             </span>
             <button
               class="text-muted hover:text-red-400 transition-colors"
@@ -475,7 +564,7 @@ function removeInteraction(idx: number) {
                 { value: 'down', label: 'Swipe Down' }
               ]"
               :modelValue="r.trigger.direction ?? 'left'"
-              @update:modelValue="updateDragDirection(idx, $event as string)"
+              @update:modelValue="updateDragDirection(idx, $event as PrototypeDragDirection)"
               class="w-full"
             />
           </div>
@@ -520,10 +609,7 @@ function removeInteraction(idx: number) {
           </div>
 
           <!-- Target variant selection if CHANGE_TO -->
-          <div
-            v-if="r.actions[0].type === 'CHANGE_TO'"
-            class="flex flex-col gap-1"
-          >
+          <div v-if="r.actions[0].type === 'CHANGE_TO'" class="flex flex-col gap-1">
             <span class="text-muted text-[10px]">Target Variant</span>
             <AppSelect
               v-if="getVariantOptions(activeSelection.node).length > 0"
@@ -532,14 +618,13 @@ function removeInteraction(idx: number) {
               @update:model-value="updateDestination(idx, $event)"
               class="w-full"
             />
-            <div v-else class="text-muted text-[10px] italic">Source must be inside a Component Set</div>
+            <div v-else class="text-muted text-[10px] italic">
+              Source must be inside a Component Set
+            </div>
           </div>
 
           <!-- Scroll target selection if SCROLL_TO -->
-          <div
-            v-if="r.actions[0].type === 'SCROLL_TO'"
-            class="flex flex-col gap-1"
-          >
+          <div v-if="r.actions[0].type === 'SCROLL_TO'" class="flex flex-col gap-1">
             <span class="text-muted text-[10px]">Scroll Target</span>
             <AppSelect
               v-if="scrollTargetOptions.length > 0"
@@ -549,6 +634,66 @@ function removeInteraction(idx: number) {
               class="w-full"
             />
             <div v-else class="text-muted text-[10px] italic">No scrollable layers found</div>
+          </div>
+
+          <!-- Variable and value selection if SET_VARIABLE -->
+          <div
+            v-if="r.actions[0].type === 'SET_VARIABLE'"
+            class="flex flex-col gap-2 border-t border-border/50 pt-2"
+          >
+            <div class="flex flex-col gap-1">
+              <span class="text-muted text-[10px]">Variable</span>
+              <AppSelect
+                v-if="variableOptions.length > 0"
+                :options="variableOptions"
+                :modelValue="r.actions[0].variableId ?? ''"
+                @update:model-value="updateVariable(idx, $event)"
+                class="w-full"
+              />
+              <div v-else class="text-muted text-[10px] italic">
+                Create a variable before using this action
+              </div>
+            </div>
+
+            <div v-if="getVariable(r.actions[0].variableId)" class="flex flex-col gap-1">
+              <span class="text-muted text-[10px]">Value</span>
+              <input
+                v-if="getVariable(r.actions[0].variableId)?.type === 'BOOLEAN'"
+                type="checkbox"
+                :checked="r.actions[0].variableValue === true"
+                class="accent-accent size-3.5"
+                @change="
+                  updateVariableValue(
+                    idx,
+                    getVariable(r.actions[0].variableId),
+                    ($event.target as HTMLInputElement).checked
+                  )
+                "
+              />
+              <input
+                v-else
+                :type="getVariable(r.actions[0].variableId)?.type === 'FLOAT' ? 'number' : 'text'"
+                :value="
+                  displayVariableValue(
+                    getVariable(r.actions[0].variableId),
+                    r.actions[0].variableValue
+                  )
+                "
+                :placeholder="
+                  getVariable(r.actions[0].variableId)?.type === 'COLOR' ? '#000000' : undefined
+                "
+                class="rounded border border-border bg-input px-2 py-1 text-xs text-surface outline-none focus:border-accent"
+                @change="
+                  updateVariableValue(
+                    idx,
+                    getVariable(r.actions[0].variableId),
+                    getVariable(r.actions[0].variableId)?.type === 'FLOAT'
+                      ? ($event.target as HTMLInputElement).valueAsNumber
+                      : ($event.target as HTMLInputElement).value
+                  )
+                "
+              />
+            </div>
           </div>
 
           <!-- Overlay settings if OPEN_OVERLAY / SWAP_OVERLAY -->
@@ -581,7 +726,11 @@ function removeInteraction(idx: number) {
 
           <!-- Transition configuration if NAVIGATE, CHANGE_TO, OPEN_OVERLAY, SWAP_OVERLAY -->
           <div
-            v-if="['NAVIGATE', 'CHANGE_TO', 'OPEN_OVERLAY', 'SWAP_OVERLAY'].includes(r.actions[0].type) && r.actions[0].transition"
+            v-if="
+              ['NAVIGATE', 'CHANGE_TO', 'OPEN_OVERLAY', 'SWAP_OVERLAY'].includes(
+                r.actions[0].type
+              ) && r.actions[0].transition
+            "
             class="flex flex-col gap-2.5 border-t border-border/60 pt-2.5 mt-1"
           >
             <div class="flex flex-col gap-1">

@@ -45,6 +45,7 @@ export function renderFromEditorState(
   r.viewportWidth = viewportWidth
   r.viewportHeight = viewportHeight
   r.showRulers = showRulers
+  r.outlineMode = state.outlineMode
   r.pageColor = state.pageColor
   r.rulerTheme = state.rulerTheme ?? null
   r.pageId = state.currentPageId
@@ -54,6 +55,7 @@ export function renderFromEditorState(
     state.selectedIds,
     {
       mode: state.mode,
+      altMeasurement: state.altMeasurement,
       prototypeDragLine: state.prototypeDragLine,
       prototypeReconnectDrag: state.prototypeReconnectDrag,
       hoveredNodeId: state.hoveredNodeId,

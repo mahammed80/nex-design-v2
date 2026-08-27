@@ -120,6 +120,7 @@ export function createDefaultNode(
     flipY: false,
     textPicture: null,
     layoutGrids: [],
+    guides: [],
     reactions: [],
     prototypeStartNodeId: null,
     prototypeFlows: [],

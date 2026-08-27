@@ -1,4 +1,5 @@
 import type { SceneGraph, SceneNode } from '@nex-design/core/scene-graph'
+
 import type { HandlePosition } from '#vue/shared/input/types'
 
 function resolveTextResizeChanges(
@@ -57,7 +58,7 @@ function resolveFrameResizeChanges(
 
 function resolveChildWidthChanges(node: SceneNode, parent: SceneNode): Partial<SceneNode> {
   const changes: Partial<SceneNode> = {}
-  if (node.layoutAlign === 'STRETCH') changes.layoutAlign = 'INHERIT'
+  if (node.layoutAlignSelf === 'STRETCH') changes.layoutAlignSelf = 'AUTO'
   if (parent.layoutMode === 'HORIZONTAL' && node.layoutGrow === 1) changes.layoutGrow = 0
   if (node.type === 'FRAME') {
     if (parent.layoutMode === 'HORIZONTAL' && node.primaryAxisSizing === 'HUG') {
@@ -111,8 +112,7 @@ export function resolveResizeModeChanges(
     handle === 'ne' ||
     handle === 'sw' ||
     handle === 'se'
-  const isCorner =
-    handle === 'nw' || handle === 'ne' || handle === 'sw' || handle === 'se'
+  const isCorner = handle === 'nw' || handle === 'ne' || handle === 'sw' || handle === 'se'
 
   return {
     ...resolveTextResizeChanges(node, affectsWidth, affectsHeight, isCorner),

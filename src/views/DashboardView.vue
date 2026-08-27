@@ -11,8 +11,6 @@ import {
   getAllProjectsFromDb,
   createProjectInDb,
   updateProjectInDb,
-  deleteProjectInDb,
-  duplicateProjectInDb,
   uint8ArrayToBase64,
   type ProjectRecord
 } from '@/app/dashboard/db'
@@ -33,7 +31,6 @@ const activeView = ref<
 const activeFilterTab = ref<'recents' | 'shared-docs' | 'shared-folders'>('recents')
 const searchQuery = ref('')
 const sortBy = ref<'modified' | 'created' | 'name'>('modified')
-const viewMode = ref<'grid' | 'list'>('list')
 const isSettingsOpen = ref(false)
 const isSearchOpen = ref(false)
 const isNewFolderModalOpen = ref(false)
@@ -43,6 +40,12 @@ const selectedSearchIndex = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
 const profileName = useLocalStorage('nex-design:profile-name', 'Alex')
 const guestTrial = computed(() => getGuestTrialStatus(getActiveProfile()))
+
+function getRequiredProfileId(): string {
+  const profileId = getActiveProfile()?.id
+  if (!profileId) throw new Error('An active local profile is required')
+  return profileId
+}
 
 // Tree Collapse State
 const isOverviewExpanded = ref(true)
@@ -127,6 +130,7 @@ async function loadProjects() {
 
 // Seed the default demo project
 async function seedDemoProject(db: IDBDatabase) {
+  const profileId = getRequiredProfileId()
   const store = createEditorStore()
   createDemoShapes(store)
 
@@ -143,6 +147,7 @@ async function seedDemoProject(db: IDBDatabase) {
 
   await createProjectInDb(db, {
     id: 'demo-project-id',
+    profileId,
     name: 'Cloud Dashboard.fig',
     document: docBytes,
     thumbnail,
@@ -153,6 +158,7 @@ async function seedDemoProject(db: IDBDatabase) {
 
   await createProjectInDb(db, {
     id: 'demo-project-2',
+    profileId,
     name: 'Project Brief.docx',
     document: docBytes,
     thumbnail: '',
@@ -163,6 +169,7 @@ async function seedDemoProject(db: IDBDatabase) {
 
   await createProjectInDb(db, {
     id: 'demo-project-3',
+    profileId,
     name: 'Project Details.xls',
     document: docBytes,
     thumbnail: '',
@@ -173,6 +180,7 @@ async function seedDemoProject(db: IDBDatabase) {
 
   await createProjectInDb(db, {
     id: 'demo-project-4',
+    profileId,
     name: 'Design Notes.docx',
     document: docBytes,
     thumbnail: '',
@@ -224,7 +232,66 @@ async function createNewDesign() {
   const id = crypto.randomUUID()
   const newProject: ProjectRecord = {
     id,
+    profileId: getRequiredProfileId(),
     name: 'Untitled.fig',
+    thumbnail: '',
+    starred: false,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    document: docBytes
+  }
+
+  await createProjectInDb(db, newProject)
+  store.dispose()
+  openProject(id)
+}
+
+const stitchTemplates = [
+  {
+    id: 'stitch-dashboard',
+    title: 'AI Command Center',
+    category: 'Dashboard UI',
+    gradient: 'from-cyan-500/20 via-purple-500/20 to-blue-500/20',
+    border: 'border-cyan-500/30',
+    tag: 'Stitch AI'
+  },
+  {
+    id: 'stitch-landing',
+    title: 'Glass SaaS Landing',
+    category: 'Marketing Hero',
+    gradient: 'from-violet-500/20 via-fuchsia-500/20 to-rose-500/20',
+    border: 'border-purple-500/30',
+    tag: 'Frosted Glass'
+  },
+  {
+    id: 'stitch-wallet',
+    title: 'Mobile Glass Crypto',
+    category: 'Mobile App',
+    gradient: 'from-emerald-500/20 via-teal-500/20 to-cyan-500/20',
+    border: 'border-emerald-500/30',
+    tag: 'Fintech'
+  },
+  {
+    id: 'stitch-linear',
+    title: 'Obsidian Dev Hub',
+    category: 'Developer Platform',
+    gradient: 'from-blue-500/20 via-indigo-500/20 to-purple-500/20',
+    border: 'border-blue-500/30',
+    tag: 'Dev Tools'
+  }
+]
+
+async function createDesignFromTemplate(templateName: string) {
+  const db = await openDb()
+  const store = createEditorStore()
+  createDemoShapes(store)
+  const docBytes = await exportFigFile(store.graph)
+
+  const id = crypto.randomUUID()
+  const newProject: ProjectRecord = {
+    id,
+    profileId: getRequiredProfileId(),
+    name: `${templateName}.fig`,
     thumbnail: '',
     starred: false,
     createdAt: Date.now(),
@@ -248,27 +315,6 @@ async function toggleStar(project: ProjectRecord) {
     await loadProjects()
   } catch (err) {
     console.error('Failed to toggle star:', err)
-  }
-}
-
-async function duplicateProject(project: ProjectRecord) {
-  try {
-    const db = await openDb()
-    await duplicateProjectInDb(db, project.id)
-    await loadProjects()
-  } catch (err) {
-    console.error('Failed to duplicate project:', err)
-  }
-}
-
-async function deleteProject(project: ProjectRecord) {
-  if (!confirm(`Are you sure you want to delete "${project.name}"?`)) return
-  try {
-    const db = await openDb()
-    await deleteProjectInDb(db, project.id)
-    await loadProjects()
-  } catch (err) {
-    console.error('Failed to delete project:', err)
   }
 }
 
@@ -297,6 +343,7 @@ async function handleImportFile(e: Event) {
     const id = crypto.randomUUID()
     const importedProject: ProjectRecord = {
       id,
+      profileId: getRequiredProfileId(),
       name: `${name}.fig`,
       thumbnail: '',
       starred: false,
@@ -645,10 +692,7 @@ onMounted(() => {
           <!-- 1. OVERVIEW ACCORDION (Dark Red Active Pill) -->
           <div>
             <button
-              @click="
-                isOverviewExpanded = !isOverviewExpanded;
-                activeView = 'home'
-              "
+              @click="isOverviewExpanded = !isOverviewExpanded; activeView = 'home'"
               class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200"
               :class="
                 activeView === 'home' || activeView === 'recents'
@@ -734,10 +778,7 @@ onMounted(() => {
           <!-- 3. UI & UX DESIGN (Tree Branch) -->
           <div>
             <button
-              @click="
-                isUiUxExpanded = !isUiUxExpanded;
-                activeView = 'folder-ui-ux'
-              "
+              @click="isUiUxExpanded = !isUiUxExpanded; activeView = 'folder-ui-ux'"
               class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-zinc-300 hover:bg-white/5 transition-colors"
             >
               <div class="flex items-center gap-2.5">
@@ -897,9 +938,7 @@ onMounted(() => {
           <div class="mt-2.5 space-y-1">
             <h4 class="text-xs font-bold text-white tracking-tight">Guest trial</h4>
             <p class="text-[10px] text-zinc-400 leading-relaxed">
-              {{ guestTrial.remainingDays }} day{{
-                guestTrial.remainingDays === 1 ? '' : 's'
-              }}
+              {{ guestTrial.remainingDays }} day{{ guestTrial.remainingDays === 1 ? '' : 's' }}
               remaining. Link an account to keep editing after the trial.
             </p>
           </div>
@@ -1072,6 +1111,66 @@ onMounted(() => {
                 >
                   See details
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SECTION: STITCH AI GLASS TEMPLATES ── -->
+        <div class="space-y-4 pt-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-mono font-semibold text-cyan-400">
+                Stitch Glass
+              </span>
+              <h2 class="text-sm font-bold text-white tracking-tight">AI Glass Templates</h2>
+            </div>
+            <span class="text-xs text-zinc-500">Google Stitch Design System</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+              v-for="tpl in stitchTemplates"
+              :key="tpl.id"
+              class="relative rounded-2xl border border-white/10 bg-gradient-to-br p-4 overflow-hidden group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_32px_rgba(0,245,212,0.12)]"
+              :class="[tpl.gradient, tpl.border]"
+              @click="createDesignFromTemplate(tpl.title)"
+            >
+              <!-- Ambient Inner Aurora Glow -->
+              <div class="absolute -top-12 -right-12 size-32 rounded-full bg-cyan-500/20 blur-2xl group-hover:bg-cyan-400/30 transition-all duration-500 pointer-events-none" />
+
+              <div class="relative z-10 flex flex-col justify-between h-36">
+                <!-- Tag & Icon -->
+                <div class="flex items-center justify-between">
+                  <span class="px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-medium text-white/80">
+                    {{ tpl.tag }}
+                  </span>
+                  <div class="size-7 rounded-full bg-white/10 flex items-center justify-center text-white/80 group-hover:text-white group-hover:bg-white/20 transition-colors">
+                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- Title & Category -->
+                <div>
+                  <h3 class="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                    {{ tpl.title }}
+                  </h3>
+                  <p class="text-[11px] text-zinc-400 mt-0.5">{{ tpl.category }}</p>
+                </div>
+
+                <!-- Hover "Use template" Frosted Pill Action -->
+                <div class="flex items-center justify-end">
+                  <button
+                    class="px-3 py-1 rounded-full text-[10px] font-bold text-black bg-white/90 hover:bg-white backdrop-blur-md shadow-md transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 group-hover:scale-105"
+                  >
+                    <span>Use template</span>
+                    <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1475,10 +1574,7 @@ onMounted(() => {
             Cancel
           </button>
           <button
-            @click="
-              isNewFolderModalOpen = false;
-              newFolderName = ''
-            "
+            @click="isNewFolderModalOpen = false; newFolderName = ''"
             class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500"
           >
             Create

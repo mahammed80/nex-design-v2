@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useEmailStore } from '@/app/email/store'
-import type { EmailTemplateId } from '@/app/email/types'
 
 const {
   activeSubTab,
@@ -26,13 +25,13 @@ function handleSaveSubject(newSubject: string) {
   updateTemplate(selectedTemplateId.value, { subject: newSubject })
 }
 
-function handleSaveBodyHtml(newHtml: string) {
-  updateTemplate(selectedTemplateId.value, { bodyHtml: newHtml })
-}
-
 function handleSendTest() {
   if (!testEmail.value.trim()) return
-  dispatchTestEmail(selectedTemplateId.value, testEmail.value.trim(), testName.value.trim() || 'Tester')
+  dispatchTestEmail(
+    selectedTemplateId.value,
+    testEmail.value.trim(),
+    testName.value.trim() || 'Tester'
+  )
   testSentSuccess.value = true
   setTimeout(() => {
     testSentSuccess.value = false
@@ -44,10 +43,14 @@ function handleSendTest() {
 <template>
   <div class="space-y-6">
     <!-- Header & Sub-tabs -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+    <div
+      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10"
+    >
       <div>
         <h2 class="text-xl font-bold text-white tracking-tight">Email System Governance</h2>
-        <p class="text-xs text-zinc-400 mt-1">Manage transactional email templates, live HTML previews, and delivery logs</p>
+        <p class="text-xs text-zinc-400 mt-1">
+          Manage transactional email templates, live HTML previews, and delivery logs
+        </p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -56,14 +59,22 @@ function handleSendTest() {
           <button
             @click="activeSubTab = 'templates'"
             class="px-3.5 py-1.5 rounded-lg font-medium transition"
-            :class="activeSubTab === 'templates' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'"
+            :class="
+              activeSubTab === 'templates'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            "
           >
             Email Templates ({{ templatesList.length }})
           </button>
           <button
             @click="activeSubTab = 'logs'"
             class="px-3.5 py-1.5 rounded-lg font-medium transition"
-            :class="activeSubTab === 'logs' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'"
+            :class="
+              activeSubTab === 'logs'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            "
           >
             Delivery Logs ({{ filteredLogs.length }})
           </button>
@@ -104,7 +115,9 @@ function handleSendTest() {
               <div class="text-[10px] text-zinc-400 truncate max-w-[200px]">{{ tpl.subject }}</div>
             </div>
 
-            <span class="px-2 py-0.5 text-[9px] font-mono uppercase rounded bg-zinc-800 text-zinc-300">
+            <span
+              class="px-2 py-0.5 text-[9px] font-mono uppercase rounded bg-zinc-800 text-zinc-300"
+            >
               {{ tpl.category }}
             </span>
           </button>
@@ -118,7 +131,9 @@ function handleSendTest() {
           <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               {{ selectedTemplate.name }}
-              <span class="text-[10px] font-mono text-violet-400">id: {{ selectedTemplate.id }}</span>
+              <span class="text-[10px] font-mono text-violet-400"
+                >id: {{ selectedTemplate.id }}</span
+              >
             </h3>
           </div>
 
@@ -159,19 +174,21 @@ function handleSendTest() {
           <div class="rounded-xl overflow-hidden border border-white/10 bg-zinc-950 min-h-[360px]">
             <div
               class="p-4"
-              v-html="compileTemplate(selectedTemplate.bodyHtml, {
-                userName: 'Mohamed Ahmed',
-                planName: 'Pro Designer',
-                price: '19',
-                billingCycle: 'monthly',
-                pluginName: 'AI Component Builder',
-                version: '1.4.0',
-                inviterName: 'Sarah Chen',
-                projectName: 'Dashboard Redesign',
-                receiptId: '8942-019',
-                actionUrl: 'http://localhost:5173/',
-                date: new Date().toLocaleDateString()
-              })"
+              v-html="
+                compileTemplate(selectedTemplate.bodyHtml, {
+                  userName: 'Mohamed Ahmed',
+                  planName: 'Pro Designer',
+                  price: '19',
+                  billingCycle: 'monthly',
+                  pluginName: 'AI Component Builder',
+                  version: '1.4.0',
+                  inviterName: 'Sarah Chen',
+                  projectName: 'Dashboard Redesign',
+                  receiptId: '8942-019',
+                  actionUrl: 'http://localhost:5173/',
+                  date: new Date().toLocaleDateString()
+                })
+              "
             ></div>
           </div>
         </div>
@@ -181,10 +198,22 @@ function handleSendTest() {
     <!-- TAB 2: SENT EMAIL DELIVERY AUDIT LOGS -->
     <div v-else class="space-y-4">
       <!-- Search & Actions Bar -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900/60 border border-white/10">
+      <div
+        class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900/60 border border-white/10"
+      >
         <div class="w-full sm:w-80 relative">
-          <svg class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           <input
             v-model="emailSearchQuery"
@@ -207,7 +236,9 @@ function handleSendTest() {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-white/10 bg-zinc-950/80 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+              <tr
+                class="border-b border-white/10 bg-zinc-950/80 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
+              >
                 <th class="py-3.5 px-4">Recipient</th>
                 <th class="py-3.5 px-4">Event Template</th>
                 <th class="py-3.5 px-4">Subject</th>
@@ -231,7 +262,9 @@ function handleSendTest() {
                 </td>
 
                 <td class="py-3.5 px-4">
-                  <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span
+                    class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  >
                     {{ log.status }}
                   </span>
                 </td>
@@ -247,41 +280,65 @@ function handleSendTest() {
     </div>
 
     <!-- SEND TEST EMAIL MODAL -->
-    <div v-if="isTestModalOpen" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div class="w-full max-w-md rounded-2xl bg-zinc-900 border border-white/10 p-6 space-y-5 shadow-2xl">
+    <div
+      v-if="isTestModalOpen"
+      class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="w-full max-w-md rounded-2xl bg-zinc-900 border border-white/10 p-6 space-y-5 shadow-2xl"
+      >
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
           <h3 class="text-base font-bold text-white">Dispatch Test Email</h3>
           <button @click="isTestModalOpen = false" class="text-zinc-400 hover:text-white">✕</button>
         </div>
 
-        <div v-if="testSentSuccess" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 text-center font-bold">
+        <div
+          v-if="testSentSuccess"
+          class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 text-center font-bold"
+        >
           ✓ Test Email Dispatched & Logged!
         </div>
 
         <div v-else class="space-y-4 text-xs">
           <div>
             <label class="block text-zinc-400 mb-1 font-medium">Selected Template</label>
-            <div class="p-2.5 rounded-xl bg-zinc-950 border border-white/10 font-bold text-violet-400">
+            <div
+              class="p-2.5 rounded-xl bg-zinc-950 border border-white/10 font-bold text-violet-400"
+            >
               {{ selectedTemplate.name }} ({{ selectedTemplate.id }})
             </div>
           </div>
 
           <div>
             <label class="block text-zinc-400 mb-1 font-medium">Recipient Name</label>
-            <input v-model="testName" type="text" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+            <input
+              v-model="testName"
+              type="text"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white"
+            />
           </div>
 
           <div>
             <label class="block text-zinc-400 mb-1 font-medium">Recipient Email</label>
-            <input v-model="testEmail" type="email" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+            <input
+              v-model="testEmail"
+              type="email"
+              class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white"
+            />
           </div>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-          <button @click="isTestModalOpen = false" class="px-4 py-2 rounded-xl bg-white/5 text-xs font-semibold text-zinc-300">
+          <button
+            @click="isTestModalOpen = false"
+            class="px-4 py-2 rounded-xl bg-white/5 text-xs font-semibold text-zinc-300"
+          >
             Cancel
           </button>
-          <button @click="handleSendTest" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white shadow">
+          <button
+            @click="handleSendTest"
+            class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white shadow"
+          >
             Send Test
           </button>
         </div>

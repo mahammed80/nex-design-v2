@@ -1,5 +1,8 @@
 # NexDesign
 
+> The implementation-grade roadmap for verified Figma parity is maintained in
+> [`FIGMA_PARITY_PLAN.md`](./FIGMA_PARITY_PLAN.md).
+
 Open-source, AI-native design editor. Think Figma, but you can self-host it, extend it, and talk to it.
 
 ## Why
@@ -10,22 +13,23 @@ Open-source, AI-native design editor. Think Figma, but you can self-host it, ext
 
 ## Positioning
 
-| | NexDesign | Figma | Penpot |
-|---|---|---|---|
-| Open source | ✅ MIT | ❌ | ✅ |
-| Rendering | Skia (WASM) | Skia (WASM) | SVG |
-| AI-native | ✅ 26 tools | ❌ Plugins only | ❌ |
-| .fig import/export | ✅ | N/A | ❌ |
-| Desktop | Tauri (~7 MB) | Electron | Browser |
-| Collaboration | P2P (WebRTC + CRDT) | Proprietary | WebSocket |
-| Self-hosted | ✅ | ❌ | ✅ |
-| Cost | Free forever | $15/editor/mo | Free (self-host) |
+|                    | NexDesign           | Figma           | Penpot           |
+| ------------------ | ------------------- | --------------- | ---------------- |
+| Open source        | ✅ MIT              | ❌              | ✅               |
+| Rendering          | Skia (WASM)         | Skia (WASM)     | SVG              |
+| AI-native          | ✅ 26 tools         | ❌ Plugins only | ❌               |
+| .fig import/export | ✅                  | N/A             | ❌               |
+| Desktop            | Tauri (~7 MB)       | Electron        | Browser          |
+| Collaboration      | P2P (WebRTC + CRDT) | Proprietary     | WebSocket        |
+| Self-hosted        | ✅                  | ❌              | ✅               |
+| Cost               | Free forever        | $15/editor/mo   | Free (self-host) |
 
 ## Reusable assets from figma-use
 
 We've built a substantial toolkit in figma-use that transfers directly:
 
 ### Figma binary format (Kiwi)
+
 - Full Kiwi encoder/decoder for .fig files
 - 533-definition schema (NodeChange with 538 fields)
 - Zstd compression/decompression
@@ -34,32 +38,38 @@ We've built a substantial toolkit in figma-use that transfers directly:
 - All node types, fills, strokes, effects, transforms
 
 ### JSX renderer
+
 - `packages/render` — declarative JSX-to-design-nodes renderer
 - Frame, Text, Rect, Ellipse, Line, Star, Polygon, Vector, Icon primitives
 - Layout props (flex, gap, padding, justify, items)
 - Variable references in colors (`var:Name`, `$Name`)
 
 ### Design linter (17 rules)
+
 - `packages/linter` — standalone, reusable as-is
 - Design tokens, layout, typography, accessibility, structure rules
 - Presets: recommended, strict, accessibility, design-system
 
 ### MCP server
+
 - `packages/mcp` — full MCP implementation for AI agents
 - All design operations as MCP tools
 - Battle-tested with Claude, works with any MCP client
 
 ### XPath query engine
+
 - `packages/plugin/src/query.ts` — query nodes by type, attributes, structure
 - `//FRAME[@width > 100]`, `//TEXT[contains(@name, 'Button')]`
 
 ### Export pipeline
+
 - JSX export with icon matching (Iconify)
 - Storybook generation (React/Vue)
 - Font extraction (Google Fonts CSS)
 - Screenshot/PNG/SVG/PDF export
 
 ### Analyze tools
+
 - Cluster detection (repeated patterns → potential components)
 - Color palette analysis with similarity merging
 - Typography audit (font combinations, sizes, weights)
@@ -167,12 +177,14 @@ Follows Figma's UI3 layout (introduced Config 2024) — toolbar at the bottom, n
 ```
 
 **Three panels:**
+
 - **Navigation panel (left)** — tabs for Layers, Assets (component library), Pages. File name + actions dropdown at top. Resizable, collapsible.
 - **Canvas (center)** — infinite canvas with zoom/pan. All design work happens here.
 - **Properties panel (right)** — context-sensitive. Sections: Appearance (size, position, rotation), Layout (auto-layout / grid), Position (constraints), Fill, Stroke, Effects, Export. Resizable.
 - **Toolbar (bottom)** — design tools in a horizontal strip. Frees up vertical space on canvas. Includes the Actions menu (AI, plugins, productivity shortcuts).
 
 **Why bottom toolbar (Figma UI3 style):**
+
 - More vertical canvas space (design is primarily vertical — phone screens, web pages)
 - Tools are closer to where your cursor naturally rests
 - Actions menu at the end provides AI/plugin access without cluttering the toolbar
@@ -196,6 +208,7 @@ Horizontal strip at the bottom of the canvas. Tools grouped with subtle dividers
 ```
 
 **Actions menu (⚡)** — the AI entry point:
+
 - 🤖 AI Chat — open sidebar for conversational design with AI
 - Quick actions: create component, auto-layout, tidy up, etc.
 - Plugins
@@ -205,121 +218,122 @@ Horizontal strip at the bottom of the canvas. Tools grouped with subtle dividers
 
 A horizontal bar above the canvas changes based on the active tool. Shows contextual controls the designer needs right now.
 
-| Active tool | Options bar contents |
-|---|---|
-| **Select** (nothing selected) | *empty* |
-| **Select** (node selected) | X, Y, W, H inputs · Rotation · Corner radius · Constraints dropdown |
-| **Select** (multiple selected) | Align buttons (6) · Distribute H/V · Tidy up · Boolean ops dropdown |
-| **Frame** | Preset sizes dropdown (iPhone 16, Desktop 1440, Custom…) · Fill color · Layout mode toggle |
-| **Rectangle** | W, H inputs · Fill color · Corner radius · Stroke toggle |
-| **Ellipse** | W, H inputs · Fill color · Arc start/end/ratio |
-| **Line** | Length · Stroke color · Stroke weight · Cap style (butt/round/square) · Arrow toggles |
-| **Polygon** | Sides (3-12 slider) · Radius · Fill color |
-| **Star** | Points (3-20) · Inner radius ratio (0-1) · Fill color |
-| **Pen** | Path close toggle · Fill/Stroke toggles · Bend tool |
-| **Pencil** | Stroke weight · Smoothing (0-100) · Stroke color |
-| **Text** | Font family · Weight · Size · Line height · Letter spacing · Align (L/C/R/J) · Color |
-| **Hand** | Zoom level indicator |
-| **Comment** | *empty* (click canvas to place) |
+| Active tool                    | Options bar contents                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| **Select** (nothing selected)  | _empty_                                                                                    |
+| **Select** (node selected)     | X, Y, W, H inputs · Rotation · Corner radius · Constraints dropdown                        |
+| **Select** (multiple selected) | Align buttons (6) · Distribute H/V · Tidy up · Boolean ops dropdown                        |
+| **Frame**                      | Preset sizes dropdown (iPhone 16, Desktop 1440, Custom…) · Fill color · Layout mode toggle |
+| **Rectangle**                  | W, H inputs · Fill color · Corner radius · Stroke toggle                                   |
+| **Ellipse**                    | W, H inputs · Fill color · Arc start/end/ratio                                             |
+| **Line**                       | Length · Stroke color · Stroke weight · Cap style (butt/round/square) · Arrow toggles      |
+| **Polygon**                    | Sides (3-12 slider) · Radius · Fill color                                                  |
+| **Star**                       | Points (3-20) · Inner radius ratio (0-1) · Fill color                                      |
+| **Pen**                        | Path close toggle · Fill/Stroke toggles · Bend tool                                        |
+| **Pencil**                     | Stroke weight · Smoothing (0-100) · Stroke color                                           |
+| **Text**                       | Font family · Weight · Size · Line height · Letter spacing · Align (L/C/R/J) · Color       |
+| **Hand**                       | Zoom level indicator                                                                       |
+| **Comment**                    | _empty_ (click canvas to place)                                                            |
 
 ### Canvas navigation
 
-| Action | Input | Behavior |
-|--------|-------|----------|
-| Pan | Space+drag / Middle mouse drag / Two-finger trackpad | Move viewport |
-| Zoom in | Cmd+= / Scroll up / Pinch out | Zoom toward cursor position |
-| Zoom out | Cmd+- / Scroll down / Pinch in | Zoom toward cursor position |
-| Zoom to fit all | Shift+1 | Fit all content in view with padding |
-| Zoom to selection | Shift+2 | Fit selected nodes in view |
-| Zoom to 100% | Cmd+0 | Reset to actual pixels |
-| Zoom to 50%/200% | Cmd+1 / Cmd+2 | Preset zoom levels |
-| Pixel preview | — | Render at 1x showing actual pixels |
-| Rulers | Shift+R | Toggle rulers on canvas edges |
-| Grid | Cmd+' | Toggle layout grid overlay |
-| Guides | Drag from ruler | Create horizontal/vertical guide line |
-| Minimap | — | Small overview in bottom-right corner (toggle) |
+| Action            | Input                                                | Behavior                                       |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------- |
+| Pan               | Space+drag / Middle mouse drag / Two-finger trackpad | Move viewport                                  |
+| Zoom in           | Cmd+= / Scroll up / Pinch out                        | Zoom toward cursor position                    |
+| Zoom out          | Cmd+- / Scroll down / Pinch in                       | Zoom toward cursor position                    |
+| Zoom to fit all   | Shift+1                                              | Fit all content in view with padding           |
+| Zoom to selection | Shift+2                                              | Fit selected nodes in view                     |
+| Zoom to 100%      | Cmd+0                                                | Reset to actual pixels                         |
+| Zoom to 50%/200%  | Cmd+1 / Cmd+2                                        | Preset zoom levels                             |
+| Pixel preview     | —                                                    | Render at 1x showing actual pixels             |
+| Rulers            | Shift+R                                              | Toggle rulers on canvas edges                  |
+| Grid              | Cmd+'                                                | Toggle layout grid overlay                     |
+| Guides            | Drag from ruler                                      | Create horizontal/vertical guide line          |
+| Minimap           | —                                                    | Small overview in bottom-right corner (toggle) |
 
 ### Selection & manipulation
 
-| Action | Input | Behavior |
-|--------|-------|----------|
-| Select | Click | Select topmost node under cursor |
-| Deep select | Double-click | Enter group/frame, select child |
-| Multi-select | Shift+click | Toggle node in selection |
-| Marquee select | Drag on empty canvas | Select all nodes intersecting rectangle |
-| Move | Drag selected | Move by delta. Shift constrains to axis. Smart guides snap to edges/centers of siblings |
-| Resize | Drag handle | 8 handles around selection. Shift constrains proportions. Alt resizes from center |
-| Rotate | Hover just outside corner handle → rotate cursor → drag | Rotation. Shift snaps to 15° increments |
-| Scale | K then drag | Scale tool, resizes content including text size and stroke weight |
-| Nudge | Arrow keys | Move 1px. Shift+arrow moves 10px |
-| Duplicate | Alt+drag / Cmd+D | Duplicate in place or at drag position |
-| Copy/Paste | Cmd+C / Cmd+V | Clipboard. Paste positions at cursor or center of viewport |
-| Copy as CSS | Cmd+Shift+C | Copy selected node's styles as CSS to clipboard |
-| Delete | Backspace / Delete | Remove selected nodes |
+| Action         | Input                                                   | Behavior                                                                                |
+| -------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Select         | Click                                                   | Select topmost node under cursor                                                        |
+| Deep select    | Double-click                                            | Enter group/frame, select child                                                         |
+| Multi-select   | Shift+click                                             | Toggle node in selection                                                                |
+| Marquee select | Drag on empty canvas                                    | Select all nodes intersecting rectangle                                                 |
+| Move           | Drag selected                                           | Move by delta. Shift constrains to axis. Smart guides snap to edges/centers of siblings |
+| Resize         | Drag handle                                             | 8 handles around selection. Shift constrains proportions. Alt resizes from center       |
+| Rotate         | Hover just outside corner handle → rotate cursor → drag | Rotation. Shift snaps to 15° increments                                                 |
+| Scale          | K then drag                                             | Scale tool, resizes content including text size and stroke weight                       |
+| Nudge          | Arrow keys                                              | Move 1px. Shift+arrow moves 10px                                                        |
+| Duplicate      | Alt+drag / Cmd+D                                        | Duplicate in place or at drag position                                                  |
+| Copy/Paste     | Cmd+C / Cmd+V                                           | Clipboard. Paste positions at cursor or center of viewport                              |
+| Copy as CSS    | Cmd+Shift+C                                             | Copy selected node's styles as CSS to clipboard                                         |
+| Delete         | Backspace / Delete                                      | Remove selected nodes                                                                   |
 
 ### Smart guides & snapping
 
-| Feature | Behavior |
-|---------|----------|
-| Edge snapping | Red lines appear when edges align with siblings (±1px threshold) |
-| Center snapping | Vertical/horizontal center lines shown |
-| Spacing guides | Pink dimension labels when equal spacing detected between 3+ objects |
-| Parent padding | Snap to parent's padding boundaries |
-| Grid snapping | Snap to pixel grid (configurable: 1px, 8px, custom) |
-| Distance labels | Shows distance (px) between selected node and hovered node |
+| Feature         | Behavior                                                             |
+| --------------- | -------------------------------------------------------------------- |
+| Edge snapping   | Red lines appear when edges align with siblings (±1px threshold)     |
+| Center snapping | Vertical/horizontal center lines shown                               |
+| Spacing guides  | Pink dimension labels when equal spacing detected between 3+ objects |
+| Parent padding  | Snap to parent's padding boundaries                                  |
+| Grid snapping   | Snap to pixel grid (configurable: 1px, 8px, custom)                  |
+| Distance labels | Shows distance (px) between selected node and hovered node           |
 
 ### Shapes
 
-| Tool | Shortcut | Draw behavior | Modifier keys |
-|------|----------|---------------|---------------|
-| Frame | F | Click+drag to create sized frame. Click to create default (100×100) | Shift: square. Alt: from center |
-| Section | Shift+S | Click+drag to create section region | — |
-| Rectangle | R | Click+drag | Shift: square. Alt: from center. Both: square from center |
-| Ellipse | O | Click+drag | Shift: circle. Alt: from center |
-| Line | L | Click+drag | Shift: constrain to 0°/45°/90° |
-| Arrow | Shift+L | Click+drag, auto-adds arrow endpoint | Shift: constrain angle |
-| Polygon | — | Click+drag for size, then adjust sides in options bar | Shift: constrain proportions |
-| Star | — | Click+drag for outer radius, options bar for points/inner ratio | Shift: constrain proportions |
+| Tool      | Shortcut | Draw behavior                                                       | Modifier keys                                             |
+| --------- | -------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
+| Frame     | F        | Click+drag to create sized frame. Click to create default (100×100) | Shift: square. Alt: from center                           |
+| Section   | Shift+S  | Click+drag to create section region                                 | —                                                         |
+| Rectangle | R        | Click+drag                                                          | Shift: square. Alt: from center. Both: square from center |
+| Ellipse   | O        | Click+drag                                                          | Shift: circle. Alt: from center                           |
+| Line      | L        | Click+drag                                                          | Shift: constrain to 0°/45°/90°                            |
+| Arrow     | Shift+L  | Click+drag, auto-adds arrow endpoint                                | Shift: constrain angle                                    |
+| Polygon   | —        | Click+drag for size, then adjust sides in options bar               | Shift: constrain proportions                              |
+| Star      | —        | Click+drag for outer radius, options bar for points/inner ratio     | Shift: constrain proportions                              |
 
 ### Pen & Pencil
 
-| Action | Input | Behavior |
-|--------|-------|----------|
-| Place point | Click | Straight corner point |
-| Place curve point | Click+drag | Bezier curve, drag sets handle length/angle |
-| Close path | Click first point | Closes the path |
-| Cancel | Escape | Finish open path |
-| Continue path | Select endpoint + P | Resume drawing from an existing path end |
-| Edit point | Double-click node with Select tool | Enter vector edit mode |
-| Move point | Drag point | Move anchor point |
-| Adjust handle | Drag handle | Change curve shape. Alt+drag breaks handle symmetry |
-| Add point | Click on segment | Insert new anchor point on path |
-| Delete point | Select point + Delete | Remove point, path reconnects |
-| Toggle straight/curve | Double-click point | Convert between corner and smooth point |
-| Bend | Click segment + drag | Convert straight segment to curve |
-| Pencil freehand | Shift+P then drag | Freehand stroke, auto-simplified to bezier path |
+| Action                | Input                              | Behavior                                            |
+| --------------------- | ---------------------------------- | --------------------------------------------------- |
+| Place point           | Click                              | Straight corner point                               |
+| Place curve point     | Click+drag                         | Bezier curve, drag sets handle length/angle         |
+| Close path            | Click first point                  | Closes the path                                     |
+| Cancel                | Escape                             | Finish open path                                    |
+| Continue path         | Select endpoint + P                | Resume drawing from an existing path end            |
+| Edit point            | Double-click node with Select tool | Enter vector edit mode                              |
+| Move point            | Drag point                         | Move anchor point                                   |
+| Adjust handle         | Drag handle                        | Change curve shape. Alt+drag breaks handle symmetry |
+| Add point             | Click on segment                   | Insert new anchor point on path                     |
+| Delete point          | Select point + Delete              | Remove point, path reconnects                       |
+| Toggle straight/curve | Double-click point                 | Convert between corner and smooth point             |
+| Bend                  | Click segment + drag               | Convert straight segment to curve                   |
+| Pencil freehand       | Shift+P then drag                  | Freehand stroke, auto-simplified to bezier path     |
 
 ### Text
 
-| Action | Input | Behavior |
-|--------|-------|----------|
-| Create text box | T then click | Auto-width text, grows horizontally |
-| Create fixed-width text | T then click+drag | Fixed width, wraps and grows vertically |
-| Edit text | Double-click text node | Enter text editing mode |
-| Select word | Double-click word | Select word |
-| Select paragraph | Triple-click | Select paragraph |
-| Select all | Cmd+A (in text edit mode) | Select all text in this text node |
-| Bold range | Select text + Cmd+B | Toggle bold on selection |
-| Italic range | Select text + Cmd+I | Toggle italic on selection |
-| Underline | Select text + Cmd+U | Toggle underline |
-| Strikethrough | Select text + Cmd+Shift+X | Toggle strikethrough |
-| Change font/size | Select text + use options bar | Mixed styles within one text box |
-| Bulleted list | Select + options bar | Toggle unordered list |
-| Numbered list | Select + options bar | Toggle ordered list |
-| Link | Select text + Cmd+K | Add hyperlink |
-| Exit text edit | Escape / Click outside | Return to Select tool |
+| Action                  | Input                         | Behavior                                |
+| ----------------------- | ----------------------------- | --------------------------------------- |
+| Create text box         | T then click                  | Auto-width text, grows horizontally     |
+| Create fixed-width text | T then click+drag             | Fixed width, wraps and grows vertically |
+| Edit text               | Double-click text node        | Enter text editing mode                 |
+| Select word             | Double-click word             | Select word                             |
+| Select paragraph        | Triple-click                  | Select paragraph                        |
+| Select all              | Cmd+A (in text edit mode)     | Select all text in this text node       |
+| Bold range              | Select text + Cmd+B           | Toggle bold on selection                |
+| Italic range            | Select text + Cmd+I           | Toggle italic on selection              |
+| Underline               | Select text + Cmd+U           | Toggle underline                        |
+| Strikethrough           | Select text + Cmd+Shift+X     | Toggle strikethrough                    |
+| Change font/size        | Select text + use options bar | Mixed styles within one text box        |
+| Bulleted list           | Select + options bar          | Toggle unordered list                   |
+| Numbered list           | Select + options bar          | Toggle ordered list                     |
+| Link                    | Select text + Cmd+K           | Add hyperlink                           |
+| Exit text edit          | Escape / Click outside        | Return to Select tool                   |
 
 **Text auto-resize modes:**
+
 - **None** — fixed width and height, clips overflow
 - **Height** — fixed width, grows vertically to fit content
 - **Width and height** — grows both directions to fit content
@@ -332,6 +346,7 @@ Context-sensitive. Sections are grouped to match Figma UI3's modern layout. Sect
 **Header row** — shows selection name, component status, and quick actions (mask, create component, boolean ops, more ⋯ menu).
 
 **Appearance section:**
+
 - W, H inputs (width, height)
 - Rotation input (degrees)
 - Corner radius: uniform input, click 🔓 for independent corners (TL, TR, BR, BL)
@@ -341,11 +356,13 @@ Context-sensitive. Sections are grouped to match Figma UI3's modern layout. Sect
 - Clip content checkbox
 
 **Layout section:**
+
 - Shows "Use auto layout" button when no layout set
 - When auto-layout active: direction, gap, padding, justify, align, child sizing (see Layout panel details below)
 - When grid active: template columns/rows, gaps (see Grid layout details below)
 
 **Position section:**
+
 - X, Y inputs (absolute position on canvas)
 - Constraints visual picker (box with pin toggles for each edge + center)
 - Horizontal: left / right / left+right / center / scale
@@ -353,6 +370,7 @@ Context-sensitive. Sections are grouped to match Figma UI3's modern layout. Sect
 - "Ignore auto layout" toggle (absolute position within auto-layout parent)
 
 **Fill section:**
+
 - Add/remove fills (multiple fills supported, stacked with blend modes)
 - Types: solid, linear gradient, radial gradient, angular gradient, diamond gradient, image
 - Color picker: HSB/RGB/Hex input, opacity slider, eyedropper tool (I)
@@ -361,6 +379,7 @@ Context-sensitive. Sections are grouped to match Figma UI3's modern layout. Sect
 - Variable binding: click 🔗 icon → pick variable from collection
 
 **Stroke section:**
+
 - Add/remove strokes (multiple supported)
 - Color (same as fill)
 - Weight: number input (supports independent per-side: top/right/bottom/left)
@@ -371,6 +390,7 @@ Context-sensitive. Sections are grouped to match Figma UI3's modern layout. Sect
 - Variable binding for color
 
 **Effects section:**
+
 - Add/remove effects (stackable)
 - Drop shadow: color, X offset, Y offset, blur, spread, show behind node toggle
 - Inner shadow: color, X offset, Y offset, blur, spread
@@ -378,6 +398,7 @@ Context-sensitive. Sections are grouped to match Figma UI3's modern layout. Sect
 - Background blur: radius
 
 **Export section:**
+
 - Add export presets: format (PNG/SVG/PDF/JPG) + scale (0.5x-4x) + suffix
 - Multiple presets per node
 - Export selected: Cmd+Shift+E
@@ -405,6 +426,7 @@ Appears in properties panel when a frame with layout is selected.
 ```
 
 **CSS Grid mode** (when Yoga supports it):
+
 ```
 ┌─────────────────────────────────────┐
 │ Grid Layout                    [X]  │
@@ -438,31 +460,31 @@ Left side panel. Tree view of the document.
 └──────────────────────────────────────┘
 ```
 
-| Action | Input | Behavior |
-|--------|-------|----------|
-| Select layer | Click | Select corresponding node on canvas |
-| Multi-select | Cmd+click | Add/remove from selection |
-| Range select | Shift+click | Select range between last selected and clicked |
-| Expand/collapse | Click ▸/▾ | Toggle children visibility |
-| Rename | Double-click name | Inline rename |
-| Reorder | Drag layer | Move in tree (changes z-order and parent) |
-| Toggle visibility | Click 👁 | Show/hide node |
-| Toggle lock | Click 🔒 | Lock/unlock node |
-| Drag into frame | Drag layer onto another layer | Reparent node |
-| Search | Cmd+F in panel | Filter layers by name |
+| Action            | Input                         | Behavior                                       |
+| ----------------- | ----------------------------- | ---------------------------------------------- |
+| Select layer      | Click                         | Select corresponding node on canvas            |
+| Multi-select      | Cmd+click                     | Add/remove from selection                      |
+| Range select      | Shift+click                   | Select range between last selected and clicked |
+| Expand/collapse   | Click ▸/▾                     | Toggle children visibility                     |
+| Rename            | Double-click name             | Inline rename                                  |
+| Reorder           | Drag layer                    | Move in tree (changes z-order and parent)      |
+| Toggle visibility | Click 👁                      | Show/hide node                                 |
+| Toggle lock       | Click 🔒                      | Lock/unlock node                               |
+| Drag into frame   | Drag layer onto another layer | Reparent node                                  |
+| Search            | Cmd+F in panel                | Filter layers by name                          |
 
 ### Components
 
-| Action | How |
-|--------|-----|
-| Create component | Select frame → Right-click → "Create component" or Cmd+Alt+K |
-| Create instance | Drag component from assets panel or Alt+drag existing instance |
-| Detach instance | Right-click instance → "Detach instance" |
-| Reset overrides | Right-click instance → "Reset all overrides" |
-| Edit main component | Double-click instance → "Go to main component" |
-| Create variant | Select component → "+" button in properties → set variant property values |
-| Swap variant | Select instance → variant dropdown in properties panel |
-| Add component prop | Select main component → properties panel → "+" next to properties section |
+| Action               | How                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Create component     | Select frame → Right-click → "Create component" or Cmd+Alt+K                                                            |
+| Create instance      | Drag component from assets panel or Alt+drag existing instance                                                          |
+| Detach instance      | Right-click instance → "Detach instance"                                                                                |
+| Reset overrides      | Right-click instance → "Reset all overrides"                                                                            |
+| Edit main component  | Double-click instance → "Go to main component"                                                                          |
+| Create variant       | Select component → "+" button in properties → set variant property values                                               |
+| Swap variant         | Select instance → variant dropdown in properties panel                                                                  |
+| Add component prop   | Select main component → properties panel → "+" next to properties section                                               |
 | Component prop types | Text (overridable string), Boolean (show/hide layer), Instance swap (replace nested instance), Variant (select variant) |
 
 ### Variables panel
@@ -493,65 +515,65 @@ Separate panel (tab alongside properties), or modal.
 └──────────────────────────────────────┘
 ```
 
-| Action | How |
-|--------|-----|
-| Create collection | "+" button at top → name collection → add modes |
-| Create variable | "+" inside collection → type (color/number/string/boolean) → name → values per mode |
-| Bind to node | Select node → click 🔗 in fill/stroke/text/etc. → pick variable |
-| Edit variable | Click value cell → edit inline |
-| Switch mode | Top-right mode switcher in canvas → all bound properties update live |
-| Alias variable | Set variable value to reference another variable |
+| Action            | How                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| Create collection | "+" button at top → name collection → add modes                                     |
+| Create variable   | "+" inside collection → type (color/number/string/boolean) → name → values per mode |
+| Bind to node      | Select node → click 🔗 in fill/stroke/text/etc. → pick variable                     |
+| Edit variable     | Click value cell → edit inline                                                      |
+| Switch mode       | Top-right mode switcher in canvas → all bound properties update live                |
+| Alias variable    | Set variable value to reference another variable                                    |
 
 ### Boolean Operations
 
-| Operation | Shortcut | Description |
-|-----------|----------|-------------|
-| Union | Cmd+Shift+U | Combine shapes |
-| Subtract | Cmd+Shift+S | Cut one shape from another |
-| Intersect | Cmd+Shift+I | Keep overlapping area |
-| Exclude | Cmd+Shift+E | Keep non-overlapping areas |
-| Flatten | Cmd+E | Merge into single vector |
+| Operation | Shortcut    | Description                |
+| --------- | ----------- | -------------------------- |
+| Union     | Cmd+Shift+U | Combine shapes             |
+| Subtract  | Cmd+Shift+S | Cut one shape from another |
+| Intersect | Cmd+Shift+I | Keep overlapping area      |
+| Exclude   | Cmd+Shift+E | Keep non-overlapping areas |
+| Flatten   | Cmd+E       | Merge into single vector   |
 
 ### Alignment & distribution
 
 Available when 2+ nodes selected. Shown in options bar and right-click menu.
 
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| Align left | Alt+A | Align left edges |
-| Align horizontal center | Alt+H | Align horizontal centers |
-| Align right | Alt+D | Align right edges |
-| Align top | Alt+W | Align top edges |
-| Align vertical center | Alt+V | Align vertical centers |
-| Align bottom | Alt+S | Align bottom edges |
-| Distribute horizontally | Ctrl+Alt+H | Equal horizontal spacing |
-| Distribute vertically | Ctrl+Alt+V | Equal vertical spacing |
-| Tidy up | Ctrl+Alt+T | Auto-arrange into grid with equal spacing |
-| Match width | — | Set all selected to same width |
-| Match height | — | Set all selected to same height |
+| Action                  | Shortcut   | Description                               |
+| ----------------------- | ---------- | ----------------------------------------- |
+| Align left              | Alt+A      | Align left edges                          |
+| Align horizontal center | Alt+H      | Align horizontal centers                  |
+| Align right             | Alt+D      | Align right edges                         |
+| Align top               | Alt+W      | Align top edges                           |
+| Align vertical center   | Alt+V      | Align vertical centers                    |
+| Align bottom            | Alt+S      | Align bottom edges                        |
+| Distribute horizontally | Ctrl+Alt+H | Equal horizontal spacing                  |
+| Distribute vertically   | Ctrl+Alt+V | Equal vertical spacing                    |
+| Tidy up                 | Ctrl+Alt+T | Auto-arrange into grid with equal spacing |
+| Match width             | —          | Set all selected to same width            |
+| Match height            | —          | Set all selected to same height           |
 
 ### Pages
 
-| Action | How |
-|--------|-----|
-| Switch page | Click page name in layers panel dropdown |
-| Create page | "+" next to page dropdown |
-| Rename page | Double-click page name |
-| Delete page | Right-click → Delete (cannot delete last page) |
-| Reorder pages | Drag in dropdown list |
-| Duplicate page | Right-click → Duplicate |
+| Action         | How                                            |
+| -------------- | ---------------------------------------------- |
+| Switch page    | Click page name in layers panel dropdown       |
+| Create page    | "+" next to page dropdown                      |
+| Rename page    | Double-click page name                         |
+| Delete page    | Right-click → Delete (cannot delete last page) |
+| Reorder pages  | Drag in dropdown list                          |
+| Duplicate page | Right-click → Duplicate                        |
 
 ### Import & Export
 
-| Format | Import | Export |
-|--------|--------|--------|
-| .fig (Figma) | ✅ Kiwi binary codec | ✅ Kiwi + Zstd + thumbnail |
-| .png | ✅ (image fill) | ✅ (1x, 2x, 3x) via CLI and editor |
-| .jpg | ✅ (image fill) | ✅ |
-| .webp | — | ✅ |
-| .svg | planned | planned |
-| .pdf | — | planned |
-| Figma clipboard | ✅ copy/paste between apps | ✅ |
+| Format          | Import                     | Export                             |
+| --------------- | -------------------------- | ---------------------------------- |
+| .fig (Figma)    | ✅ Kiwi binary codec       | ✅ Kiwi + Zstd + thumbnail         |
+| .png            | ✅ (image fill)            | ✅ (1x, 2x, 3x) via CLI and editor |
+| .jpg            | ✅ (image fill)            | ✅                                 |
+| .webp           | —                          | ✅                                 |
+| .svg            | planned                    | planned                            |
+| .pdf            | —                          | planned                            |
+| Figma clipboard | ✅ copy/paste between apps | ✅                                 |
 
 ### AI tools — 26 tools
 
@@ -559,66 +581,66 @@ Tools are defined once in `packages/core/src/tools/schema.ts` as framework-agnos
 
 #### Read (7 tools)
 
-| Tool | Description |
-|------|-------------|
-| `get_selection` | Get selected nodes |
-| `get_page_tree` | Get page node tree |
-| `get_node` | Get node by ID |
-| `find_nodes` | Find nodes by name or type |
-| `list_pages` | List all pages |
-| `list_variables` | List design variables |
-| `list_collections` | List variable collections |
+| Tool               | Description                |
+| ------------------ | -------------------------- |
+| `get_selection`    | Get selected nodes         |
+| `get_page_tree`    | Get page node tree         |
+| `get_node`         | Get node by ID             |
+| `find_nodes`       | Find nodes by name or type |
+| `list_pages`       | List all pages             |
+| `list_variables`   | List design variables      |
+| `list_collections` | List variable collections  |
 
 #### Create (4 tools)
 
-| Tool | Description |
-|------|-------------|
-| `create_shape` | Create a shape (frame, rect, ellipse, line, polygon, star, text) |
-| `render` | Render JSX to design nodes |
-| `create_component` | Convert frame to component |
-| `create_instance` | Create a component instance |
+| Tool               | Description                                                      |
+| ------------------ | ---------------------------------------------------------------- |
+| `create_shape`     | Create a shape (frame, rect, ellipse, line, polygon, star, text) |
+| `render`           | Render JSX to design nodes                                       |
+| `create_component` | Convert frame to component                                       |
+| `create_instance`  | Create a component instance                                      |
 
 #### Modify (10 tools)
 
-| Tool | Description |
-|------|-------------|
-| `set_fill` | Set fill color |
-| `set_stroke` | Set stroke color and weight |
-| `set_effects` | Set effects (shadow, blur) |
-| `update_node` | Update node properties (position, size, text, etc.) |
-| `set_layout` | Set auto-layout properties |
-| `set_constraints` | Set resize constraints |
-| `rename_node` | Rename a node |
-| `reparent_node` | Move node to a different parent |
-| `clone_node` | Duplicate a node |
-| `delete_node` | Delete a node |
+| Tool              | Description                                         |
+| ----------------- | --------------------------------------------------- |
+| `set_fill`        | Set fill color                                      |
+| `set_stroke`      | Set stroke color and weight                         |
+| `set_effects`     | Set effects (shadow, blur)                          |
+| `update_node`     | Update node properties (position, size, text, etc.) |
+| `set_layout`      | Set auto-layout properties                          |
+| `set_constraints` | Set resize constraints                              |
+| `rename_node`     | Rename a node                                       |
+| `reparent_node`   | Move node to a different parent                     |
+| `clone_node`      | Duplicate a node                                    |
+| `delete_node`     | Delete a node                                       |
 
 #### Organize (4 tools)
 
-| Tool | Description |
-|------|-------------|
-| `select_nodes` | Set selection |
-| `group_nodes` | Group nodes |
-| `ungroup_node` | Ungroup |
-| `switch_page` | Switch to a different page |
+| Tool           | Description                |
+| -------------- | -------------------------- |
+| `select_nodes` | Set selection              |
+| `group_nodes`  | Group nodes                |
+| `ungroup_node` | Ungroup                    |
+| `switch_page`  | Switch to a different page |
 
 #### Escape hatch (1 tool)
 
-| Tool | Description |
-|------|-------------|
+| Tool        | Description                                   |
+| ----------- | --------------------------------------------- |
 | `eval_code` | Execute code with Figma-compatible plugin API |
 
 ### Prototyping (planned)
 
-| Feature | Description |
-|---------|-------------|
-| Connections | Link frames with interaction triggers |
-| Triggers | Click, hover, press, mouse enter/leave, after delay, drag |
-| Actions | Navigate to, overlay, swap, back, scroll to, open URL |
-| Transitions | Instant, dissolve, smart animate, move in/out, push, slide |
-| Easing | Linear, ease-in, ease-out, ease-in-out, spring, custom bezier |
-| Preview | Play prototype in browser |
-| Device frames | iPhone, Android, Desktop, custom sizes |
+| Feature       | Description                                                   |
+| ------------- | ------------------------------------------------------------- |
+| Connections   | Link frames with interaction triggers                         |
+| Triggers      | Click, hover, press, mouse enter/leave, after delay, drag     |
+| Actions       | Navigate to, overlay, swap, back, scroll to, open URL         |
+| Transitions   | Instant, dissolve, smart animate, move in/out, push, slide    |
+| Easing        | Linear, ease-in, ease-out, ease-in-out, spring, custom bezier |
+| Preview       | Play prototype in browser                                     |
+| Device frames | iPhone, Android, Desktop, custom sizes                        |
 
 ---
 
@@ -655,36 +677,36 @@ Document
 
 #### Node types (29, from Figma Kiwi schema)
 
-| Type | ID | Description |
-|------|----|-------------|
-| DOCUMENT | 1 | Root, one per file |
-| CANVAS | 2 | Page |
-| GROUP | 3 | Group container |
-| FRAME | 4 | Primary container (artboard), supports auto-layout |
-| BOOLEAN_OPERATION | 5 | Union/subtract/intersect/exclude result |
-| VECTOR | 6 | Freeform vector path |
-| STAR | 7 | Star shape |
-| LINE | 8 | Line |
-| ELLIPSE | 9 | Ellipse/circle, supports arc data |
-| RECTANGLE | 10 | Rectangle |
-| REGULAR_POLYGON | 11 | Regular polygon (3-12 sides) |
-| ROUNDED_RECTANGLE | 12 | Rectangle with smooth corners |
-| TEXT | 13 | Text with rich formatting |
-| SLICE | 14 | Export region |
-| SYMBOL | 15 | Component (main) |
-| INSTANCE | 16 | Component instance |
-| STICKY | 17 | FigJam sticky note |
-| SHAPE_WITH_TEXT | 18 | FigJam shape |
-| CONNECTOR | 19 | Connector line between nodes |
-| CODE_BLOCK | 20 | FigJam code block |
-| WIDGET | 21 | Plugin widget |
-| STAMP | 22 | FigJam stamp |
-| MEDIA | 23 | Video/GIF |
-| HIGHLIGHT | 24 | FigJam highlight |
-| SECTION | 25 | Canvas section (organizational) |
-| SECTION_OVERLAY | 26 | Section overlay |
-| WASHI_TAPE | 27 | FigJam washi tape |
-| VARIABLE | 28 | Variable definition node |
+| Type              | ID  | Description                                        |
+| ----------------- | --- | -------------------------------------------------- |
+| DOCUMENT          | 1   | Root, one per file                                 |
+| CANVAS            | 2   | Page                                               |
+| GROUP             | 3   | Group container                                    |
+| FRAME             | 4   | Primary container (artboard), supports auto-layout |
+| BOOLEAN_OPERATION | 5   | Union/subtract/intersect/exclude result            |
+| VECTOR            | 6   | Freeform vector path                               |
+| STAR              | 7   | Star shape                                         |
+| LINE              | 8   | Line                                               |
+| ELLIPSE           | 9   | Ellipse/circle, supports arc data                  |
+| RECTANGLE         | 10  | Rectangle                                          |
+| REGULAR_POLYGON   | 11  | Regular polygon (3-12 sides)                       |
+| ROUNDED_RECTANGLE | 12  | Rectangle with smooth corners                      |
+| TEXT              | 13  | Text with rich formatting                          |
+| SLICE             | 14  | Export region                                      |
+| SYMBOL            | 15  | Component (main)                                   |
+| INSTANCE          | 16  | Component instance                                 |
+| STICKY            | 17  | FigJam sticky note                                 |
+| SHAPE_WITH_TEXT   | 18  | FigJam shape                                       |
+| CONNECTOR         | 19  | Connector line between nodes                       |
+| CODE_BLOCK        | 20  | FigJam code block                                  |
+| WIDGET            | 21  | Plugin widget                                      |
+| STAMP             | 22  | FigJam stamp                                       |
+| MEDIA             | 23  | Video/GIF                                          |
+| HIGHLIGHT         | 24  | FigJam highlight                                   |
+| SECTION           | 25  | Canvas section (organizational)                    |
+| SECTION_OVERLAY   | 26  | Section overlay                                    |
+| WASHI_TAPE        | 27  | FigJam washi tape                                  |
+| VARIABLE          | 28  | Variable definition node                           |
 
 #### Core node properties
 
@@ -793,17 +815,17 @@ Nodes live in a flat `Map<string, Node>` keyed by GUID string. The tree structur
 ```typescript
 interface SceneGraph {
   nodes: Map<string, Node>
-  root: string                    // Document GUID
-  
+  root: string // Document GUID
+
   getNode(id: string): Node
   getChildren(id: string): Node[] // Sorted by position string
   getParent(id: string): Node | null
-  
+
   createNode(type: NodeType, parent: string, props: Partial<NodeChange>): Node
   updateNode(id: string, changes: Partial<NodeChange>): void
   deleteNode(id: string): void
   moveNode(id: string, newParent: string, position: string): void
-  
+
   // Queries
   findByType(type: NodeType): Node[]
   findByName(pattern: string): Node[]
@@ -820,34 +842,34 @@ We use the same **inverse command** pattern:
 
 ```typescript
 interface UndoEntry {
-  label: string                   // "Create Rectangle", "Change fill", etc.
-  forward: NodeChange[]           // Changes to apply
-  inverse: NodeChange[]           // Changes to revert (auto-computed)
+  label: string // "Create Rectangle", "Change fill", etc.
+  forward: NodeChange[] // Changes to apply
+  inverse: NodeChange[] // Changes to revert (auto-computed)
   timestamp: number
 }
 
 interface UndoManager {
   undoStack: UndoEntry[]
   redoStack: UndoEntry[]
-  
-  apply(changes: NodeChange[], label: string): void  // Pushes inverse onto undoStack
-  undo(): void                                        // Pops undoStack, pushes to redoStack
-  redo(): void                                        // Pops redoStack, pushes to undoStack
-  
-  beginBatch(label: string): void  // Group multiple changes into one undo step
+
+  apply(changes: NodeChange[], label: string): void // Pushes inverse onto undoStack
+  undo(): void // Pops undoStack, pushes to redoStack
+  redo(): void // Pops redoStack, pushes to undoStack
+
+  beginBatch(label: string): void // Group multiple changes into one undo step
   commitBatch(): void
 }
 ```
 
 How inverse computation works:
 
-| Operation | Forward | Inverse |
-|-----------|---------|---------|
-| Create node | `{guid, phase: CREATED, ...props}` | `{guid, phase: REMOVED}` |
-| Delete node | `{guid, phase: REMOVED}` | `{guid, phase: CREATED, ...allProps}` (snapshot) |
-| Change prop | `{guid, fill: "#F00"}` | `{guid, fill: "#00F"}` (previous value) |
-| Move node | `{guid, parentIndex: newParent}` | `{guid, parentIndex: oldParent}` |
-| Reparent | `{guid, parentIndex: newParent}` | `{guid, parentIndex: oldParent}` |
+| Operation   | Forward                            | Inverse                                          |
+| ----------- | ---------------------------------- | ------------------------------------------------ |
+| Create node | `{guid, phase: CREATED, ...props}` | `{guid, phase: REMOVED}`                         |
+| Delete node | `{guid, phase: REMOVED}`           | `{guid, phase: CREATED, ...allProps}` (snapshot) |
+| Change prop | `{guid, fill: "#F00"}`             | `{guid, fill: "#00F"}` (previous value)          |
+| Move node   | `{guid, parentIndex: newParent}`   | `{guid, parentIndex: oldParent}`                 |
+| Reparent    | `{guid, parentIndex: newParent}`   | `{guid, parentIndex: oldParent}`                 |
 
 Before applying any change, we snapshot the affected fields. The snapshot becomes the inverse. This is simple, correct, and the exact pattern Figma uses.
 
@@ -872,6 +894,7 @@ The goal: open any `.fig` file and render it identically to Figma.
 ```
 
 We already have the full pipeline from figma-use:
+
 - **Kiwi schema**: 194 definitions, 2178 lines (in git: `9216dcc^:packages/cli/src/multiplayer/schema.ts`)
 - **Codec**: encode/decode Messages with Kiwi, Zstd compress/decompress (`codec.ts`, 546 lines)
 - **Protocol**: wire format parsing, message type detection (`protocol.ts`, 238 lines)
@@ -907,12 +930,12 @@ Both NexDesign and Figma use Skia CanvasKit for rendering. This means identical 
 Crawl Figma files → for each:
   1. Export from Figma (via REST API or screenshot):
      figma-use export node <id> --scale 2 --output expected.png
-  
+
   2. Import .fig into NexDesign
-  
+
   3. Render same node in NexDesign:
      nexdesign render <id> --scale 2 --output actual.png
-  
+
   4. Compare with pixelmatch:
      - Threshold: 0.1 (allow minor subpixel differences)
      - Report: diff percentage, diff image, failing regions
@@ -967,13 +990,13 @@ bun run test:figma:report
 
 **Compatibility tiers:**
 
-| Tier | Requirement | What it covers |
-|------|-------------|----------------|
-| T0 | Exact pixels | Basic shapes, solid fills, positioning, sizing |
-| T1 | < 0.1% diff | Auto-layout, text (minor font hinting differences) |
-| T2 | < 0.5% diff | Effects, gradients, masks |
-| T3 | < 1% diff | Complex components, real-world files |
-| T4 | Visual match | Corner smoothing, subpixel rendering edge cases |
+| Tier | Requirement  | What it covers                                     |
+| ---- | ------------ | -------------------------------------------------- |
+| T0   | Exact pixels | Basic shapes, solid fills, positioning, sizing     |
+| T1   | < 0.1% diff  | Auto-layout, text (minor font hinting differences) |
+| T2   | < 0.5% diff  | Effects, gradients, masks                          |
+| T3   | < 1% diff    | Complex components, real-world files               |
+| T4   | Visual match | Corner smoothing, subpixel rendering edge cases    |
 
 ### Layout Engine: Yoga
 
@@ -992,22 +1015,22 @@ We'll wrap Yoga with a thin adapter that speaks our property names (`fill_contai
 
 Mapping Figma layout fields to Yoga:
 
-| Figma (NodeChange field) | Yoga equivalent |
-|---|---|
-| `stackMode: HORIZONTAL` | `flexDirection: row` |
-| `stackMode: VERTICAL` | `flexDirection: column` |
-| `stackSpacing` | `gap` |
-| `stackPadding` / `stackHorizontalPadding` / `stackVerticalPadding` / `stackPaddingRight` / `stackPaddingBottom` | `padding*` |
-| `stackJustify` (MIN/CENTER/MAX/SPACE_BETWEEN) | `justifyContent` |
-| `stackCounterAlign` / `stackCounterAlignItems` | `alignItems` |
-| `stackPrimarySizing: FIXED/HUG/FILL` | `width/height: fixed/auto/flex-grow` |
-| `stackCounterSizing: FIXED/HUG/FILL` | Cross-axis sizing |
-| `stackChildPrimaryGrow` | `flexGrow` |
-| `stackChildAlignSelf` | `alignSelf` |
-| `stackPositioning: ABSOLUTE` | `position: absolute` |
-| `gridRowCount` / `gridColumnCount` | CSS Grid `grid-template-rows/columns` count |
-| `gridRowGap` / `gridColumnGap` | `row-gap` / `column-gap` |
-| `gridColumnSizes[]` / `gridRowSizes[]` | `grid-template-columns/rows` (track sizes) |
+| Figma (NodeChange field)                                                                                        | Yoga equivalent                             |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `stackMode: HORIZONTAL`                                                                                         | `flexDirection: row`                        |
+| `stackMode: VERTICAL`                                                                                           | `flexDirection: column`                     |
+| `stackSpacing`                                                                                                  | `gap`                                       |
+| `stackPadding` / `stackHorizontalPadding` / `stackVerticalPadding` / `stackPaddingRight` / `stackPaddingBottom` | `padding*`                                  |
+| `stackJustify` (MIN/CENTER/MAX/SPACE_BETWEEN)                                                                   | `justifyContent`                            |
+| `stackCounterAlign` / `stackCounterAlignItems`                                                                  | `alignItems`                                |
+| `stackPrimarySizing: FIXED/HUG/FILL`                                                                            | `width/height: fixed/auto/flex-grow`        |
+| `stackCounterSizing: FIXED/HUG/FILL`                                                                            | Cross-axis sizing                           |
+| `stackChildPrimaryGrow`                                                                                         | `flexGrow`                                  |
+| `stackChildAlignSelf`                                                                                           | `alignSelf`                                 |
+| `stackPositioning: ABSOLUTE`                                                                                    | `position: absolute`                        |
+| `gridRowCount` / `gridColumnCount`                                                                              | CSS Grid `grid-template-rows/columns` count |
+| `gridRowGap` / `gridColumnGap`                                                                                  | `row-gap` / `column-gap`                    |
+| `gridColumnSizes[]` / `gridRowSizes[]`                                                                          | `grid-template-columns/rows` (track sizes)  |
 
 ### File Format: Kiwi binary
 
@@ -1033,18 +1056,18 @@ Fully peer-to-peer via Trystero (WebRTC). No relay server — signaling via MQTT
 
 ## Tech Stack
 
-| Layer | Choice | Why |
-|-------|--------|-----|
-| Rendering | Skia CanvasKit WASM | Same as Figma/Pencil, proven performance |
-| UI | Vue 3 + TypeScript | Reactivity, composables, SFC ecosystem |
-| Styling | Tailwind CSS 4 | Fast iteration |
-| State | Vue reactivity + composables | Native to the framework, zero boilerplate |
-| Layout | Yoga WASM | Flexbox, battle-tested (CSS Grid blocked on upstream) |
-| Desktop | Tauri v2 | ~7MB vs Electron's ~100MB, Rust backend |
-| AI | Vercel AI SDK + OpenRouter | Client-side tool use, no backend |
-| Collaboration | Trystero (WebRTC) + Yjs (CRDT) | P2P sync, no server required |
-| File format | Kiwi binary + Zstd | Compact, fast, .fig compatible |
-| Build | Bun + Vite 7 | Fast bundling, native TS |
+| Layer         | Choice                         | Why                                                   |
+| ------------- | ------------------------------ | ----------------------------------------------------- |
+| Rendering     | Skia CanvasKit WASM            | Same as Figma/Pencil, proven performance              |
+| UI            | Vue 3 + TypeScript             | Reactivity, composables, SFC ecosystem                |
+| Styling       | Tailwind CSS 4                 | Fast iteration                                        |
+| State         | Vue reactivity + composables   | Native to the framework, zero boilerplate             |
+| Layout        | Yoga WASM                      | Flexbox, battle-tested (CSS Grid blocked on upstream) |
+| Desktop       | Tauri v2                       | ~7MB vs Electron's ~100MB, Rust backend               |
+| AI            | Vercel AI SDK + OpenRouter     | Client-side tool use, no backend                      |
+| Collaboration | Trystero (WebRTC) + Yjs (CRDT) | P2P sync, no server required                          |
+| File format   | Kiwi binary + Zstd             | Compact, fast, .fig compatible                        |
+| Build         | Bun + Vite 7                   | Fast bundling, native TS                              |
 
 ## Phases
 
@@ -1117,10 +1140,10 @@ tests/
 
 We benchmarked the Rust `kiwi-schema` crate (by Evan Wallace, 1.5M downloads) against our JS decoder:
 
-| File | JS (Bun) | Rust (native) |
-|------|----------|---------------|
-| material3 (87K nodes, 44.7 MB) | **168 ms** | 595 ms |
-| nuxtui (315K nodes, 229 MB) | **785 ms** | 4,215 ms |
+| File                           | JS (Bun)   | Rust (native) |
+| ------------------------------ | ---------- | ------------- |
+| material3 (87K nodes, 44.7 MB) | **168 ms** | 595 ms        |
+| nuxtui (315K nodes, 229 MB)    | **785 ms** | 4,215 ms      |
 
 **JS is 3.5–5.4x faster.** The Rust crate uses dynamic `Value` enum with `HashMap<&str, Value>` per object — heap allocations for every field of every node. Our JS decoder uses `compileSchema()` which generates specialized decode functions via `new Function()` — the JIT optimizes these into near-native code with zero boxing overhead.
 
@@ -1144,128 +1167,128 @@ Full Figma-compatible shortcut map. Implemented shortcuts marked with ✅.
 
 ### Tools (single key, no modifier)
 
-| Key | Tool | Status |
-|-----|------|--------|
-| V | Move/Select | ✅ |
-| K | Scale | |
-| H | Hand | ✅ |
-| F | Frame | ✅ |
-| S | Section / Slice | |
-| R | Rectangle | ✅ |
-| O | Ellipse | ✅ |
-| L | Line | ✅ |
-| ⇧L | Arrow | |
-| P | Pen | |
-| ⇧P | Pencil | |
-| T | Text | ✅ |
-| C | Comment | |
-| I | Eyedropper | |
+| Key | Tool            | Status |
+| --- | --------------- | ------ |
+| V   | Move/Select     | ✅     |
+| K   | Scale           |        |
+| H   | Hand            | ✅     |
+| F   | Frame           | ✅     |
+| S   | Section / Slice |        |
+| R   | Rectangle       | ✅     |
+| O   | Ellipse         | ✅     |
+| L   | Line            | ✅     |
+| ⇧L  | Arrow           |        |
+| P   | Pen             |        |
+| ⇧P  | Pencil          |        |
+| T   | Text            | ✅     |
+| C   | Comment         |        |
+| I   | Eyedropper      |        |
 
 ### File
 
-| Shortcut | Action | Status |
-|----------|--------|--------|
-| ⌘N | New Window | |
-| ⌘O | Open File | ✅ |
-| ⌘W | Close Tab | |
-| ⌘S | Save | |
-| ⇧⌘E | Export… | |
+| Shortcut | Action     | Status |
+| -------- | ---------- | ------ |
+| ⌘N       | New Window |        |
+| ⌘O       | Open File  | ✅     |
+| ⌘W       | Close Tab  |        |
+| ⌘S       | Save       |        |
+| ⇧⌘E      | Export…    |        |
 
 ### Edit
 
-| Shortcut | Action | Status |
-|----------|--------|--------|
-| ⌘Z | Undo | ✅ |
-| ⇧⌘Z | Redo | ✅ |
-| ⌘X | Cut | |
-| ⌘C | Copy | |
-| ⌘V | Paste | |
-| ⇧⌘V | Paste Over Selection | |
-| ⌘D | Duplicate | ✅ |
-| ⌫ | Delete | ✅ |
-| ⌘A | Select All | ✅ |
-| ⇧⌘A | Select Inverse | |
-| ⌥⌘C | Copy Properties | |
-| ⌥⌘V | Paste Properties | |
-| ⌃C | Pick Color (Eyedropper) | |
+| Shortcut | Action                  | Status |
+| -------- | ----------------------- | ------ |
+| ⌘Z       | Undo                    | ✅     |
+| ⇧⌘Z      | Redo                    | ✅     |
+| ⌘X       | Cut                     |        |
+| ⌘C       | Copy                    |        |
+| ⌘V       | Paste                   |        |
+| ⇧⌘V      | Paste Over Selection    |        |
+| ⌘D       | Duplicate               | ✅     |
+| ⌫        | Delete                  | ✅     |
+| ⌘A       | Select All              | ✅     |
+| ⇧⌘A      | Select Inverse          |        |
+| ⌥⌘C      | Copy Properties         |        |
+| ⌥⌘V      | Paste Properties        |        |
+| ⌃C       | Pick Color (Eyedropper) |        |
 
 ### View
 
-| Shortcut | Action | Status |
-|----------|--------|--------|
-| ⌘' | Pixel Grid | |
-| ⌃G | Layout Guides | |
-| ⇧R | Rulers | |
-| ⌘\ | Show/Hide UI | |
-| ⌘= | Zoom In | ✅ |
-| ⌘- | Zoom Out | ✅ |
-| ⌘0 | Zoom to 100% | ✅ |
-| ⌘1 | Zoom to Fit | |
-| ⌘2 | Zoom to Selection | |
-| N / ⇧N | Next/Previous Frame | |
+| Shortcut | Action              | Status |
+| -------- | ------------------- | ------ |
+| ⌘'       | Pixel Grid          |        |
+| ⌃G       | Layout Guides       |        |
+| ⇧R       | Rulers              |        |
+| ⌘\       | Show/Hide UI        |        |
+| ⌘=       | Zoom In             | ✅     |
+| ⌘-       | Zoom Out            | ✅     |
+| ⌘0       | Zoom to 100%        | ✅     |
+| ⌘1       | Zoom to Fit         |        |
+| ⌘2       | Zoom to Selection   |        |
+| N / ⇧N   | Next/Previous Frame |        |
 
 ### Object
 
-| Shortcut | Action | Status |
-|----------|--------|--------|
-| ⌥⌘G | Frame Selection | |
-| ⌘G | Group Selection | |
-| ⇧⌘G | Ungroup | |
-| ⇧A | Add Auto Layout | |
-| ⌥⌘K | Create Component | |
-| ⌥⌘B | Detach Instance | |
-| ⌘] | Bring Forward | |
-| ⌥⌘] | Bring to Front | |
-| ⌘[ | Send Backward | |
-| ⌥⌘[ | Send to Back | |
-| ⇧H | Flip Horizontal | |
-| ⇧V | Flip Vertical | |
-| ⌘E | Flatten | |
-| ⇧⌘H | Show/Hide Selection | |
-| ⇧⌘L | Lock/Unlock Selection | |
-| ⌥/ | Remove Fill | |
-| ⇧X | Swap Fill and Stroke | |
+| Shortcut | Action                | Status |
+| -------- | --------------------- | ------ |
+| ⌥⌘G      | Frame Selection       |        |
+| ⌘G       | Group Selection       |        |
+| ⇧⌘G      | Ungroup               |        |
+| ⇧A       | Add Auto Layout       |        |
+| ⌥⌘K      | Create Component      |        |
+| ⌥⌘B      | Detach Instance       |        |
+| ⌘]       | Bring Forward         |        |
+| ⌥⌘]      | Bring to Front        |        |
+| ⌘[       | Send Backward         |        |
+| ⌥⌘[      | Send to Back          |        |
+| ⇧H       | Flip Horizontal       |        |
+| ⇧V       | Flip Vertical         |        |
+| ⌘E       | Flatten               |        |
+| ⇧⌘H      | Show/Hide Selection   |        |
+| ⇧⌘L      | Lock/Unlock Selection |        |
+| ⌥/       | Remove Fill           |        |
+| ⇧X       | Swap Fill and Stroke  |        |
 
 ### Text
 
-| Shortcut | Action | Status |
-|----------|--------|--------|
-| ⌘B | Bold | |
-| ⌘I | Italic | |
-| ⌘U | Underline | |
-| ⇧⌘X | Strikethrough | |
-| ⇧⌘U | Create Link | |
+| Shortcut | Action        | Status |
+| -------- | ------------- | ------ |
+| ⌘B       | Bold          |        |
+| ⌘I       | Italic        |        |
+| ⌘U       | Underline     |        |
+| ⇧⌘X      | Strikethrough |        |
+| ⇧⌘U      | Create Link   |        |
 
 ### Arrange
 
-| Shortcut | Action | Status |
-|----------|--------|--------|
-| ⌥A | Align Left | |
-| ⌥H | Align Horizontal Centers | |
-| ⌥D | Align Right | |
-| ⌥W | Align Top | |
-| ⌥V | Align Vertical Centers | |
-| ⌥S | Align Bottom | |
-| ⌥⇧H | Distribute Horizontal Spacing | |
-| ⌥⇧V | Distribute Vertical Spacing | |
+| Shortcut | Action                        | Status |
+| -------- | ----------------------------- | ------ |
+| ⌥A       | Align Left                    |        |
+| ⌥H       | Align Horizontal Centers      |        |
+| ⌥D       | Align Right                   |        |
+| ⌥W       | Align Top                     |        |
+| ⌥V       | Align Vertical Centers        |        |
+| ⌥S       | Align Bottom                  |        |
+| ⌥⇧H      | Distribute Horizontal Spacing |        |
+| ⌥⇧V      | Distribute Vertical Spacing   |        |
 
 ### Canvas Interaction
 
-| Input | Action | Status |
-|-------|--------|--------|
-| Click | Select node | ✅ |
-| Shift+Click | Add/remove from selection | ✅ |
-| Alt+Drag | Duplicate and move | ✅ |
-| Shift+Drag (draw) | Constrain to square/circle | ✅ |
-| Shift+Drag (resize) | Maintain aspect ratio | ✅ |
-| Shift+Drag (rotate) | Snap to 15° | ✅ |
-| Middle mouse drag | Pan | ✅ |
-| Scroll | Pan | ✅ |
-| Ctrl+Scroll / Pinch | Zoom | ✅ |
-| Double-click text | Edit text inline | ✅ |
-| Drag onto frame | Reparent into frame | ✅ |
-| Escape | Deselect / Cancel | ✅ |
+| Input               | Action                     | Status |
+| ------------------- | -------------------------- | ------ |
+| Click               | Select node                | ✅     |
+| Shift+Click         | Add/remove from selection  | ✅     |
+| Alt+Drag            | Duplicate and move         | ✅     |
+| Shift+Drag (draw)   | Constrain to square/circle | ✅     |
+| Shift+Drag (resize) | Maintain aspect ratio      | ✅     |
+| Shift+Drag (rotate) | Snap to 15°                | ✅     |
+| Middle mouse drag   | Pan                        | ✅     |
+| Scroll              | Pan                        | ✅     |
+| Ctrl+Scroll / Pinch | Zoom                       | ✅     |
+| Double-click text   | Edit text inline           | ✅     |
+| Drag onto frame     | Reparent into frame        | ✅     |
+| Escape              | Deselect / Cancel          | ✅     |
 
 ---
 
-*Created: 2026-02-26 · Updated: 2026-03-02*
+_Created: 2026-02-26 · Updated: 2026-03-02_

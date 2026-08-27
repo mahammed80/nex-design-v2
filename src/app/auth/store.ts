@@ -1,8 +1,10 @@
-import { ref, computed } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import type { UserAccount, AuthViewMode } from './types'
+import { ref, computed } from 'vue'
+
 import { subscribersStorage } from '@/app/admin/db'
 import { sendEmail } from '@/app/email/service'
+
+import type { UserAccount, AuthViewMode } from './types'
 
 const ACCOUNTS_STORAGE_KEY = 'nex-design:auth:accounts'
 const ACTIVE_USER_ID_KEY = 'nex-design:auth:active-user-id'
@@ -12,7 +14,8 @@ const DEFAULT_ACCOUNTS: UserAccount[] = [
     id: 'user-admin-1',
     name: 'Mohamed Ahmed',
     email: 'mohamed@example.com',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+    avatar:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
     role: 'admin',
     planId: 'plan-pro',
     emailVerified: true,
@@ -23,7 +26,8 @@ const DEFAULT_ACCOUNTS: UserAccount[] = [
     id: 'user-designer-2',
     name: 'Sarah Chen',
     email: 'sarah.c@designstudio.io',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80',
+    avatar:
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80',
     role: 'designer',
     planId: 'plan-team',
     emailVerified: true,
@@ -33,7 +37,10 @@ const DEFAULT_ACCOUNTS: UserAccount[] = [
 ]
 
 export const storedAccounts = useLocalStorage<UserAccount[]>(ACCOUNTS_STORAGE_KEY, DEFAULT_ACCOUNTS)
-export const storedActiveUserId = useLocalStorage<string>(ACTIVE_USER_ID_KEY, DEFAULT_ACCOUNTS[0].id)
+export const storedActiveUserId = useLocalStorage<string>(
+  ACTIVE_USER_ID_KEY,
+  DEFAULT_ACCOUNTS[0].id
+)
 
 const isAuthModalOpen = ref(false)
 const activeAuthView = ref<AuthViewMode>('signin')
@@ -126,7 +133,9 @@ function signUp(
   storedActiveUserId.value = id
 
   // Register in Admin subscribers list automatically
-  const existingSubIndex = subscribersStorage.value.findIndex((s) => s.userEmail === newAccount.email)
+  const existingSubIndex = subscribersStorage.value.findIndex(
+    (s) => s.userEmail === newAccount.email
+  )
   if (existingSubIndex === -1) {
     subscribersStorage.value.push({
       id: `sub-${hex}`,
@@ -139,6 +148,7 @@ function signUp(
       nextBillingDate: Date.now() + 86400000 * 30,
       storageUsedGb: 0,
       aiCreditsUsed: 0,
+      topupCreditsRemaining: 0,
       createdAt: Date.now()
     })
   }

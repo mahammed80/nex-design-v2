@@ -67,5 +67,10 @@ export function createNudgeActions(ctx: EditorContext) {
     }
   }
 
-  return { nudgeSelected, flushNudge }
+  function setNudgeSettings(small?: number, big?: number) {
+    if (typeof small === 'number' && small > 0) ctx.state.smallNudge = small
+    if (typeof big === 'number' && big > 0) ctx.state.bigNudge = big
+  }
+
+  return { nudgeSelected, flushNudge, setNudgeSettings }
 }

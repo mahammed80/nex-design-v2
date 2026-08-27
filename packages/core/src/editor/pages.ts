@@ -16,6 +16,8 @@ export function createPageActions(ctx: EditorContext) {
 
     const previousPageId = ctx.state.currentPageId
     ctx.state.currentPageId = pageId
+    ctx.state.guides = structuredClone(page.guides ?? [])
+    ctx.state.selectedGuideId = null
     ctx.state.enteredContainerId = null
     ctx.setSelectedIds(new Set())
     if (previousPageId !== pageId) ctx.emitEditorEvent('page:changed', pageId, previousPageId)

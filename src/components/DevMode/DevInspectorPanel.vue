@@ -9,10 +9,11 @@ import AssetExportSection from './AssetExportSection.vue'
 const editor = useEditorStore()
 
 const selectedNode = useSceneComputed(() => {
+  if (!editor?.state?.selectedIds) return null
   void editor.state.sceneVersion
   const ids = Array.from(editor.state.selectedIds)
   if (ids.length === 0) return null
-  return editor.graph.getNode(ids[0]) ?? null
+  return editor.graph?.getNode(ids[0]) ?? null
 })
 </script>
 

@@ -4,6 +4,11 @@
 
 ### Added
 
+- Add a generated Figma-parity capability registry with stable IDs, acceptance criteria, test evidence, current coverage totals, a category report, stale-documentation checks, and an implementation-grade 99% parity roadmap.
+
+- Add layer-outline view with constant-width CanvasKit path outlines, unclipped child visibility, View-menu control, and <kbd>Shift</kbd>+<kbd>O</kbd> shortcut.
+- Complete ruler-guide workflows with per-page `.fig` persistence, snapping, deletion, locking, undo/redo, and correct canvas-coordinate drag history under zoom and pan.
+
 - Add a locally persisted seven-day guest profile trial with route-level expiry enforcement, dashboard countdown, and account-upgrade messaging.
 
 - Add interactive, progress-tracked tutorials for every canvas tool with toolbar highlighting and real move, draw, text, pen, and pan practice tasks.
@@ -51,6 +56,10 @@
 - Add font settings controls for local font access, fallback font predownloads, and downloaded font cache management.
 
 ### Fixes
+
+- Restore zero-error app and Vue SDK type checking by reconciling rendering, layout, prototype transition, URL import, account, admin, and profile-scoped project contracts.
+
+- Expose prototype overlay swapping and variable assignment in the inspector, and repair the AI wireframe workflow so generated sections and typed content are nested under their intended frames with usable generated IDs.
 
 - Preserve lineage-based root and descendant instance overrides during component synchronization, variant switching, and undo/redo instead of rebuilding instance children with new identities.
 

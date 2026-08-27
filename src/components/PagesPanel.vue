@@ -58,17 +58,17 @@ function onDuplicatePage(pageId: string) {
           </button>
         </Tip>
       </div>
-      <div class="scrollbar-thin overflow-x-hidden overflow-y-auto px-1 pb-1">
+      <div class="scrollbar-thin overflow-x-hidden overflow-y-auto px-2 pb-1 space-y-1">
         <div v-for="pg in pages" :key="pg.id">
           <div
             v-if="rename.editingId.value === pg.id"
-            class="flex w-full items-center gap-1.5 rounded px-2 py-1"
+            class="flex w-full items-center gap-1.5 rounded-xl px-2.5 py-1.5 bg-white/10 border border-white/20"
           >
-            <icon-lucide-file class="size-3 shrink-0 opacity-70" />
+            <icon-lucide-file class="size-3.5 shrink-0 opacity-70" />
             <input
               ref="pageInput"
               data-test-id="pages-item-input"
-              class="min-w-0 flex-1 rounded border border-accent bg-input px-1 py-0 text-xs text-surface outline-none"
+              class="min-w-0 flex-1 rounded border border-rose-500 bg-black/50 px-1 py-0 text-xs text-white outline-none"
               :value="pg.name"
               @blur="rename.commit(pg.id, $event)"
               @keydown.stop="rename.onKeydown"
@@ -76,29 +76,29 @@ function onDuplicatePage(pageId: string) {
           </div>
           <div
             v-else-if="isDivider(pg)"
-            class="my-1 flex items-center px-2"
+            class="my-1.5 flex items-center px-2"
             @dblclick="startRename(pg)"
           >
-            <div class="h-px flex-1 bg-border" />
+            <div class="h-px flex-1 bg-white/10" />
           </div>
           <div v-else class="group relative flex w-full items-center">
             <button
               data-test-id="pages-item"
-              class="flex w-full cursor-pointer items-center gap-1.5 rounded border-none px-2 py-1 text-left text-xs"
+              class="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs transition-all duration-200"
               :class="
                 pg.id === currentPageId
-                  ? 'bg-hover text-surface font-semibold'
-                  : 'bg-transparent text-muted hover:bg-hover hover:text-surface'
+                  ? 'bg-rose-600 text-white font-bold shadow-[0_4px_14px_rgba(225,29,72,0.35)]'
+                  : 'text-zinc-400 hover:bg-white/5 hover:text-white'
               "
               @click="actions.switch(pg.id)"
               @dblclick="handlePageDblClick(pg, actions.rename)"
             >
-              <icon-lucide-file class="size-3 shrink-0" />
+              <icon-lucide-file-text class="size-3.5 shrink-0" :class="pg.id === currentPageId ? 'text-white' : 'text-zinc-500'" />
               <span class="truncate flex-1">{{ pg.name }}</span>
             </button>
             <Tip label="Duplicate Page">
               <button
-                class="absolute right-1 hidden group-hover:flex size-5 items-center justify-center rounded text-muted hover:bg-muted/30 hover:text-surface transition-colors cursor-pointer"
+                class="absolute right-2 hidden group-hover:flex size-5 items-center justify-center rounded text-white/70 hover:bg-white/20 hover:text-white transition-colors cursor-pointer"
                 @click.stop="onDuplicatePage(pg.id)"
               >
                 <icon-lucide-copy class="size-3" />

@@ -218,6 +218,59 @@ export function createPenActions(ctx: EditorContext, createShape: CreateShape) {
     ctx.requestRender()
   }
 
+  function createFreehandPencilStroke(points: Vector[], parentId?: string): string | null {
+    if (points.length < 2) return null
+
+    let minX = Infinity
+    let maxX = -Infinity
+    let minY = Infinity
+    let maxY = -Infinity
+
+    for (const p of points) {
+      minX = Math.min(minX, p.x)
+      maxX = Math.max(maxX, p.x)
+      minY = Math.min(minY, p.y)
+      maxY = Math.max(maxY, p.y)
+    }
+
+    const width = Math.max(1, maxX - minX)
+    const height = Math.max(1, maxY - minY)
+
+    const vertices = points.map((p) => ({
+      x: p.x - minX,
+      y: p.y - minY
+    }))
+
+    const segments: VectorSegment[] = []
+    for (let i = 0; i < vertices.length - 1; i++) {
+      segments.push({
+        start: i,
+        end: i + 1,
+        tangentStart: { x: 0, y: 0 },
+        tangentEnd: { x: 0, y: 0 }
+      })
+    }
+
+    const network: VectorNetwork = {
+      vertices,
+      segments,
+      regions: []
+    }
+
+    const nodeId = createShape('VECTOR', minX, minY, width, height, parentId)
+    ctx.graph.updateNode(nodeId, {
+      name: 'Pencil',
+      vectorNetwork: network,
+      strokeCap: 'ROUND',
+      strokeJoin: 'ROUND',
+      strokes: [{ ...PEN_DEFAULT_STROKE }]
+    })
+    ctx.setSelectedIds(new Set([nodeId]))
+    ctx.requestRender()
+
+    return nodeId
+  }
+
   return {
     penAddVertex,
     penSetDragTangent,
@@ -225,6 +278,7 @@ export function createPenActions(ctx: EditorContext, createShape: CreateShape) {
     penSetPendingClose,
     penSetKnotPosition,
     penCommit,
-    penCancel
+    penCancel,
+    createFreehandPencilStroke
   }
 }

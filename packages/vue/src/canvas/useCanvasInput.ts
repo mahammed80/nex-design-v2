@@ -164,13 +164,13 @@ export function useCanvasInput(
     e: MouseEvent | undefined
   ) {
     if (e) {
-      const { sx, sy } = getCoords(e)
+      const { sx, sy, cx, cy } = getCoords(e)
       if (d.axis === 'horizontal' && sy <= RULER_SIZE) {
         editor.removeGuide(d.guideId, 'Delete guide')
       } else if (d.axis === 'vertical' && sx <= RULER_SIZE) {
         editor.removeGuide(d.guideId, 'Delete guide')
       } else if (!d.isNew) {
-        const finalVal = d.axis === 'horizontal' ? Math.round(sy) : Math.round(sx)
+        const finalVal = d.axis === 'horizontal' ? Math.round(cy) : Math.round(cx)
         const startVal = d.startValue
         const guideId = d.guideId
         if (finalVal !== startVal) {
@@ -208,15 +208,16 @@ export function useCanvasInput(
       if (targetNode) {
         let actionType: ActionType = 'NAVIGATE'
         const sourceNode = editor.graph.getNode(d.nodeId)
-        
+
         if (targetNode.type === 'COMPONENT' && targetNode.parentId) {
           const parent = editor.graph.getNode(targetNode.parentId)
           if (parent?.type === 'COMPONENT_SET') {
             if (
               sourceNode &&
               ((sourceNode.type === 'COMPONENT' && sourceNode.parentId === targetNode.parentId) ||
-               (sourceNode.type === 'INSTANCE' && sourceNode.componentId &&
-                editor.graph.getNode(sourceNode.componentId)?.parentId === targetNode.parentId))
+                (sourceNode.type === 'INSTANCE' &&
+                  sourceNode.componentId &&
+                  editor.graph.getNode(sourceNode.componentId)?.parentId === targetNode.parentId))
             ) {
               actionType = 'CHANGE_TO'
             }
@@ -312,6 +313,12 @@ export function useCanvasInput(
     const { sx, sy, cx, cy } = getCoords(e)
     if (onCursorMove) onCursorMove(cx, cy)
 
+    const isAlt = e.altKey && editor.state.selectedIds.size > 0
+    if (editor.state.altMeasurement !== isAlt) {
+      editor.state.altMeasurement = isAlt
+      editor.requestRender()
+    }
+
     if (!drag.value) {
       interaction.dispatch('pointermove', e, cx, cy, sx, sy, {
         updateHover: true,
@@ -383,10 +390,18 @@ export function useCanvasInput(
   }
 
   function onKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Alt' && editor.state.selectedIds.size > 0 && !editor.state.altMeasurement) {
+      editor.state.altMeasurement = true
+      editor.requestRender()
+    }
     interaction.dispatchStack('keydown', e, keyEventStack())
   }
 
   function onKeyUp(e: KeyboardEvent) {
+    if (e.key === 'Alt' && editor.state.altMeasurement) {
+      editor.state.altMeasurement = false
+      editor.requestRender()
+    }
     interaction.dispatchStack('keyup', e, keyEventStack())
   }
 
@@ -405,9 +420,19 @@ export function useCanvasInput(
   useEventListener(canvasRef, 'keydown', onKeyDown)
   useEventListener(canvasRef, 'keyup', onKeyUp)
   useEventListener(canvasRef, 'mouseleave', () => {
+    if (editor.state.altMeasurement) {
+      editor.state.altMeasurement = false
+      editor.requestRender()
+    }
     if (!drag.value) {
       editor.setHoveredNode(null)
       interaction.resetHover()
+    }
+  })
+  useEventListener(window, 'blur', () => {
+    if (editor.state.altMeasurement) {
+      editor.state.altMeasurement = false
+      editor.requestRender()
     }
   })
   useEventListener(window, 'mouseup', () => {
@@ -462,8 +487,9 @@ function resolveDragTarget(
     if (parent?.type === 'COMPONENT_SET') {
       if (
         (sourceNode.type === 'COMPONENT' && sourceNode.parentId === hitNode.parentId) ||
-        (sourceNode.type === 'INSTANCE' && sourceNode.componentId && 
-         graph.getNode(sourceNode.componentId)?.parentId === hitNode.parentId)
+        (sourceNode.type === 'INSTANCE' &&
+          sourceNode.componentId &&
+          graph.getNode(sourceNode.componentId)?.parentId === hitNode.parentId)
       ) {
         return hitNode
       }
@@ -472,11 +498,7 @@ function resolveDragTarget(
 
   let current: SceneNode | undefined = hitNode
   while (current) {
-    if (
-      current.type === 'FRAME' ||
-      current.type === 'SECTION' ||
-      current.type === 'COMPONENT'
-    ) {
+    if (current.type === 'FRAME' || current.type === 'SECTION' || current.type === 'COMPONENT') {
       return current
     }
     current = current.parentId ? graph.getNode(current.parentId) : undefined

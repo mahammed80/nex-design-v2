@@ -3,7 +3,13 @@ import type { CanvasKit } from 'canvaskit-wasm'
 import type { RulerTheme, SkiaRenderer } from '#core/canvas/renderer'
 import type { RenderOverlays } from '#core/canvas/renderer/types'
 import type { ConnectionSide } from '#core/prototype'
-import type { SceneGraph, SceneNode, VectorSegment, VectorVertex } from '#core/scene-graph'
+import type {
+  CanvasGuide,
+  SceneGraph,
+  SceneNode,
+  VectorSegment,
+  VectorVertex
+} from '#core/scene-graph'
 import type { SnapGuide } from '#core/scene-graph/snap'
 import type { UndoManager } from '#core/scene-graph/undo'
 import type { TextEditor } from '#core/text/editor'
@@ -11,6 +17,7 @@ import type { Color, Rect, Vector } from '#core/types'
 
 export type Tool =
   | 'SELECT'
+  | 'SCALE'
   | 'FRAME'
   | 'SECTION'
   | 'RECTANGLE'
@@ -20,10 +27,13 @@ export type Tool =
   | 'STAR'
   | 'TEXT'
   | 'PEN'
+  | 'PENCIL'
+  | 'EYEDROPPER'
   | 'HAND'
 
 export interface EditorState {
   mode: 'DESIGN' | 'PROTOTYPE' | 'DEVELOPER'
+  outlineMode: boolean
   activeTool: Tool
   currentPageId: string
   selectedIds: Set<string>
@@ -96,13 +106,12 @@ export interface EditorState {
   selectedGuideId: string | null
   guidesVisible: boolean
   guidesLocked: boolean
+  altMeasurement?: boolean
+  smallNudge?: number
+  bigNudge?: number
 }
 
-export interface Guide {
-  id: string
-  type: 'horizontal' | 'vertical'
-  value: number
-}
+export type Guide = CanvasGuide
 
 export interface EditorEvents {
   'render:requested': (versions: { renderVersion: number; sceneVersion: number }) => void

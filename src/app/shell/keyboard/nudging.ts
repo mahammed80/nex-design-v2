@@ -20,7 +20,7 @@ export function bindNudgeKeys(store: EditorStore) {
     const delta = NUDGE_DELTAS[e.code]
     if (!delta || store.state.selectedIds.size === 0) return
 
-    const step = e.shiftKey ? 10 : 1
+    const step = e.shiftKey ? (store.state.bigNudge ?? 10) : (store.state.smallNudge ?? 1)
     store.nudgeSelected(delta[0] * step, delta[1] * step)
     e.preventDefault()
   })

@@ -3,64 +3,56 @@ import { randomHex } from '#core/random'
 import type { EditorContext, Guide } from './types'
 
 export function createGuidesActions(ctx: EditorContext) {
+  function applyPageGuides(pageId: string, guides: Guide[], selectedGuideId?: string | null) {
+    ctx.graph.updateNode(pageId, { guides: structuredClone(guides) })
+    if (ctx.state.currentPageId === pageId) {
+      ctx.state.guides = structuredClone(guides)
+      if (selectedGuideId !== undefined) ctx.state.selectedGuideId = selectedGuideId
+    }
+    ctx.requestRender()
+  }
+
   function addGuide(type: 'horizontal' | 'vertical', value: number, label = 'Add guide') {
     const id = `guide:${randomHex(8)}`
     const guide: Guide = { id, type, value }
+    const pageId = ctx.state.currentPageId
+    const nextGuides = [...ctx.state.guides, guide]
 
-    ctx.state.guides = [...ctx.state.guides, guide]
-    ctx.requestRender()
+    applyPageGuides(pageId, nextGuides)
 
     ctx.undo.push({
       label,
-      forward: () => {
-        ctx.state.guides = [...ctx.state.guides, guide]
-        ctx.requestRender()
-      },
-      inverse: () => {
-        ctx.state.guides = ctx.state.guides.filter((g) => g.id !== id)
-        if (ctx.state.selectedGuideId === id) {
-          ctx.state.selectedGuideId = null
-        }
-        ctx.requestRender()
-      }
+      forward: () => applyPageGuides(pageId, nextGuides),
+      inverse: () =>
+        applyPageGuides(
+          pageId,
+          nextGuides.filter((g) => g.id !== id),
+          null
+        )
     })
 
     return id
   }
 
   function removeGuide(id: string, label = 'Delete guide') {
-    const guide = ctx.state.guides.find((g) => g.id === id)
-    if (!guide) return
+    if (!ctx.state.guides.some((g) => g.id === id)) return
 
+    const pageId = ctx.state.currentPageId
+    const previousGuides = structuredClone(ctx.state.guides)
     const prevSelected = ctx.state.selectedGuideId
-    ctx.state.guides = ctx.state.guides.filter((g) => g.id !== id)
-    if (prevSelected === id) {
-      ctx.state.selectedGuideId = null
-    }
-    ctx.requestRender()
+    const nextGuides = previousGuides.filter((g) => g.id !== id)
+    applyPageGuides(pageId, nextGuides, prevSelected === id ? null : prevSelected)
 
     ctx.undo.push({
       label,
-      forward: () => {
-        ctx.state.guides = ctx.state.guides.filter((g) => g.id !== id)
-        if (ctx.state.selectedGuideId === id) {
-          ctx.state.selectedGuideId = null
-        }
-        ctx.requestRender()
-      },
-      inverse: () => {
-        ctx.state.guides = [...ctx.state.guides, guide]
-        if (prevSelected === id) {
-          ctx.state.selectedGuideId = id
-        }
-        ctx.requestRender()
-      }
+      forward: () => applyPageGuides(pageId, nextGuides, null),
+      inverse: () => applyPageGuides(pageId, previousGuides, prevSelected)
     })
   }
 
   function updateGuideValue(id: string, value: number) {
-    ctx.state.guides = ctx.state.guides.map((g) => (g.id === id ? { ...g, value } : g))
-    ctx.requestRender()
+    const guides = ctx.state.guides.map((g) => (g.id === id ? { ...g, value } : g))
+    applyPageGuides(ctx.state.currentPageId, guides)
   }
 
   function setSelectedGuideId(id: string | null) {

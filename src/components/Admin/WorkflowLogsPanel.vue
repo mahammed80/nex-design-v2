@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAdminStore } from '@/app/admin/store'
-import type { WorkflowLogRecord } from '@/app/admin/types'
 
 const {
   workflowLogs,
@@ -49,7 +48,8 @@ function formatDate(ts: number): string {
       <div>
         <h2 class="text-xl font-bold text-[#fafafa] tracking-tight">Workflow & Telemetry Audit</h2>
         <p class="text-xs text-[#a1a1aa] mt-1">
-          Monitor live agentic workflow executions, ACP/MCP session protocols, AI credit consumption, and audit passes.
+          Monitor live agentic workflow executions, ACP/MCP session protocols, AI credit
+          consumption, and audit passes.
         </p>
       </div>
       <button
@@ -57,7 +57,12 @@ function formatDate(ts: number): string {
         class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition shrink-0"
       >
         <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
         </svg>
         Simulate Workflow Execution
       </button>
@@ -66,26 +71,34 @@ function formatDate(ts: number): string {
     <!-- Quick Telemetry Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="rounded-2xl border border-white/5 bg-[#18181b] p-4">
-        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">Total Workflow Executions</div>
+        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">
+          Total Workflow Executions
+        </div>
         <div class="text-2xl font-bold text-[#fafafa] mt-1">{{ workflowLogs.length }}</div>
         <div class="text-[10px] text-emerald-400 mt-1">✓ ACP + MCP agent sessions</div>
       </div>
       <div class="rounded-2xl border border-white/5 bg-[#18181b] p-4">
-        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">AI Credits Consumed</div>
+        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">
+          AI Credits Consumed
+        </div>
         <div class="text-2xl font-bold text-violet-400 mt-1">
           {{ workflowLogs.reduce((acc, l) => acc + l.aiCreditsSpent, 0) }}
         </div>
         <div class="text-[10px] text-[#a1a1aa] mt-1">Tracked across active sessions</div>
       </div>
       <div class="rounded-2xl border border-white/5 bg-[#18181b] p-4">
-        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">Successful Audit Passes</div>
+        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">
+          Successful Audit Passes
+        </div>
         <div class="text-2xl font-bold text-emerald-400 mt-1">
           {{ workflowLogs.filter((l) => l.status === 'success').length }}
         </div>
         <div class="text-[10px] text-[#71717a] mt-1">Deterministic slop check clean</div>
       </div>
       <div class="rounded-2xl border border-white/5 bg-[#18181b] p-4">
-        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">Failed Audit Checks</div>
+        <div class="text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">
+          Failed Audit Checks
+        </div>
         <div class="text-2xl font-bold text-rose-400 mt-1">
           {{ workflowLogs.filter((l) => l.status === 'failed').length }}
         </div>
@@ -94,10 +107,22 @@ function formatDate(ts: number): string {
     </div>
 
     <!-- Filters & Search Bar -->
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl border border-white/5 bg-[#18181b]">
+    <div
+      class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl border border-white/5 bg-[#18181b]"
+    >
       <div class="relative flex-1">
-        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#71717a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <svg
+          class="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#71717a]"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
         <input
           v-model="workflowSearchQuery"
@@ -135,7 +160,9 @@ function formatDate(ts: number): string {
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead>
-            <tr class="border-b border-white/5 bg-[#121215] text-[10px] font-semibold uppercase tracking-wider text-[#71717a]">
+            <tr
+              class="border-b border-white/5 bg-[#121215] text-[10px] font-semibold uppercase tracking-wider text-[#71717a]"
+            >
               <th class="py-3 px-4">Time</th>
               <th class="py-3 px-4">Protocol</th>
               <th class="py-3 px-4">Agent Role</th>
@@ -159,9 +186,12 @@ function formatDate(ts: number): string {
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase"
                   :class="{
-                    'bg-violet-500/10 text-violet-300 border border-violet-500/20': log.sessionType === 'acp',
-                    'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20': log.sessionType === 'mcp',
-                    'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20': log.sessionType === 'in-app'
+                    'bg-violet-500/10 text-violet-300 border border-violet-500/20':
+                      log.sessionType === 'acp',
+                    'bg-cyan-500/10 text-cyan-300 border border-cyan-500/20':
+                      log.sessionType === 'mcp',
+                    'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20':
+                      log.sessionType === 'in-app'
                   }"
                 >
                   {{ log.sessionType }}
@@ -183,9 +213,12 @@ function formatDate(ts: number): string {
                 <span
                   class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium"
                   :class="{
-                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20': log.status === 'success',
-                    'bg-rose-500/10 text-rose-400 border border-rose-500/20': log.status === 'failed',
-                    'bg-amber-500/10 text-amber-300 border border-amber-500/20': log.status === 'running'
+                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20':
+                      log.status === 'success',
+                    'bg-rose-500/10 text-rose-400 border border-rose-500/20':
+                      log.status === 'failed',
+                    'bg-amber-500/10 text-amber-300 border border-amber-500/20':
+                      log.status === 'running'
                   }"
                 >
                   <span
@@ -219,12 +252,16 @@ function formatDate(ts: number): string {
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       @click.self="isAddModalOpen = false"
     >
-      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-[#18181b] p-6 shadow-2xl space-y-4">
+      <div
+        class="w-full max-w-md rounded-2xl border border-white/10 bg-[#18181b] p-6 shadow-2xl space-y-4"
+      >
         <h3 class="text-base font-bold text-[#fafafa]">Simulate Workflow Execution</h3>
-        
+
         <div class="space-y-3 text-xs">
           <div>
-            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Protocol</label>
+            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+              >Protocol</label
+            >
             <select
               v-model="newSessionType"
               class="w-full h-9 px-3 rounded-xl border border-white/5 bg-[#121215] text-[#eae8e4] focus:outline-none"
@@ -236,7 +273,9 @@ function formatDate(ts: number): string {
           </div>
 
           <div>
-            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Agent Role</label>
+            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+              >Agent Role</label
+            >
             <input
               v-model="newAgentRole"
               type="text"
@@ -245,7 +284,9 @@ function formatDate(ts: number): string {
           </div>
 
           <div>
-            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Action Name</label>
+            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+              >Action Name</label
+            >
             <input
               v-model="newAction"
               type="text"
@@ -254,7 +295,9 @@ function formatDate(ts: number): string {
           </div>
 
           <div>
-            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Target Node ID (Optional)</label>
+            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+              >Target Node ID (Optional)</label
+            >
             <input
               v-model="newTargetNodeId"
               type="text"
@@ -265,7 +308,9 @@ function formatDate(ts: number): string {
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Credits Spent</label>
+              <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+                >Credits Spent</label
+              >
               <input
                 v-model.number="newCredits"
                 type="number"
@@ -273,7 +318,9 @@ function formatDate(ts: number): string {
               />
             </div>
             <div>
-              <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Execution Status</label>
+              <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+                >Execution Status</label
+              >
               <select
                 v-model="newStatus"
                 class="w-full h-9 px-3 rounded-xl border border-white/5 bg-[#121215] text-[#eae8e4] focus:outline-none"
@@ -286,7 +333,9 @@ function formatDate(ts: number): string {
           </div>
 
           <div>
-            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1">Details & Result Summary</label>
+            <label class="block text-[10px] font-semibold text-[#a1a1aa] uppercase mb-1"
+              >Details & Result Summary</label
+            >
             <textarea
               v-model="newDetails"
               rows="3"

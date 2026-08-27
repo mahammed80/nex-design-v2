@@ -83,6 +83,10 @@ export function createKeyboardActions({
     store.state.showUI = !store.state.showUI
   }
 
+  function toggleOutlineMode() {
+    store.toggleOutlineMode()
+  }
+
   function toggleCreativeNotes() {
     store.state.showCreativeNotes = !store.state.showCreativeNotes
   }
@@ -98,6 +102,14 @@ export function createKeyboardActions({
     }
   }
 
+  function toggleCommandPalette() {
+    store.state.showCommandPalette = !store.state.showCommandPalette
+  }
+
+  function toggleFindReplace() {
+    store.state.showFindReplace = !store.state.showFindReplace
+  }
+
   function exportSelectionPng() {
     if (store.state.selectedIds.size > 0) void store.exportSelection(1, 'png')
   }
@@ -108,8 +120,11 @@ export function createKeyboardActions({
     escapeOrDeselect,
     toggleAutoLayout,
     toggleUI,
+    toggleOutlineMode,
     toggleCreativeNotes,
     toggleAI,
+    toggleCommandPalette,
+    toggleFindReplace,
     exportSelectionPng
   }
 }

@@ -20,6 +20,8 @@ export function useSelectionCapabilities() {
     canCopy: computed(() => hasSelection.value),
     canCut: computed(() => hasSelection.value),
     canPaste: computed(() => true),
+    canCopyProperties: computed(() => hasSelection.value),
+    canPasteProperties: computed(() => hasSelection.value),
     canDelete: computed(() => hasSelection.value || !!editor.state.selectedGuideId),
     canDuplicate: computed(() => hasSelection.value),
     canExportSelection: computed(() => hasSelection.value),

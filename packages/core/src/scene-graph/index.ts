@@ -1,4 +1,7 @@
 export * from './snap'
+export * from './copy'
+export * from './named-styles'
+export * from './version-history'
 export { UndoManager, type UndoEntry, type UndoManagerOptions } from './undo'
 
 import { createNanoEvents } from 'nanoevents'

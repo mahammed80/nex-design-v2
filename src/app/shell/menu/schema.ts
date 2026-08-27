@@ -77,6 +77,20 @@ export const APP_MENU_SCHEMA = [
       { id: 'copy', label: 'Copy', shortcut: 'MOD+C', accelerator: 'CmdOrCtrl+C' },
       { id: 'paste', label: 'Paste', shortcut: 'MOD+V', accelerator: 'CmdOrCtrl+V' },
       {
+        id: 'selection.copyProperties',
+        label: 'Copy Properties',
+        shortcut: 'MOD+⌥C',
+        accelerator: 'CmdOrCtrl+Alt+C',
+        command: 'selection.copyProperties'
+      },
+      {
+        id: 'selection.pasteProperties',
+        label: 'Paste Properties',
+        shortcut: 'MOD+⌥V',
+        accelerator: 'CmdOrCtrl+Alt+V',
+        command: 'selection.pasteProperties'
+      },
+      {
         id: 'selection.duplicate',
         label: 'Duplicate',
         shortcut: 'MOD+D',
@@ -127,6 +141,12 @@ export const APP_MENU_SCHEMA = [
       { id: 'zoom-in', label: 'Zoom In', shortcut: 'MOD+=', accelerator: 'CmdOrCtrl+=' },
       { id: 'zoom-out', label: 'Zoom Out', shortcut: 'MOD+-', accelerator: 'CmdOrCtrl+-' },
       { type: 'separator' },
+      {
+        id: 'outline-mode',
+        label: 'Show Layer Outlines',
+        shortcut: '⇧O',
+        checkbox: true
+      },
       {
         id: 'theme',
         label: 'Theme',

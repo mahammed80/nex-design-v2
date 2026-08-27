@@ -9,86 +9,110 @@ export type ToolTutorialCompletion =
 export interface ToolTutorialStep {
   tool: Tool
   title: string
+  shortcut: string
   description: string
+  howTo: string
   task: string
   completion: ToolTutorialCompletion
 }
 
 export const TOOL_TUTORIAL_STEPS: ToolTutorialStep[] = [
   {
-    tool: 'SELECT',
-    title: 'Move tool',
-    description: 'Select layers and reposition them without changing their shape.',
-    task: 'Select an existing object, then drag it to a new position.',
-    completion: { kind: 'move' }
-  },
-  {
     tool: 'FRAME',
-    title: 'Frame tool',
-    description: 'Frames are containers for screens, components, and auto-layout content.',
-    task: 'Drag on the canvas to create a frame.',
+    title: 'Frame Tool',
+    shortcut: 'F',
+    description: 'Frames are the master containers in NexDesign — like artboards, phone screens, or component cards.',
+    howTo: 'Press F or click the Frame tool, then click & drag anywhere on the canvas to draw a new frame container.',
+    task: 'Drag on the canvas to draw your first Frame container.',
     completion: { kind: 'create', nodeType: 'FRAME' }
   },
   {
-    tool: 'SECTION',
-    title: 'Section tool',
-    description: 'Sections organize related work without clipping their contents.',
-    task: 'Drag around an area of the canvas to create a section.',
-    completion: { kind: 'create', nodeType: 'SECTION' }
+    tool: 'SELECT',
+    title: 'Move Tool',
+    shortcut: 'V',
+    description: 'Select, drag, resize, and inspect any layer or frame across your design.',
+    howTo: 'Press V or select the arrow icon. Click any object on the canvas to select it, or drag it to move.',
+    task: 'Click and drag an object or frame on the canvas to reposition it.',
+    completion: { kind: 'move' }
   },
   {
     tool: 'RECTANGLE',
-    title: 'Rectangle tool',
-    description: 'Rectangles are the foundation of cards, buttons, fields, and surfaces.',
-    task: 'Drag on the canvas to create a rectangle.',
+    title: 'Rectangle Tool',
+    shortcut: 'R',
+    description: 'Rectangles are the core building blocks for buttons, cards, modals, and backgrounds.',
+    howTo: 'Press R or select Rectangle. Click & drag on the canvas (or inside your frame) to draw a rectangle.',
+    task: 'Drag on the canvas to draw a rectangle.',
     completion: { kind: 'create', nodeType: 'RECTANGLE' }
   },
   {
     tool: 'ELLIPSE',
-    title: 'Ellipse tool',
-    description: 'Use ellipses for circles, avatars, indicators, and decorative shapes.',
-    task: 'Drag on the canvas to create an ellipse.',
+    title: 'Ellipse Tool',
+    shortcut: 'O',
+    description: 'Create perfect circles, status badges, avatars, and radial glows.',
+    howTo: 'Press O or select Ellipse. Hold Shift while dragging to draw a constrained 1:1 perfect circle.',
+    task: 'Drag on the canvas to draw an ellipse or circle.',
     completion: { kind: 'create', nodeType: 'ELLIPSE' }
   },
   {
+    tool: 'TEXT',
+    title: 'Text Tool',
+    shortcut: 'T',
+    description: 'Add live editable typography with custom Google Fonts, styles, and alignments.',
+    howTo: 'Press T or select Text. Click on the canvas and type your title or button label.',
+    task: 'Click anywhere on the canvas and type some text.',
+    completion: { kind: 'create', nodeType: 'TEXT' }
+  },
+  {
+    tool: 'PEN',
+    title: 'Pen Tool',
+    shortcut: 'P',
+    description: 'Craft custom vector paths, illustrations, bezier curves, and custom icons point-by-point.',
+    howTo: 'Press P. Click to place vector points, drag for curves, and press Enter or double-click to finish.',
+    task: 'Click at least two canvas points to draw a vector line, then finish.',
+    completion: { kind: 'create', nodeType: 'VECTOR' }
+  },
+  {
     tool: 'LINE',
-    title: 'Line tool',
-    description: 'Lines create dividers, connectors, and simple strokes.',
-    task: 'Drag between two points to create a line.',
+    title: 'Line Tool',
+    shortcut: 'L',
+    description: 'Draw clean divider lines, connectors, and decorative borders.',
+    howTo: 'Press L. Drag from a start point to an end point. Hold Shift to snap to 0°, 45°, or 90°.',
+    task: 'Drag on the canvas to draw a divider line.',
     completion: { kind: 'create', nodeType: 'LINE' }
   },
   {
     tool: 'POLYGON',
-    title: 'Polygon tool',
-    description: 'Polygons create triangles and other multi-sided shapes.',
-    task: 'Drag on the canvas to create a polygon.',
+    title: 'Polygon Tool',
+    shortcut: '',
+    description: 'Generate triangles, badges, and geometric multi-sided polygons.',
+    howTo: 'Select Polygon from the shapes flyout, then drag on the canvas to create a shape.',
+    task: 'Drag on the canvas to draw a polygon.',
     completion: { kind: 'create', nodeType: 'POLYGON' }
   },
   {
     tool: 'STAR',
-    title: 'Star tool',
-    description: 'Stars are useful for ratings, badges, and decorative accents.',
-    task: 'Drag on the canvas to create a star.',
+    title: 'Star Tool',
+    shortcut: '',
+    description: 'Create star ratings, badges, sparkle indicators, and decorative accents.',
+    howTo: 'Select Star from the shape flyout, then drag on the canvas to create a star.',
+    task: 'Drag on the canvas to draw a star.',
     completion: { kind: 'create', nodeType: 'STAR' }
   },
   {
-    tool: 'PEN',
-    title: 'Pen tool',
-    description: 'The pen builds custom vector paths point by point.',
-    task: 'Click at least two canvas points, then finish the path.',
-    completion: { kind: 'create', nodeType: 'VECTOR' }
-  },
-  {
-    tool: 'TEXT',
-    title: 'Text tool',
-    description: 'Add editable labels, headings, and body copy.',
-    task: 'Click the canvas and type a short label.',
-    completion: { kind: 'create', nodeType: 'TEXT' }
+    tool: 'SECTION',
+    title: 'Section Tool',
+    shortcut: 'S',
+    description: 'Sections group and organize screens into milestones, user flows, and milestones.',
+    howTo: 'Press S or select Section. Drag a large bounding box around multiple frames to organize them.',
+    task: 'Drag around an area of the canvas to create an organizational section.',
+    completion: { kind: 'create', nodeType: 'SECTION' }
   },
   {
     tool: 'HAND',
-    title: 'Hand tool',
-    description: 'Pan around the canvas without moving any design layers.',
+    title: 'Hand Tool',
+    shortcut: 'H',
+    description: 'Pan and navigate across the infinite 2D canvas smoothly without moving design objects.',
+    howTo: 'Press H (or hold Spacebar anytime), then click & drag to pan the viewport.',
     task: 'Drag the canvas to move the viewport.',
     completion: { kind: 'pan' }
   }

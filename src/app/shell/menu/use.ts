@@ -92,6 +92,7 @@ export function useMenu() {
     'toggle-ui': () => {
       store.state.showUI = !store.state.showUI
     },
+    'outline-mode': () => store.toggleOutlineMode(),
     'check-updates': () => void checkForAppUpdate({ messages: dialogs }),
     'text.bold': () => {
       const node = store.selectedNodes.value.find((item) => item.type === 'TEXT')

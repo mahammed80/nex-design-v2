@@ -82,6 +82,8 @@ function savePlan() {
       maxMembers: Number(planFormMembers.value),
       storageGb: Number(planFormStorageGb.value),
       aiCredits: Number(planFormAiCredits.value),
+      allowTopupCredits: false,
+      topupPricePer1k: 0,
       features: featuresList,
       cloudSyncEnabled: planFormCloudSyncEnabled.value,
       cloudBackupIntervalMinutes: Number(planFormCloudBackupInterval.value),
@@ -96,6 +98,8 @@ function savePlan() {
       maxMembers: Number(planFormMembers.value),
       storageGb: Number(planFormStorageGb.value),
       aiCredits: Number(planFormAiCredits.value),
+      allowTopupCredits: false,
+      topupPricePer1k: 0,
       features: featuresList,
       cloudSyncEnabled: planFormCloudSyncEnabled.value,
       cloudBackupIntervalMinutes: Number(planFormCloudBackupInterval.value),
@@ -110,10 +114,14 @@ function savePlan() {
 <template>
   <div class="space-y-6">
     <!-- Header & sub-tabs -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+    <div
+      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10"
+    >
       <div>
         <h2 class="text-xl font-bold text-white tracking-tight">Subscription & Cloud Governance</h2>
-        <p class="text-xs text-zinc-400 mt-1">Manage pricing tiers, optional cloud sync offers, and subscriber status</p>
+        <p class="text-xs text-zinc-400 mt-1">
+          Manage pricing tiers, optional cloud sync offers, and subscriber status
+        </p>
       </div>
 
       <div class="flex items-center gap-3">
@@ -122,21 +130,33 @@ function savePlan() {
           <button
             @click="activeSubTab = 'plans'"
             class="px-3.5 py-1.5 rounded-lg font-medium transition"
-            :class="activeSubTab === 'plans' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'"
+            :class="
+              activeSubTab === 'plans'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            "
           >
             Tiers ({{ plans.length }})
           </button>
           <button
             @click="activeSubTab = 'cloud'"
             class="px-3.5 py-1.5 rounded-lg font-medium transition"
-            :class="activeSubTab === 'cloud' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'"
+            :class="
+              activeSubTab === 'cloud'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            "
           >
             Cloud Provider & Sync
           </button>
           <button
             @click="activeSubTab = 'subscribers'"
             class="px-3.5 py-1.5 rounded-lg font-medium transition"
-            :class="activeSubTab === 'subscribers' ? 'bg-violet-600 text-white shadow' : 'text-zinc-400 hover:text-white'"
+            :class="
+              activeSubTab === 'subscribers'
+                ? 'bg-violet-600 text-white shadow'
+                : 'text-zinc-400 hover:text-white'
+            "
           >
             Subscribers ({{ subscribers.length }})
           </button>
@@ -148,7 +168,12 @@ function savePlan() {
           class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/20 transition"
         >
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
           </svg>
           Add New Plan
         </button>
@@ -156,14 +181,23 @@ function savePlan() {
     </div>
 
     <!-- PLANS TAB CONTENT -->
-    <div v-if="activeSubTab === 'plans'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div
+      v-if="activeSubTab === 'plans'"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+    >
       <div
         v-for="plan in plans"
         :key="plan.id"
         class="p-6 rounded-2xl bg-zinc-900/60 border border-white/10 relative flex flex-col justify-between group hover:border-violet-500/40 transition"
-        :class="{ 'ring-2 ring-violet-500/50 bg-gradient-to-b from-zinc-900 via-zinc-900 to-violet-950/20': plan.isPopular }"
+        :class="{
+          'ring-2 ring-violet-500/50 bg-gradient-to-b from-zinc-900 via-zinc-900 to-violet-950/20':
+            plan.isPopular
+        }"
       >
-        <div v-if="plan.isPopular" class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-violet-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow">
+        <div
+          v-if="plan.isPopular"
+          class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-violet-600 text-white text-[10px] font-extrabold uppercase tracking-wider shadow"
+        >
           Most Popular
         </div>
 
@@ -172,7 +206,11 @@ function savePlan() {
             <h3 class="text-base font-bold text-white">{{ plan.name }}</h3>
             <span
               class="px-2 py-0.5 text-[10px] font-semibold uppercase rounded-full"
-              :class="plan.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-400'"
+              :class="
+                plan.status === 'active'
+                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-zinc-800 text-zinc-400'
+              "
             >
               {{ plan.status }}
             </span>
@@ -189,12 +227,23 @@ function savePlan() {
           </div>
 
           <!-- Cloud Sync Pill Badge -->
-          <div class="p-2.5 rounded-xl border flex items-center justify-between text-xs" :class="plan.cloudSyncEnabled ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-300' : 'bg-zinc-950 border-white/5 text-zinc-400'">
+          <div
+            class="p-2.5 rounded-xl border flex items-center justify-between text-xs"
+            :class="
+              plan.cloudSyncEnabled
+                ? 'bg-cyan-500/10 border-cyan-500/20 text-cyan-300'
+                : 'bg-zinc-950 border-white/5 text-zinc-400'
+            "
+          >
             <div class="flex items-center gap-2">
               <span>☁️ Cloud Sync:</span>
-              <span class="font-bold">{{ plan.cloudSyncEnabled ? 'Enabled' : 'Disabled (Local Only)' }}</span>
+              <span class="font-bold">{{
+                plan.cloudSyncEnabled ? 'Enabled' : 'Disabled (Local Only)'
+              }}</span>
             </div>
-            <span v-if="plan.cloudSyncEnabled" class="text-[10px] font-mono text-cyan-400">Every {{ plan.cloudBackupIntervalMinutes }}m</span>
+            <span v-if="plan.cloudSyncEnabled" class="text-[10px] font-mono text-cyan-400"
+              >Every {{ plan.cloudBackupIntervalMinutes }}m</span
+            >
           </div>
 
           <div class="space-y-2 pt-2 border-t border-white/5 text-xs text-zinc-300">
@@ -208,14 +257,30 @@ function savePlan() {
             </div>
             <div class="flex items-center justify-between text-zinc-400">
               <span>AI Credits:</span>
-              <span class="font-medium text-violet-400">{{ plan.aiCredits.toLocaleString() }} / mo</span>
+              <span class="font-medium text-violet-400"
+                >{{ plan.aiCredits.toLocaleString() }} / mo</span
+              >
             </div>
           </div>
 
           <ul class="space-y-1.5 pt-3 border-t border-white/5 text-xs text-zinc-300">
-            <li v-for="(feat, idx) in plan.features" :key="idx" class="flex items-center gap-2 text-zinc-300">
-              <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            <li
+              v-for="(feat, idx) in plan.features"
+              :key="idx"
+              class="flex items-center gap-2 text-zinc-300"
+            >
+              <svg
+                class="w-3.5 h-3.5 text-emerald-400 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
               <span class="truncate">{{ feat }}</span>
             </li>
@@ -235,7 +300,12 @@ function savePlan() {
             title="Delete Plan"
           >
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </button>
         </div>
@@ -259,7 +329,12 @@ function savePlan() {
             <label class="block text-zinc-400 mb-1.5 font-medium">Cloud Storage Provider</label>
             <select
               :value="cloudSettings.provider"
-              @change="(e) => updateCloudSettings({ provider: (e.target as HTMLSelectElement).value as CloudProviderType })"
+              @change="
+                (e) =>
+                  updateCloudSettings({
+                    provider: (e.target as HTMLSelectElement).value as CloudProviderType
+                  })
+              "
               class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-zinc-200 focus:outline-none focus:border-violet-500"
             >
               <option value="cloudflare_r2">Cloudflare R2 Storage (Recommended)</option>
@@ -273,7 +348,9 @@ function savePlan() {
             <label class="block text-zinc-400 mb-1.5 font-medium">Cloud Endpoint URL</label>
             <input
               :value="cloudSettings.endpointUrl"
-              @input="(e) => updateCloudSettings({ endpointUrl: (e.target as HTMLInputElement).value })"
+              @input="
+                (e) => updateCloudSettings({ endpointUrl: (e.target as HTMLInputElement).value })
+              "
               type="text"
               class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white font-mono focus:outline-none focus:border-violet-500"
             />
@@ -281,10 +358,17 @@ function savePlan() {
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-zinc-400 mb-1.5 font-medium">Default Per-User Cloud Quota (GB)</label>
+              <label class="block text-zinc-400 mb-1.5 font-medium"
+                >Default Per-User Cloud Quota (GB)</label
+              >
               <input
                 :value="cloudSettings.maxCloudStoragePerUserGb"
-                @input="(e) => updateCloudSettings({ maxCloudStoragePerUserGb: Number((e.target as HTMLInputElement).value) })"
+                @input="
+                  (e) =>
+                    updateCloudSettings({
+                      maxCloudStoragePerUserGb: Number((e.target as HTMLInputElement).value)
+                    })
+                "
                 type="number"
                 class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-950 border border-white/10 text-white focus:outline-none focus:border-violet-500"
               />
@@ -294,7 +378,12 @@ function savePlan() {
               <input
                 id="auto-sync-chk"
                 :checked="cloudSettings.autoSyncOnOnline"
-                @change="(e) => updateCloudSettings({ autoSyncOnOnline: (e.target as HTMLInputElement).checked })"
+                @change="
+                  (e) =>
+                    updateCloudSettings({
+                      autoSyncOnOnline: (e.target as HTMLInputElement).checked
+                    })
+                "
                 type="checkbox"
                 class="rounded bg-zinc-950 border-white/10 text-violet-600 w-4 h-4"
               />
@@ -305,8 +394,12 @@ function savePlan() {
           </div>
         </div>
 
-        <div class="p-4 rounded-xl bg-violet-600/10 border border-violet-500/20 text-xs text-violet-300">
-          <span class="font-bold">Offline Resilience Guarantee:</span> When network is disconnected, edits are written to local PC IndexedDB queues. Upon returning online, Yjs state vectors automatically reconcile with the cloud without data loss.
+        <div
+          class="p-4 rounded-xl bg-violet-600/10 border border-violet-500/20 text-xs text-violet-300"
+        >
+          <span class="font-bold">Offline Resilience Guarantee:</span> When network is disconnected,
+          edits are written to local PC IndexedDB queues. Upon returning online, Yjs state vectors
+          automatically reconcile with the cloud without data loss.
         </div>
       </div>
     </div>
@@ -314,10 +407,22 @@ function savePlan() {
     <!-- SUBSCRIBERS TAB CONTENT -->
     <div v-else class="space-y-4">
       <!-- Search & Filters -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900/60 border border-white/10">
+      <div
+        class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-zinc-900/60 border border-white/10"
+      >
         <div class="w-full sm:w-80 relative">
-          <svg class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           <input
             v-model="subscriberSearchQuery"
@@ -354,7 +459,9 @@ function savePlan() {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-white/10 bg-zinc-950/80 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+              <tr
+                class="border-b border-white/10 bg-zinc-950/80 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
+              >
                 <th class="py-3.5 px-4">User Details</th>
                 <th class="py-3.5 px-4">Current Plan</th>
                 <th class="py-3.5 px-4">Status</th>
@@ -364,11 +471,22 @@ function savePlan() {
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5 text-xs text-zinc-300">
-              <tr v-for="sub in filteredSubscribers" :key="sub.id" class="hover:bg-white/5 transition">
+              <tr
+                v-for="sub in filteredSubscribers"
+                :key="sub.id"
+                class="hover:bg-white/5 transition"
+              >
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 overflow-hidden flex items-center justify-center font-bold text-violet-300 shrink-0">
-                      <img v-if="sub.avatar" :src="sub.avatar" :alt="sub.userName" class="w-full h-full object-cover" />
+                    <div
+                      class="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 overflow-hidden flex items-center justify-center font-bold text-violet-300 shrink-0"
+                    >
+                      <img
+                        v-if="sub.avatar"
+                        :src="sub.avatar"
+                        :alt="sub.userName"
+                        class="w-full h-full object-cover"
+                      />
                       <span v-else>{{ sub.userName[0] }}</span>
                     </div>
                     <div>
@@ -381,7 +499,9 @@ function savePlan() {
                 <td class="py-3.5 px-4">
                   <select
                     :value="sub.planId"
-                    @change="(e) => updateSubscriberPlan(sub.id, (e.target as HTMLSelectElement).value)"
+                    @change="
+                      (e) => updateSubscriberPlan(sub.id, (e.target as HTMLSelectElement).value)
+                    "
                     class="px-2.5 py-1 rounded-lg bg-zinc-950 border border-white/10 text-xs text-violet-300 font-medium focus:outline-none"
                   >
                     <option v-for="p in plans" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -391,7 +511,13 @@ function savePlan() {
                 <td class="py-3.5 px-4">
                   <select
                     :value="sub.status"
-                    @change="(e) => updateSubscriberStatus(sub.id, (e.target as HTMLSelectElement).value as SubscriptionStatus)"
+                    @change="
+                      (e) =>
+                        updateSubscriberStatus(
+                          sub.id,
+                          (e.target as HTMLSelectElement).value as SubscriptionStatus
+                        )
+                    "
                     class="px-2 py-1 rounded-lg text-xs font-semibold focus:outline-none bg-zinc-950 border border-white/10"
                     :class="{
                       'text-emerald-400': sub.status === 'active',
@@ -413,8 +539,12 @@ function savePlan() {
 
                 <td class="py-3.5 px-4 text-zinc-400">
                   <div>{{ sub.storageUsedGb }} GB storage</div>
-                  <div class="text-[11px] text-violet-400">{{ sub.aiCreditsUsed }} AI credits used</div>
-                  <div class="text-[10px] text-emerald-400 font-mono">+{{ sub.topupCreditsRemaining || 0 }} Top-up Credits</div>
+                  <div class="text-[11px] text-violet-400">
+                    {{ sub.aiCreditsUsed }} AI credits used
+                  </div>
+                  <div class="text-[10px] text-emerald-400 font-mono">
+                    +{{ sub.topupCreditsRemaining || 0 }} Top-up Credits
+                  </div>
                 </td>
 
                 <td class="py-3.5 px-4 text-right flex items-center justify-end gap-2">
@@ -426,9 +556,18 @@ function savePlan() {
                     +1k Top-up
                   </button>
                   <button
-                    @click="updateSubscriberStatus(sub.id, sub.status === 'active' ? 'canceled' : 'active')"
+                    @click="
+                      updateSubscriberStatus(
+                        sub.id,
+                        sub.status === 'active' ? 'canceled' : 'active'
+                      )
+                    "
                     class="px-3 py-1 rounded-lg text-[11px] font-medium border transition"
-                    :class="sub.status === 'active' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'"
+                    :class="
+                      sub.status === 'active'
+                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20'
+                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                    "
                   >
                     {{ sub.status === 'active' ? 'Revoke' : 'Activate' }}
                   </button>
@@ -441,7 +580,10 @@ function savePlan() {
     </div>
 
     <!-- CREATE / EDIT PLAN MODAL -->
-    <div v-if="isPlanModalOpen" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      v-if="isPlanModalOpen"
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    >
       <div class="w-full max-w-lg rounded-2xl bg-zinc-900 border border-white/10 p-6 space-y-5">
         <div class="flex items-center justify-between border-b border-white/10 pb-4">
           <h3 class="text-base font-bold text-white">
@@ -453,63 +595,113 @@ function savePlan() {
         <div class="space-y-4 text-xs">
           <div>
             <label class="block text-zinc-400 mb-1">Plan Name</label>
-            <input v-model="planFormName" type="text" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+            <input
+              v-model="planFormName"
+              type="text"
+              class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+            />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-zinc-400 mb-1">Monthly Price ($)</label>
-              <input v-model.number="planFormPriceMonthly" type="number" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+              <input
+                v-model.number="planFormPriceMonthly"
+                type="number"
+                class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+              />
             </div>
             <div>
               <label class="block text-zinc-400 mb-1">Annual Price ($)</label>
-              <input v-model.number="planFormPriceAnnual" type="number" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+              <input
+                v-model.number="planFormPriceAnnual"
+                type="number"
+                class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+              />
             </div>
           </div>
 
           <div class="grid grid-cols-3 gap-3">
             <div>
               <label class="block text-zinc-400 mb-1">Max Members</label>
-              <input v-model.number="planFormMembers" type="number" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+              <input
+                v-model.number="planFormMembers"
+                type="number"
+                class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+              />
             </div>
             <div>
               <label class="block text-zinc-400 mb-1">Storage (GB)</label>
-              <input v-model.number="planFormStorageGb" type="number" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+              <input
+                v-model.number="planFormStorageGb"
+                type="number"
+                class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+              />
             </div>
             <div>
               <label class="block text-zinc-400 mb-1">AI Credits/mo</label>
-              <input v-model.number="planFormAiCredits" type="number" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white" />
+              <input
+                v-model.number="planFormAiCredits"
+                type="number"
+                class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+              />
             </div>
           </div>
 
           <!-- Cloud Sync Options -->
           <div class="p-3 rounded-xl bg-zinc-950 border border-white/5 space-y-2">
             <div class="flex items-center gap-2">
-              <input id="cloud-sync-chk" v-model="planFormCloudSyncEnabled" type="checkbox" class="rounded bg-zinc-900 border-white/10 text-violet-600" />
-              <label for="cloud-sync-chk" class="text-zinc-200 font-semibold">Enable Optional Cloud Sync & Backup</label>
+              <input
+                id="cloud-sync-chk"
+                v-model="planFormCloudSyncEnabled"
+                type="checkbox"
+                class="rounded bg-zinc-900 border-white/10 text-violet-600"
+              />
+              <label for="cloud-sync-chk" class="text-zinc-200 font-semibold"
+                >Enable Optional Cloud Sync & Backup</label
+              >
             </div>
             <div v-if="planFormCloudSyncEnabled" class="flex items-center gap-2 pt-1">
               <label class="text-zinc-400 shrink-0">Auto-Backup Frequency (Minutes):</label>
-              <input v-model.number="planFormCloudBackupInterval" type="number" class="w-24 px-2 py-1 rounded bg-zinc-900 border border-white/10 text-white" />
+              <input
+                v-model.number="planFormCloudBackupInterval"
+                type="number"
+                class="w-24 px-2 py-1 rounded bg-zinc-900 border border-white/10 text-white"
+              />
             </div>
           </div>
 
           <div>
             <label class="block text-zinc-400 mb-1">Features (One per line)</label>
-            <textarea v-model="planFormFeatures" rows="3" class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"></textarea>
+            <textarea
+              v-model="planFormFeatures"
+              rows="3"
+              class="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/10 text-white"
+            ></textarea>
           </div>
 
           <div class="flex items-center gap-2 pt-1">
-            <input id="popular-chk" v-model="planFormIsPopular" type="checkbox" class="rounded bg-zinc-950 border-white/10 text-violet-600" />
+            <input
+              id="popular-chk"
+              v-model="planFormIsPopular"
+              type="checkbox"
+              class="rounded bg-zinc-950 border-white/10 text-violet-600"
+            />
             <label for="popular-chk" class="text-zinc-300">Highlight as "Most Popular" Plan</label>
           </div>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-          <button @click="isPlanModalOpen = false" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300">
+          <button
+            @click="isPlanModalOpen = false"
+            class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300"
+          >
             Cancel
           </button>
-          <button @click="savePlan" class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white shadow">
+          <button
+            @click="savePlan"
+            class="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-white shadow"
+          >
             Save Plan
           </button>
         </div>

@@ -39,7 +39,8 @@ import type {
   ArcData,
   VectorNetwork,
   ComponentPropertyDefinition,
-  ComponentPropertyType
+  ComponentPropertyType,
+  CanvasGuide
 } from '#core/scene-graph'
 import type { GUID } from '#core/types'
 
@@ -191,6 +192,14 @@ export function mapArcData(data?: Partial<ArcData>): ArcData | null {
     endingAngle: data.endingAngle ?? 2 * Math.PI,
     innerRadius: data.innerRadius ?? 0
   }
+}
+
+export function convertGuides(nc: Pick<NodeChange, 'guides'>): CanvasGuide[] {
+  return (nc.guides ?? []).map((guide, index) => ({
+    id: guide.guid ? guidToString(guide.guid) : `imported-guide:${index}`,
+    type: guide.axis === 'X' ? 'vertical' : 'horizontal',
+    value: guide.offset
+  }))
 }
 
 function convertTransformProps(

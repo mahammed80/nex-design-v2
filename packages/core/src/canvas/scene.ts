@@ -1,11 +1,18 @@
 import type { Canvas, EmbindEnumEntity, Path } from 'canvaskit-wasm'
 
-import { DROP_HIGHLIGHT_ALPHA, DROP_HIGHLIGHT_STROKE, SECTION_CORNER_RADIUS } from '#core/constants'
+import {
+  DROP_HIGHLIGHT_ALPHA,
+  DROP_HIGHLIGHT_STROKE,
+  OUTLINE_COLOR,
+  SECTION_CORNER_RADIUS
+} from '#core/constants'
 import type { SceneNode, SceneGraph, Fill } from '#core/scene-graph'
 import type { Color } from '#core/types'
 import { vectorNetworkToCenterlinePath } from '#core/vector'
 
 import { nodeHasRadius } from './effects'
+import { drawNodeLayoutGrids } from './layout-grid'
+import { renderChildrenWithMasks } from './mask'
 import type { SkiaRenderer, RenderOverlays } from './renderer'
 
 function drawVisibleFills(
@@ -81,6 +88,16 @@ function renderNodeContent(
   nodeId: string,
   overlays: RenderOverlays
 ): void {
+  if (r.outlineMode) {
+    r.auxStroke.setColor(
+      r.ck.Color4f(OUTLINE_COLOR.r, OUTLINE_COLOR.g, OUTLINE_COLOR.b, OUTLINE_COLOR.a)
+    )
+    r.auxStroke.setStrokeWidth(1 / r.zoom)
+    r.auxStroke.setPathEffect(null)
+    r.strokeNodeShape(canvas, node, r.auxStroke)
+    return
+  }
+
   if (node.type === 'SECTION') {
     r.renderSection(canvas, node, graph)
   } else if (node.type === 'COMPONENT_SET') {
@@ -109,21 +126,17 @@ function renderChildren(
 ): void {
   const isClippableContainer =
     node.type === 'FRAME' || node.type === 'COMPONENT' || node.type === 'INSTANCE'
-  if (isClippableContainer && node.clipsContent && node.childIds.length > 0) {
+  if (!r.outlineMode && isClippableContainer && node.clipsContent && node.childIds.length > 0) {
     canvas.save()
     if (nodeHasRadius(node)) {
       canvas.clipRRect(r.makeRRect(node), r.ck.ClipOp.Intersect, true)
     } else {
       canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, true)
     }
-    for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays)
-    }
+    renderChildrenWithMasks(r, canvas, graph, node.childIds, overlays)
     canvas.restore()
   } else {
-    for (const childId of node.childIds) {
-      r.renderNode(canvas, graph, childId, overlays)
-    }
+    renderChildrenWithMasks(r, canvas, graph, node.childIds, overlays)
   }
 }
 
@@ -155,14 +168,16 @@ export function renderNode(
   canvas.save()
   canvas.translate(node.x, node.y)
 
-  if (node.opacity < 1) {
+  if (!r.outlineMode && node.opacity < 1) {
     r.opacityPaint.setAlphaf(node.opacity)
     canvas.saveLayer(r.opacityPaint)
   }
 
-  const layerBlur = node.effects.find(
-    (e) => e.visible && (e.type === 'LAYER_BLUR' || e.type === 'FOREGROUND_BLUR')
-  )
+  const layerBlur = r.outlineMode
+    ? undefined
+    : node.effects.find(
+        (e) => e.visible && (e.type === 'LAYER_BLUR' || e.type === 'FOREGROUND_BLUR')
+      )
   if (layerBlur) {
     // Entry guard: reset shared paint to known state
     r.effectLayerPaint.setImageFilter(null)
@@ -176,6 +191,7 @@ export function renderNode(
   applyNodeTransforms(r, canvas, node, nodeId, overlays)
   renderNodeContent(r, canvas, graph, node, nodeId, overlays)
   renderChildren(r, canvas, graph, node, overlays)
+  if (!r.outlineMode) drawNodeLayoutGrids(r, canvas, node)
 
   if (layerBlur) {
     canvas.restore()
@@ -184,7 +200,7 @@ export function renderNode(
     r.effectLayerPaint.setColorFilter(null)
     r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   }
-  if (node.opacity < 1) {
+  if (!r.outlineMode && node.opacity < 1) {
     canvas.restore()
   }
   canvas.restore()
@@ -216,7 +232,7 @@ export function renderSection(
 ): void {
   const rrect = makeNodeRRect(r, node, SECTION_CORNER_RADIUS)
 
-  drawVisibleFills(r, node, graph, () => canvas.drawRRect(rrect, r.fillPaint))
+  drawVisibleFills(r, canvas, node, graph, () => canvas.drawRRect(rrect, r.fillPaint))
 
   forVisibleStrokes(r, node, graph, (stroke, color) => {
     r.strokePaint.setColor(r.ck.Color4f(color.r, color.g, color.b, color.a))
@@ -236,7 +252,7 @@ export function renderComponentSet(
 ): void {
   const rrect = makeNodeRRect(r, node, 5)
 
-  drawVisibleFills(r, node, graph, () => canvas.drawRRect(rrect, r.fillPaint))
+  drawVisibleFills(r, canvas, node, graph, () => canvas.drawRRect(rrect, r.fillPaint))
 
   r.auxStroke.setStrokeWidth(r.COMPONENT_SET_BORDER_WIDTH / r.zoom)
   r.auxStroke.setColor(r.compColor())
@@ -486,7 +502,9 @@ export function renderShapeUncached(
   const shadowChild = getShadowShapeChild(node, graph)
   r.renderEffects(canvas, node, rect, hasRadius, 'behind', shadowChild)
 
-  drawVisibleFills(r, canvas, node, graph, (fill) => r.drawNodeFill(canvas, node, rect, hasRadius, fill, graph))
+  drawVisibleFills(r, canvas, node, graph, (fill) =>
+    r.drawNodeFill(canvas, node, rect, hasRadius, fill, graph)
+  )
 
   const sg = node.strokeGeometry.length > 0 ? r.getStrokeGeometry(node) : null
   const vectorPaths = node.type === 'VECTOR' ? r.getVectorPaths(node) : null
@@ -534,13 +552,22 @@ function drawGradientText(
 
   r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcIn)
   canvas.saveLayer(r.effectLayerPaint)
-  canvas.drawRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.fillPaint)
   canvas.restore()
   canvas.restore()
   r.effectLayerPaint.setImageFilter(null)
   r.effectLayerPaint.setColorFilter(null)
   r.effectLayerPaint.setBlendMode(r.ck.BlendMode.SrcOver)
   return true
+}
+
+function resolveParagraphY(node: SceneNode, paraH: number): number {
+  if (node.textAlignVertical === 'CENTER' && node.height > 0) {
+    return Math.max(0, (node.height - paraH) / 2)
+  }
+  if (node.textAlignVertical === 'BOTTOM' && node.height > 0) {
+    return Math.max(0, node.height - paraH)
+  }
+  return 0
 }
 
 export function renderText(
@@ -559,8 +586,7 @@ export function renderText(
     canvas.clipRect(r.ck.LTRBRect(0, 0, node.width, node.height), r.ck.ClipOp.Intersect, false)
   }
 
-  const paragraphY = -1
-  if (isGradientFill(fill) && drawGradientText(r, canvas, node, paragraphY)) {
+  if (isGradientFill(fill) && drawGradientText(r, canvas, node, 0)) {
     canvas.restore()
     return
   }
@@ -575,7 +601,7 @@ export function renderText(
     }
   }
   if (r.fontsLoaded && r.fontProvider) {
-    const sg = graph ?? r.activeGraph
+    const sg = graph
     let textColor4f: Float32Array
     if (fill) {
       const c = sg ? r.resolveFillColor(fill, 0, node, sg) : fill.color
@@ -591,6 +617,7 @@ export function renderText(
     }
 
     const paragraph = r.buildParagraph(node, textColor4f)
+    const paragraphY = resolveParagraphY(node, paragraph.getHeight())
     canvas.drawParagraph(paragraph, 0, paragraphY)
     paragraph.delete()
   } else if (r.textFont) {

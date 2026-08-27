@@ -1,6 +1,6 @@
 import { colorToFill, parseColor } from '#core/color'
 import { TRANSPARENT } from '#core/constants'
-import type { GridTrack, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
+import type { GridTrack, ImageScaleMode, LayoutMode, SceneNode, Stroke } from '#core/scene-graph'
 
 const WEIGHT_MAP: Record<string, number> = {
   normal: 400,
@@ -90,8 +90,10 @@ export function applySizeOverrides(
   }
 
   // Escape-hatch: url-import parser can directly set axis sizing via _counterAxisSizing / _primaryAxisSizing
-  if (props._counterAxisSizing) o.counterAxisSizing = props._counterAxisSizing as SceneNode['counterAxisSizing']
-  if (props._primaryAxisSizing) o.primaryAxisSizing = props._primaryAxisSizing as SceneNode['primaryAxisSizing']
+  if (props._counterAxisSizing)
+    o.counterAxisSizing = props._counterAxisSizing as SceneNode['counterAxisSizing']
+  if (props._primaryAxisSizing)
+    o.primaryAxisSizing = props._primaryAxisSizing as SceneNode['primaryAxisSizing']
 
   return { w, h }
 }

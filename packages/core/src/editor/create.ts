@@ -65,6 +65,7 @@ export function createEditor(options?: EditorOptions) {
   void prefetchFigmaSchema()
 
   const state: EditorState = options?.state ?? createDefaultEditorState(_graph.getPages()[0].id)
+  state.guides = structuredClone(_graph.getNode(state.currentPageId)?.guides ?? state.guides)
   let flushPendingHistory: () => void = () => undefined
 
   function emitEditorEvent<K extends EditorEventName>(
@@ -105,6 +106,11 @@ export function createEditor(options?: EditorOptions) {
         sceneVersion: state.sceneVersion
       })
     })
+  }
+
+  function toggleOutlineMode(force?: boolean) {
+    state.outlineMode = force ?? !state.outlineMode
+    requestRender()
   }
 
   function setSelectedIds(ids: Set<string>) {
@@ -213,6 +219,8 @@ export function createEditor(options?: EditorOptions) {
     subscribeToGraph()
     const previousPageId = state.currentPageId
     state.currentPageId = _graph.getPages()[0]?.id ?? _graph.rootId
+    state.guides = structuredClone(_graph.getNode(state.currentPageId)?.guides ?? [])
+    state.selectedGuideId = null
     setSelectedIds(new Set())
     state.hoveredNodeId = null
     pages.clearPageViewports()
@@ -245,6 +253,7 @@ export function createEditor(options?: EditorOptions) {
     // Lifecycle
     requestRender,
     requestRepaint,
+    toggleOutlineMode,
     onEditorEvent,
     setCanvasKit,
     removeCanvasRenderer,

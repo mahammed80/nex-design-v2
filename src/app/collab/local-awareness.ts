@@ -60,5 +60,18 @@ export function createLocalAwarenessActions({
     broadcastAwareness()
   }
 
-  return { broadcastAwareness, updateCursor, updateSelection, updatePeersList, setLocalName }
+  function updateCursorChat(message: string) {
+    const awareness = getAwareness()
+    if (!awareness) return
+    awareness.setLocalStateField('cursorChat', { message, timestamp: Date.now() })
+  }
+
+  return {
+    broadcastAwareness,
+    updateCursor,
+    updateSelection,
+    updatePeersList,
+    setLocalName,
+    updateCursorChat
+  }
 }

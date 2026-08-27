@@ -25,6 +25,9 @@ import type { Rect } from '#core/types'
 import { computeAccurateBounds } from './bezier'
 
 export { vectorNetworkToCenterlinePath, fitCircleArc, isClosedThinCrescent } from './centerline'
+export { simplifyVectorNetwork } from './simplify'
+export { offsetVectorNetwork } from './offset-path'
+export { outlineStrokeNetwork } from './outline-stroke'
 
 // --- vectorNetworkBlob binary format ---
 // Header:  [numVertices:u32, numSegments:u32, numRegions:u32]  (12 bytes)

@@ -4,6 +4,7 @@ import type { EditorState } from '#core/editor/types'
 export function createDefaultEditorState(pageId: string): EditorState {
   return {
     mode: 'DESIGN',
+    outlineMode: false,
     activeTool: 'SELECT',
     currentPageId: pageId,
     selectedIds: new Set<string>(),
@@ -34,6 +35,9 @@ export function createDefaultEditorState(pageId: string): EditorState {
     guides: [],
     selectedGuideId: null,
     guidesVisible: true,
-    guidesLocked: false
+    guidesLocked: false,
+    altMeasurement: false,
+    smallNudge: 1,
+    bigNudge: 10
   }
 }

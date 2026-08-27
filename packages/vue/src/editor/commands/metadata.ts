@@ -6,6 +6,8 @@ export const EDITOR_COMMAND_SHORTCUTS: Partial<Record<EditorCommandId, string>> 
   'selection.selectAll': '⌘A',
   'selection.duplicate': '⌘D',
   'selection.delete': '⌫',
+  'selection.copyProperties': '⌥⌘C',
+  'selection.pasteProperties': '⌥⌘V',
   'selection.group': '⌘G',
   'selection.ungroup': '⇧⌘G',
   'selection.createComponent': '⌥⌘K',
@@ -15,5 +17,11 @@ export const EDITOR_COMMAND_SHORTCUTS: Partial<Record<EditorCommandId, string>> 
   'selection.bringToFront': ']',
   'selection.sendToBack': '[',
   'selection.toggleVisibility': '⇧⌘H',
-  'selection.toggleLock': '⇧⌘L'
+  'selection.toggleLock': '⇧⌘L',
+  'selection.toggleMask': '⌃⌘M',
+  'selection.tidyUp': '⌃⌥T',
+  'selection.distributeHorizontal': '⌃⌥H',
+  'selection.distributeVertical': '⌃⌥V',
+  'selection.flipHorizontal': '⇧H',
+  'selection.flipVertical': '⇧V'
 }

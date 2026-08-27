@@ -63,11 +63,14 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
   })
 
   const shortcuts: ShortcutDefinition[] = [
+    commandShortcut('copy-properties', '$mod+Alt+KeyC', 'selection.copyProperties'),
+    commandShortcut('paste-properties', '$mod+Alt+KeyV', 'selection.pasteProperties'),
     commandShortcut('create-component', '$mod+Alt+KeyK', 'selection.createComponent'),
     commandShortcut('detach-instance', '$mod+Alt+KeyB', 'selection.detachInstance'),
     commandShortcut('create-component-set', '$mod+Shift+KeyK', 'selection.createComponentSet'),
     commandShortcut('toggle-visibility', '$mod+Shift+KeyH', 'selection.toggleVisibility'),
     commandShortcut('toggle-lock', '$mod+Shift+KeyL', 'selection.toggleLock'),
+    commandShortcut('toggle-mask', '$mod+Alt+KeyM', 'selection.toggleMask'),
     {
       id: 'export-selection-png',
       keys: '$mod+Shift+KeyE',
@@ -76,13 +79,30 @@ export function registerKeyboardShortcuts(options: KeyboardShortcutOptions) {
     { id: 'save-as', keys: '$mod+Shift+KeyS', run: ({ store }) => void store.saveFigFileAs() },
     commandShortcut('ungroup', '$mod+Shift+KeyG', 'selection.ungroup'),
     commandShortcut('redo-shift', '$mod+Shift+KeyZ', 'edit.redo'),
+    commandShortcut('flip-horizontal', 'Shift+KeyH', 'selection.flipHorizontal'),
+    commandShortcut('flip-vertical', 'Shift+KeyV', 'selection.flipVertical'),
+    {
+      id: 'toggle-dev-mode',
+      keys: 'Shift+KeyD',
+      run: ({ store }) => {
+        store.state.mode = store.state.mode === 'DEVELOPER' ? 'DESIGN' : 'DEVELOPER'
+        store.requestRender()
+      }
+    },
     { id: 'toggle-ui', keys: '$mod+Backslash', run: ({ actions }) => actions.toggleUI() },
+    { id: 'outline-mode', keys: 'Shift+KeyO', run: ({ actions }) => actions.toggleOutlineMode() },
     {
       id: 'toggle-creative-notes',
       keys: '$mod+Alt+KeyN',
       run: ({ actions }) => actions.toggleCreativeNotes()
     },
     { id: 'toggle-ai', keys: '$mod+KeyJ', run: ({ actions }) => actions.toggleAI() },
+    {
+      id: 'command-palette',
+      keys: ['$mod+KeyK', '$mod+Slash'],
+      run: ({ actions }) => actions.toggleCommandPalette()
+    },
+    { id: 'find-replace', keys: '$mod+KeyF', run: ({ actions }) => actions.toggleFindReplace() },
     { id: 'close-tab', keys: '$mod+KeyW', run: ({ closeActiveTab }) => closeActiveTab() },
     { id: 'new-tab', keys: ['$mod+KeyN', '$mod+KeyT'], run: ({ createTab }) => createTab() },
     commandShortcut('undo', '$mod+KeyZ', 'edit.undo'),

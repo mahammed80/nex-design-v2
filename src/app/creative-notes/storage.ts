@@ -31,9 +31,13 @@ export function useCreativeNotes(documentKey: MaybeRefOrGetter<string>) {
     }
   }
 
-  function addNote(content: string, color: CreativeNoteColor): CreativeNote | null {
+  function addNote(
+    content: string,
+    color: CreativeNoteColor,
+    image?: string
+  ): CreativeNote | null {
     const trimmed = content.trim()
-    if (!trimmed) return null
+    if (!trimmed && !image) return null
 
     const now = Date.now()
     const note: CreativeNote = {
@@ -41,6 +45,7 @@ export function useCreativeNotes(documentKey: MaybeRefOrGetter<string>) {
       content: trimmed,
       color,
       pinned: false,
+      image,
       createdAt: now,
       updatedAt: now
     }
@@ -52,6 +57,22 @@ export function useCreativeNotes(documentKey: MaybeRefOrGetter<string>) {
     write(
       notes.value.map((note) =>
         note.id === id ? { ...note, content, updatedAt: Date.now() } : note
+      )
+    )
+  }
+
+  function updateNoteColor(id: string, color: CreativeNoteColor) {
+    write(
+      notes.value.map((note) =>
+        note.id === id ? { ...note, color, updatedAt: Date.now() } : note
+      )
+    )
+  }
+
+  function attachImage(id: string, image?: string) {
+    write(
+      notes.value.map((note) =>
+        note.id === id ? { ...note, image, updatedAt: Date.now() } : note
       )
     )
   }
@@ -68,5 +89,13 @@ export function useCreativeNotes(documentKey: MaybeRefOrGetter<string>) {
     write(notes.value.filter((note) => note.id !== id))
   }
 
-  return { notes, addNote, updateNote, togglePin, deleteNote }
+  return {
+    notes,
+    addNote,
+    updateNote,
+    updateNoteColor,
+    attachImage,
+    togglePin,
+    deleteNote
+  }
 }

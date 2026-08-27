@@ -137,7 +137,15 @@ export function renderThumbnail(
   const page = graph.getNode(pageId)
   if (!page || page.childIds.length === 0) return null
 
-  const bounds = computeContentBounds(graph, page.childIds)
+  let targetChildIds = page.childIds
+  const thumbnailNode = page.childIds
+    .map((id) => graph.getNode(id))
+    .find((n) => n?.isThumbnail === true)
+  if (thumbnailNode) {
+    targetChildIds = [thumbnailNode.id]
+  }
+
+  const bounds = computeContentBounds(graph, targetChildIds)
   if (!bounds) return null
 
   const contentW = bounds.maxX - bounds.minX

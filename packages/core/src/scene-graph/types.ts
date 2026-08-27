@@ -227,6 +227,7 @@ export interface CharacterStyleOverride {
   baselineShift?: number
   superscript?: boolean
   subscript?: boolean
+  hyperlink?: string
   openTypeFeatures?: OpenTypeFeatures
 }
 
@@ -274,6 +275,23 @@ export interface PluginRelaunchDataEntry {
   command: string
   message: string
   isDeleted: boolean
+}
+
+export interface CanvasGuide {
+  id: string
+  type: 'horizontal' | 'vertical'
+  value: number
+}
+
+export interface LayoutGrid {
+  pattern: 'COLUMNS' | 'ROWS' | 'GRID'
+  sectionSize: number
+  visible: boolean
+  color: Color
+  alignment?: 'MIN' | 'MAX' | 'CENTER' | 'STRETCH'
+  gutterSize?: number
+  offset?: number
+  count?: number
 }
 
 export interface SceneNode {
@@ -414,6 +432,7 @@ export interface SceneNode {
 
   textPicture: Uint8Array | null
   layoutGrids?: LayoutGrid[]
+  guides?: CanvasGuide[]
 
   reactions?: Reaction[]
   prototypeStartNodeId?: string | null

@@ -258,6 +258,12 @@ export interface PluginRelaunchData {
   isDeleted: boolean
 }
 
+export interface Guide {
+  axis: 'X' | 'Y'
+  offset: number
+  guid?: GUID
+}
+
 export interface NodeChange {
   [key: string]: unknown
   guid?: GUID
@@ -382,6 +388,7 @@ export interface NodeChange {
   documentColorProfile?: 'SRGB' | 'DISPLAY_P3'
   pluginData?: PluginData[]
   pluginRelaunchData?: PluginRelaunchData[]
+  guides?: Guide[]
 }
 
 export interface FigmaMessage {

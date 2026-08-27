@@ -76,7 +76,7 @@ export const importUrl = defineTool({
       description: 'Viewport width used for layout (default: 1440).'
     }
   },
-  execute: async (figma, args) => {
+  execute: async (_figma, args) => {
     const url = args.url
     if (!url.startsWith('http')) {
       return { error: 'url must start with http:// or https://' }

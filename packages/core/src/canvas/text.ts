@@ -246,7 +246,6 @@ export function buildParagraph(
   const paragraph = builder.build()
   if (node.textAutoResize === 'WIDTH_AND_HEIGHT') {
     paragraph.layout(1e6)
-    paragraph.layout(Math.max(node.width || 1, Math.ceil(paragraph.getLongestLine())))
   } else {
     paragraph.layout(resolveParagraphLayoutWidth(node))
   }

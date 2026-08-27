@@ -89,6 +89,16 @@
         "accelerator": "CmdOrCtrl+V"
       },
       {
+        "id": "selection.copyProperties",
+        "label": "Copy Properties",
+        "accelerator": "CmdOrCtrl+Alt+C"
+      },
+      {
+        "id": "selection.pasteProperties",
+        "label": "Paste Properties",
+        "accelerator": "CmdOrCtrl+Alt+V"
+      },
+      {
         "id": "selection.duplicate",
         "label": "Duplicate",
         "accelerator": "CmdOrCtrl+D"
@@ -138,6 +148,11 @@
       },
       {
         "type": "separator"
+      },
+      {
+        "id": "outline-mode",
+        "label": "Show Layer Outlines",
+        "checkbox": true
       },
       {
         "id": "theme",

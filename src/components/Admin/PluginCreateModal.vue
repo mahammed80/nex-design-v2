@@ -76,7 +76,8 @@ function submitForm() {
     iconUrl: iconUrl.value.trim() || undefined,
     scriptUrl: scriptUrl.value.trim() || undefined,
     manifestJson: JSON.stringify(manifestObject, null, 2),
-    permissions: selectedPermissions.value
+    permissions: selectedPermissions.value,
+    isWebWorkerSandboxRequired: true
   })
 
   emit('close')
@@ -85,12 +86,16 @@ function submitForm() {
 
 <template>
   <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-2xl rounded-2xl bg-zinc-900 border border-white/10 p-6 space-y-5 max-h-[90vh] flex flex-col justify-between">
+    <div
+      class="w-full max-w-2xl rounded-2xl bg-zinc-900 border border-white/10 p-6 space-y-5 max-h-[90vh] flex flex-col justify-between"
+    >
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-white/10 pb-4">
         <div>
           <h3 class="text-base font-bold text-white">Publish New Marketplace Plugin</h3>
-          <p class="text-xs text-zinc-400">Register a new extension or tool for the NexDesign ecosystem</p>
+          <p class="text-xs text-zinc-400">
+            Register a new extension or tool for the NexDesign ecosystem
+          </p>
         </div>
         <button @click="$emit('close')" class="text-zinc-400 hover:text-white text-lg">✕</button>
       </div>
@@ -197,7 +202,11 @@ function submitForm() {
               :key="perm.id"
               @click="togglePermission(perm.id)"
               class="p-2.5 rounded-xl border cursor-pointer flex items-center justify-between transition"
-              :class="selectedPermissions.includes(perm.id) ? 'bg-violet-600/10 border-violet-500/40 text-violet-300' : 'bg-zinc-950 border-white/5 text-zinc-400 hover:border-white/20'"
+              :class="
+                selectedPermissions.includes(perm.id)
+                  ? 'bg-violet-600/10 border-violet-500/40 text-violet-300'
+                  : 'bg-zinc-950 border-white/5 text-zinc-400 hover:border-white/20'
+              "
             >
               <span>{{ perm.label }}</span>
               <span class="text-[10px] font-mono text-zinc-500">{{ perm.id }}</span>

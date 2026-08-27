@@ -1,3 +1,5 @@
+import { computed } from 'vue'
+
 import type { EditorCommandMapOptions } from './context'
 import type { EditorCommand, EditorCommandId } from './types'
 
@@ -35,6 +37,22 @@ export function createSelectionCommands({
       },
       enabled: capabilities.canDelete,
       run: () => editor.deleteSelected()
+    },
+    'selection.copyProperties': {
+      id: 'selection.copyProperties',
+      get label() {
+        return t.value.copyProperties
+      },
+      enabled: capabilities.canCopyProperties,
+      run: () => editor.copyProperties()
+    },
+    'selection.pasteProperties': {
+      id: 'selection.pasteProperties',
+      get label() {
+        return t.value.pasteProperties
+      },
+      enabled: capabilities.canPasteProperties,
+      run: () => editor.pasteProperties()
     },
     'selection.group': {
       id: 'selection.group',
@@ -135,6 +153,14 @@ export function createSelectionCommands({
       enabled: capabilities.canToggleLock,
       run: () => editor.toggleLock()
     },
+    'selection.toggleMask': {
+      id: 'selection.toggleMask',
+      get label() {
+        return t.value.toggleMask
+      },
+      enabled: computed(() => (editor.state.selectedIds.size ?? 0) > 0),
+      run: () => editor.toggleMaskSelected()
+    },
     'selection.moveToPage': {
       id: 'selection.moveToPage',
       get label() {
@@ -144,6 +170,46 @@ export function createSelectionCommands({
       run: () => {
         moveSelectionToPage(otherPages.value[0].id)
       }
+    },
+    'selection.tidyUp': {
+      id: 'selection.tidyUp',
+      get label() {
+        return t.value.tidyUp
+      },
+      enabled: computed(() => (editor.state.selectedIds.size ?? 0) >= 2),
+      run: () => editor.tidyUp()
+    },
+    'selection.distributeHorizontal': {
+      id: 'selection.distributeHorizontal',
+      get label() {
+        return t.value.distributeHorizontal
+      },
+      enabled: computed(() => (editor.state.selectedIds.size ?? 0) >= 3),
+      run: () => editor.distributeSpacing('HORIZONTAL')
+    },
+    'selection.distributeVertical': {
+      id: 'selection.distributeVertical',
+      get label() {
+        return t.value.distributeVertical
+      },
+      enabled: computed(() => (editor.state.selectedIds.size ?? 0) >= 3),
+      run: () => editor.distributeSpacing('VERTICAL')
+    },
+    'selection.flipHorizontal': {
+      id: 'selection.flipHorizontal',
+      get label() {
+        return t.value.flipHorizontal
+      },
+      enabled: computed(() => (editor.state.selectedIds.size ?? 0) > 0),
+      run: () => editor.flipHorizontalSelected()
+    },
+    'selection.flipVertical': {
+      id: 'selection.flipVertical',
+      get label() {
+        return t.value.flipVertical
+      },
+      enabled: computed(() => (editor.state.selectedIds.size ?? 0) > 0),
+      run: () => editor.flipVerticalSelected()
     }
   }
 }

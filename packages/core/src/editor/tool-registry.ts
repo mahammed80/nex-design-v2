@@ -8,7 +8,7 @@ export interface EditorToolDef {
 }
 
 export const EDITOR_TOOLS: EditorToolDef[] = [
-  { key: 'SELECT', label: 'Move', shortcut: 'V' },
+  { key: 'SELECT', label: 'Move', shortcut: 'V', flyout: ['SELECT', 'SCALE'] },
   { key: 'FRAME', label: 'Frame', shortcut: 'F', flyout: ['FRAME', 'SECTION'] },
   {
     key: 'RECTANGLE',
@@ -16,13 +16,15 @@ export const EDITOR_TOOLS: EditorToolDef[] = [
     shortcut: 'R',
     flyout: ['RECTANGLE', 'LINE', 'ELLIPSE', 'POLYGON', 'STAR']
   },
-  { key: 'PEN', label: 'Pen', shortcut: 'P' },
+  { key: 'PEN', label: 'Pen', shortcut: 'P', flyout: ['PEN', 'PENCIL'] },
   { key: 'TEXT', label: 'Text', shortcut: 'T' },
+  { key: 'EYEDROPPER', label: 'Eyedropper', shortcut: 'I' },
   { key: 'HAND', label: 'Hand', shortcut: 'H' }
 ]
 
 export const TOOL_SHORTCUTS: Partial<Record<string, Tool>> = {
   KeyV: 'SELECT',
+  KeyK: 'SCALE',
   KeyF: 'FRAME',
   KeyS: 'SECTION',
   KeyR: 'RECTANGLE',
@@ -30,5 +32,7 @@ export const TOOL_SHORTCUTS: Partial<Record<string, Tool>> = {
   KeyL: 'LINE',
   KeyT: 'TEXT',
   KeyP: 'PEN',
+  'Shift+KeyP': 'PENCIL',
+  KeyI: 'EYEDROPPER',
   KeyH: 'HAND'
 }

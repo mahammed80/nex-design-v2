@@ -21,45 +21,63 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <h2
-        class="text-sm font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5"
-      >
-        <icon-lucide-type class="size-4 text-accent" />
-        Typography & Fonts
-      </h2>
+  <section class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-5">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+          <icon-lucide-type class="size-4" />
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+            Typography & Fonts
+            <span class="text-[10px] font-normal text-rose-400 font-mono">{{ fontVariables.length }} families</span>
+          </h2>
+          <p class="text-[11px] text-zinc-400">Font families, weights, and modular type scale sizes.</p>
+        </div>
+      </div>
       <button
-        class="flex cursor-pointer items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white shadow hover:bg-accent/90 transition-colors"
+        class="flex cursor-pointer items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-rose-600/20 transition-all hover:scale-105 active:scale-95"
         @click="emit('addFont')"
       >
-        <icon-lucide-plus class="size-3" />
-        Add Font
+        <icon-lucide-plus class="size-3.5 stroke-[3]" />
+        <span>Add Font</span>
       </button>
     </div>
 
+    <!-- Empty State -->
     <div
       v-if="fontVariables.length === 0"
-      class="rounded border border-dashed border-border p-8 text-center text-xs text-muted"
+      class="rounded-2xl border border-dashed border-white/15 bg-black/40 p-8 text-center flex flex-col items-center justify-center gap-2.5"
     >
-      No font families defined. Click "+ Add Font" to begin.
+      <div class="flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400">
+        <icon-lucide-type class="size-5" />
+      </div>
+      <p class="text-xs font-semibold text-white">No font families defined yet</p>
+      <p class="text-[11px] text-zinc-400 max-w-sm">Pick primary & secondary Google Fonts or load a starter preset.</p>
+      <button
+        class="mt-1 flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer"
+        @click="emit('addFont')"
+      >
+        <icon-lucide-plus class="size-3.5" />
+        <span>Add First Font</span>
+      </button>
     </div>
 
-    <div v-else class="flex flex-col gap-6 mt-2">
+    <div v-else class="flex flex-col gap-6">
       <!-- Font Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div
           v-for="v in fontVariables"
           :key="v.id"
-          class="card-bubble flex flex-col items-center relative group/font p-4 rounded-lg bg-panel border border-border shadow-sm"
+          class="flex flex-col items-center relative group p-3.5 rounded-2xl bg-black/50 border border-white/10 shadow-sm hover:border-rose-500/50 hover:shadow-lg transition-all"
         >
           <!-- Aa Box preview -->
           <div
-            class="w-full aspect-video rounded bg-input border border-border flex items-center justify-center flex-col gap-1 mb-3"
+            class="w-full aspect-video rounded-xl bg-black/60 border border-white/10 flex items-center justify-center flex-col gap-1 mb-3"
             :style="{ fontFamily: `'${v.valuesByMode.default}', sans-serif` }"
           >
-            <span class="text-4xl font-semibold text-surface">Aa</span>
-            <span class="text-[10px] text-muted">{{ v.valuesByMode.default }}</span>
+            <span class="text-4xl font-bold text-white tracking-tight">Aa</span>
+            <span class="text-[10px] text-zinc-400 font-mono">{{ v.valuesByMode.default }}</span>
           </div>
 
           <!-- Font Details (Variable name, Picker, Delete) -->
@@ -68,21 +86,21 @@ const emit = defineEmits<{
               <input
                 type="text"
                 :value="v.name"
-                placeholder="font-name"
-                class="flex-1 min-w-0 bg-transparent text-[11px] font-bold text-surface border-none outline-none focus:ring-0 p-0"
+                placeholder="font-token-name"
+                class="flex-1 min-w-0 bg-transparent text-xs font-bold text-white border-none outline-none focus:text-rose-300 transition-colors p-0"
                 @change="emit('renameFont', v.id, ($event.target as HTMLInputElement).value)"
               />
               <button
-                class="cursor-pointer text-muted hover:text-red-500 transition-colors focus:outline-none shrink-0"
+                class="opacity-0 group-hover:opacity-100 flex cursor-pointer items-center justify-center size-6 rounded-lg bg-black/70 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 shadow-sm transition-all"
                 title="Delete font variable"
                 @click="emit('removeFont', v.id)"
               >
-                <icon-lucide-trash-2 class="size-3.5" />
+                <icon-lucide-trash-2 class="size-3" />
               </button>
             </div>
 
             <FontPicker
-              class="w-full bg-input"
+              class="w-full bg-black/40 border border-white/10 rounded-xl text-xs text-white"
               :model-value="String(v.valuesByMode.default)"
               @select="emit('updateValue', v.id, $event)"
             />
@@ -91,134 +109,116 @@ const emit = defineEmits<{
       </div>
 
       <!-- Typography Scale Font Sizes -->
-      <div class="flex flex-col gap-3">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-muted/80">
-          Typography Scale Font Sizes (px)
+      <div class="flex flex-col gap-2.5">
+        <h3 class="text-xs font-bold tracking-tight text-zinc-300 flex items-center gap-1.5">
+          <icon-lucide-ruler class="size-3.5 text-rose-400" />
+          <span>Type Scale Ladder (px)</span>
         </h3>
-        <div
-          class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-panel border border-border/80 shadow-sm"
-        >
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3.5 rounded-2xl bg-black/50 border border-white/10 shadow-sm">
           <div
             v-for="v in fontSizeVariables"
             :key="v.id"
-            class="flex flex-col gap-1.5 p-2 rounded bg-input border border-border/40 hover:border-accent/30 transition-all"
+            class="flex flex-col gap-1 p-2 rounded-xl bg-white/5 border border-white/10 hover:border-rose-400/40 transition-all"
           >
-            <span class="text-[9px] text-muted font-bold tracking-wide truncate">{{
-              getFontSizeLabel(v.name)
-            }}</span>
+            <span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider truncate">
+              {{ getFontSizeLabel(v.name) }}
+            </span>
             <div class="flex items-center gap-1.5">
               <input
                 type="number"
                 :value="v.valuesByMode.default"
-                class="w-full bg-transparent text-xs font-mono text-surface border-none outline-none p-0 focus:ring-0"
+                class="w-full bg-transparent text-xs font-mono font-bold text-white border-none outline-none p-0 focus:text-rose-300"
                 @change="
                   emit('updateValue', v.id, Number(($event.target as HTMLInputElement).value))
                 "
               />
-              <span class="text-[8px] text-muted font-bold">PX</span>
+              <span class="text-[9px] text-zinc-500 font-mono font-bold">px</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Typography Scale Preview -->
-      <div class="flex flex-col gap-3">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-muted/80">
-          Typography Scale Preview
+      <div class="flex flex-col gap-2.5">
+        <h3 class="text-xs font-bold tracking-tight text-zinc-300 flex items-center gap-1.5">
+          <icon-lucide-eye class="size-3.5 text-rose-400" />
+          <span>Live Hierarchy Specimen</span>
         </h3>
         <div
-          class="flex flex-col gap-6 p-6 rounded-lg bg-panel border border-border shadow-sm"
+          class="flex flex-col gap-4 p-5 rounded-2xl bg-black/60 border border-white/10 shadow-sm leading-none"
           :style="{ fontFamily: `'${previewFontFamily}', sans-serif` }"
         >
-          <div class="flex flex-col border-b border-border/40 pb-4">
-            <span class="text-[9px] font-mono text-muted uppercase tracking-wider mb-1"
-              >Display 1 ({{ getFontSizeVal('font-size-display-1') }}px, Bold)</span
+          <div class="flex flex-col border-b border-white/10 pb-3">
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
+              >Display 1 ({{ getFontSizeVal('font-size-display-1') }}px)</span
             >
             <h1
-              :style="{ fontSize: getFontSizeVal('font-size-display-1') + 'px' }"
-              class="font-bold leading-none tracking-tight text-surface"
+              :style="{ fontSize: `${getFontSizeVal('font-size-display-1')}px` }"
+              class="font-bold leading-none tracking-tight text-white"
             >
-              Display 1
+              Display Hero
             </h1>
           </div>
 
-          <div class="flex flex-col border-b border-border/40 pb-4">
-            <span class="text-[9px] font-mono text-muted uppercase tracking-wider mb-1"
-              >Heading 1 ({{ getFontSizeVal('font-size-heading-1') }}px, Bold)</span
+          <div class="flex flex-col border-b border-white/10 pb-3">
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
+              >Heading 1 ({{ getFontSizeVal('font-size-heading-1') }}px)</span
             >
             <h2
-              :style="{ fontSize: getFontSizeVal('font-size-heading-1') + 'px' }"
-              class="font-bold leading-tight text-surface"
+              :style="{ fontSize: `${getFontSizeVal('font-size-heading-1')}px` }"
+              class="font-bold leading-tight text-white"
             >
-              Heading 1
+              Main Headline
             </h2>
           </div>
 
-          <div class="flex flex-col border-b border-border/40 pb-4">
-            <span class="text-[9px] font-mono text-muted uppercase tracking-wider mb-1"
-              >Heading 2 ({{ getFontSizeVal('font-size-heading-2') }}px, Bold)</span
+          <div class="flex flex-col border-b border-white/10 pb-3">
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
+              >Heading 2 ({{ getFontSizeVal('font-size-heading-2') }}px)</span
             >
             <h3
-              :style="{ fontSize: getFontSizeVal('font-size-heading-2') + 'px' }"
-              class="font-bold leading-snug text-surface"
+              :style="{ fontSize: `${getFontSizeVal('font-size-heading-2')}px` }"
+              class="font-bold leading-snug text-white"
             >
-              Heading 2
+              Section Title
             </h3>
           </div>
 
-          <div class="flex flex-col border-b border-border/40 pb-4">
-            <span class="text-[9px] font-mono text-muted uppercase tracking-wider mb-1"
-              >Heading 3 ({{ getFontSizeVal('font-size-heading-3') }}px, Bold)</span
-            >
-            <h4
-              :style="{ fontSize: getFontSizeVal('font-size-heading-3') + 'px' }"
-              class="font-bold leading-normal text-surface"
-            >
-              Heading 3
-            </h4>
-          </div>
-
-          <div class="flex flex-col border-b border-border/40 pb-4">
-            <span class="text-[9px] font-mono text-muted uppercase tracking-wider mb-1"
-              >Paragraph ({{ getFontSizeVal('font-size-body') }}px, Regular)</span
+          <div class="flex flex-col border-b border-white/10 pb-3">
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
+              >Paragraph ({{ getFontSizeVal('font-size-body') }}px)</span
             >
             <p
-              :style="{ fontSize: getFontSizeVal('font-size-body') + 'px' }"
-              class="font-normal text-muted leading-relaxed"
+              :style="{ fontSize: `${getFontSizeVal('font-size-body')}px` }"
+              class="font-normal text-zinc-300 leading-relaxed"
             >
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua.
+              NexDesign gives creators instant design variables, scalable UI components, and real-time collaboration.
             </p>
           </div>
 
           <div class="flex flex-col">
-            <span class="text-[9px] font-mono text-muted uppercase tracking-wider mb-1"
-              >Button / Link ({{ getFontSizeVal('font-size-button') }}px, Semibold)</span
+            <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-2"
+              >Interactive Button ({{ getFontSizeVal('font-size-button') }}px)</span
             >
-            <div class="flex items-center gap-4 mt-2">
+            <div class="flex items-center gap-3">
               <button
-                :style="{ fontSize: getFontSizeVal('font-size-button') + 'px' }"
-                class="bg-accent hover:bg-accent/90 text-white font-semibold px-4 py-2 rounded shadow transition-colors cursor-default"
+                :style="{ fontSize: `${getFontSizeVal('font-size-button')}px` }"
+                class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-4 py-2 rounded-xl shadow-md shadow-rose-600/20 transition-colors cursor-default"
               >
-                Button
+                Primary Action
               </button>
               <a
                 href="#"
-                :style="{ fontSize: getFontSizeVal('font-size-button') + 'px' }"
-                class="text-accent hover:underline font-semibold"
+                :style="{ fontSize: `${getFontSizeVal('font-size-button')}px` }"
+                class="text-rose-400 hover:underline font-semibold"
                 @click.prevent
-                >Hyperlink</a
               >
+                Secondary Text Link →
+              </a>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
-
-<style scoped>
-.card-bubble {
-  background: var(--color-bg-panel, #ffffff);
-}
-</style>

@@ -46,65 +46,84 @@ function getVariableValueText(v: VariableItem): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
-    <div class="flex items-center justify-between">
-      <h2
-        class="text-sm font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5"
-      >
-        <icon-lucide-palette class="size-4 text-accent" />
-        Color & Gradient Palette
-      </h2>
+  <section class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <div class="flex items-center gap-2.5">
+        <div class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+          <icon-lucide-palette class="size-4" />
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+            Color & Gradient Palette
+            <span class="text-[10px] font-normal text-rose-400 font-mono">{{ variables.length }} swatches</span>
+          </h2>
+          <p class="text-[11px] text-zinc-400">Tokens for fills, strokes, surfaces, and semantic states.</p>
+        </div>
+      </div>
       <button
-        class="flex cursor-pointer items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white shadow hover:bg-accent/90 transition-colors"
+        class="flex cursor-pointer items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-md shadow-rose-600/20 transition-all hover:scale-105 active:scale-95"
         @click="emit('add')"
       >
-        <icon-lucide-plus class="size-3" />
-        Add Swatch
+        <icon-lucide-plus class="size-3.5 stroke-[3]" />
+        <span>Add Swatch</span>
       </button>
     </div>
 
+    <!-- Empty State -->
     <div
       v-if="variables.length === 0"
-      class="rounded-xl border border-dashed border-border p-8 text-center text-xs text-muted"
+      class="rounded-2xl border border-dashed border-white/15 bg-black/40 p-8 text-center flex flex-col items-center justify-center gap-2.5"
     >
-      No colors or gradients defined. Click "+ Add Swatch" to begin.
+      <div class="flex size-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400">
+        <icon-lucide-palette class="size-5" />
+      </div>
+      <p class="text-xs font-semibold text-white">No colors or gradients defined yet</p>
+      <p class="text-[11px] text-zinc-400 max-w-sm">Create individual color swatches or apply a starter preset from the top bar.</p>
+      <button
+        class="mt-1 flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer"
+        @click="emit('add')"
+      >
+        <icon-lucide-plus class="size-3.5" />
+        <span>Add First Swatch</span>
+      </button>
     </div>
 
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+    <!-- Swatch Grid -->
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
       <div
         v-for="v in variables"
         :key="v.id"
-        class="flex flex-col gap-2.5 p-3 rounded-xl bg-panel border border-border/80 shadow-sm relative group hover:border-accent/40 hover:shadow-md transition-all duration-200"
+        class="flex flex-col gap-2 p-3 rounded-2xl bg-black/50 border border-white/10 shadow-sm relative group hover:border-rose-500/50 hover:shadow-lg transition-all duration-200"
       >
         <!-- Swatch Preview Block -->
         <div
-          class="w-full aspect-video rounded-lg border border-border bg-checkerboard relative overflow-hidden transition-all group-hover:scale-[1.01]"
+          class="w-full aspect-[16/10] rounded-xl border border-white/10 bg-checkerboard relative overflow-hidden transition-all group-hover:scale-[1.02]"
           :style="{ background: getSwatchBackground(v) }"
         >
           <!-- Delete button on hover -->
           <button
-            class="absolute top-2 right-2 hidden group-hover:flex cursor-pointer items-center justify-center p-1.5 rounded-md bg-panel/90 border border-border hover:text-red-500 hover:border-red-500/20 shadow-sm transition-all"
-            title="Delete style"
+            class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex cursor-pointer items-center justify-center size-6 rounded-lg bg-black/70 border border-white/20 text-white hover:bg-red-500 hover:border-red-500 shadow-sm transition-all"
+            title="Delete swatch"
             @click="emit('remove', v.id)"
           >
-            <icon-lucide-trash-2 class="size-3.5" />
+            <icon-lucide-trash-2 class="size-3" />
           </button>
         </div>
 
         <!-- Swatch Details -->
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1.5 pt-0.5">
           <!-- Variable Name input -->
           <input
             type="text"
             :value="v.name"
-            placeholder="style-name"
-            class="w-full bg-transparent text-[11px] font-bold text-surface border-none outline-none focus:ring-0 p-0"
+            placeholder="color-token-name"
+            class="w-full bg-transparent text-xs font-bold text-white border-none outline-none focus:text-rose-300 transition-colors p-0"
             @change="emit('rename', v.id, ($event.target as HTMLInputElement).value)"
           />
 
           <!-- Value and Picker Controls -->
-          <div class="flex items-center justify-between gap-2 mt-1 border-t border-border/40 pt-2">
-            <span class="text-[9px] font-mono text-muted uppercase truncate max-w-[70%]">
+          <div class="flex items-center justify-between gap-2 border-t border-white/10 pt-1.5">
+            <span class="text-[10px] font-mono text-zinc-400 uppercase truncate max-w-[65%]">
               {{ getVariableValueText(v) }}
             </span>
 
@@ -117,17 +136,17 @@ function getVariableValueText(v: VariableItem): string {
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
 .bg-checkerboard {
-  background-color: var(--color-bg-panel, #ffffff);
+  background-color: rgba(255, 255, 255, 0.05);
   background-image:
-    linear-gradient(45deg, var(--color-border, #e2e8f0) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--color-border, #e2e8f0) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--color-border, #e2e8f0) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--color-border, #e2e8f0) 75%);
+    linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.08) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.08) 75%);
   background-size: 10px 10px;
   background-position:
     0 0,

@@ -1,0 +1,1544 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "packages/docs/guide/figma-comparison.md",
+  "sourceHash": "e1a98c4a79fdcaaf29f5d0ef8f3142015f14a45ec2df79b4b9c2c8223c6a00b9",
+  "capabilities": [
+    {
+      "id": "INTERFACE-NAVIGATION.TOOLBAR-WITH-DESIGN-TOOLS",
+      "category": "Interface & Navigation",
+      "name": "Toolbar with design tools",
+      "status": "supported",
+      "notes": "Bottom toolbar (UI3 style): Select, Frame, Section, Rectangle, Ellipse, Line, Text, Hand, Pen",
+      "acceptance": "Complete the documented “Toolbar with design tools” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.LAYERS-PANEL-LEFT-SIDEBAR",
+      "category": "Interface & Navigation",
+      "name": "Layers panel (left sidebar)",
+      "status": "verified",
+      "notes": "Tree view with expand/collapse, drag reorder, visibility toggle; resizable width",
+      "acceptance": "Expand, collapse, rename, reorder, hide, and select nested layers from the panel.",
+      "evidence": [
+        "tests/e2e/layers/panel.spec.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.PAGES-PANEL",
+      "category": "Interface & Navigation",
+      "name": "Pages panel",
+      "status": "verified",
+      "notes": "Add, delete, rename pages; per-page viewport state",
+      "acceptance": "Create and navigate multiple pages while preserving page-specific editor state.",
+      "evidence": [
+        "tests/e2e/pages/multi-page.spec.ts",
+        "tests/engine/figma/api/document/pages.test.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.PROPERTIES-PANEL-RIGHT-SIDEBAR",
+      "category": "Interface & Navigation",
+      "name": "Properties panel (right sidebar)",
+      "status": "verified",
+      "notes": "Sections: Appearance, Fill, Stroke, Effects, Typography, Layout, Position; resizable width",
+      "acceptance": "Inspect and edit supported properties with correct mixed and persisted values.",
+      "evidence": [
+        "tests/e2e/properties/panel.spec.ts",
+        "tests/engine/editor/selection/properties.test.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.ZOOM-PAN",
+      "category": "Interface & Navigation",
+      "name": "Zoom & pan",
+      "status": "verified",
+      "notes": "<kbd>Ctrl</kbd> + scroll, pinch, <kbd>⌘</kbd><kbd>+</kbd> / <kbd>⌘</kbd><kbd>−</kbd> / <kbd>⌘</kbd><kbd>0</kbd> (100%) / <kbd>⌘</kbd><kbd>1</kbd> (fit) / <kbd>⌘</kbd><kbd>2</kbd> (selection), <kbd>Space</kbd> + drag, middle mouse, hand tool (<kbd>H</kbd>)",
+      "acceptance": "Zoom and pan through pointer and keyboard input without changing scene geometry.",
+      "evidence": [
+        "tests/e2e/viewport/zoom-pan.spec.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.CANVAS-RULERS",
+      "category": "Interface & Navigation",
+      "name": "Canvas rulers",
+      "status": "supported",
+      "notes": "Top/left rulers with selection highlight bands and coordinate badges",
+      "acceptance": "Complete the documented “Canvas rulers” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.CANVAS-BACKGROUND-COLOR",
+      "category": "Interface & Navigation",
+      "name": "Canvas background color",
+      "status": "supported",
+      "notes": "Per-page background via properties panel",
+      "acceptance": "Complete the documented “Canvas background color” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.CANVAS-GUIDES",
+      "category": "Interface & Navigation",
+      "name": "Canvas guides",
+      "status": "verified",
+      "notes": "Drag horizontal/vertical guides from rulers, reposition or delete them, snap layers to them, undo/redo changes, and preserve per-page guides through `.fig` save/reopen",
+      "acceptance": "Drag, move, snap to, lock, hide, delete, undo, and persist per-page guides through a `.fig` roundtrip.",
+      "evidence": [
+        "tests/engine/editor/guides.test.ts",
+        "tests/e2e/canvas/guides.spec.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.ACTIONS-MENU-COMMAND-PALETTE",
+      "category": "Interface & Navigation",
+      "name": "Actions menu / command palette",
+      "status": "supported",
+      "notes": "Fuzzy search for actions, menu commands, tools, themes, exports via <kbd>⌘</kbd><kbd>K</kbd> or <kbd>⌘</kbd><kbd>/</kbd>",
+      "acceptance": "Complete the documented “Actions menu / command palette” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.CONTEXT-MENU",
+      "category": "Interface & Navigation",
+      "name": "Context menu",
+      "status": "verified",
+      "notes": "Right-click with clipboard, z-order, grouping, component, visibility, lock, move-to-page actions",
+      "acceptance": "Open the contextual menu and execute enabled selection operations.",
+      "evidence": [
+        "tests/e2e/context-menu/basic.spec.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.KEYBOARD-SHORTCUTS",
+      "category": "Interface & Navigation",
+      "name": "Keyboard shortcuts",
+      "status": "partial",
+      "notes": "Core shortcuts + components + z-order + visibility/lock implemented; Scale, Arrow, Pencil, flip, text formatting not yet wired",
+      "acceptance": "Complete the documented “Keyboard shortcuts” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.FIND-AND-REPLACE",
+      "category": "Interface & Navigation",
+      "name": "Find and replace",
+      "status": "supported",
+      "notes": "Global find and replace for text content and layer names with match-case and undo support (<kbd>⌘</kbd><kbd>F</kbd>)",
+      "acceptance": "Complete the documented “Find and replace” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.LAYER-OUTLINES-VIEW",
+      "category": "Interface & Navigation",
+      "name": "Layer outlines view",
+      "status": "verified",
+      "notes": "Outline-only CanvasKit view for all visible layers, including vector paths",
+      "acceptance": "Toggle an outline-only canvas view from the menu and keyboard without changing document data.",
+      "evidence": [
+        "tests/engine/editor/view.test.ts",
+        "tests/e2e/app/menu.spec.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.CUSTOM-FILE-THUMBNAILS",
+      "category": "Interface & Navigation",
+      "name": "Custom file thumbnails",
+      "status": "verified",
+      "notes": "Set frame as document cover thumbnail with centered scale rendering and .fig export support",
+      "acceptance": "Set canvas frames as document cover thumbnails with centered scale raster export.",
+      "evidence": [
+        "tests/engine/editor/thumbnail.test.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.NUDGE-VALUE-SETTINGS",
+      "category": "Interface & Navigation",
+      "name": "Nudge value settings",
+      "status": "verified",
+      "notes": "Configurable small and big nudge values in editor state with arrow key stepping",
+      "acceptance": "Configure small and big nudge settings with arrow key stepping and undo batching.",
+      "evidence": [
+        "tests/engine/editor/nudge.test.ts"
+      ]
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.APP-MENU-BROWSER-MODE",
+      "category": "Interface & Navigation",
+      "name": "App menu (browser mode)",
+      "status": "supported",
+      "notes": "File, Edit, View, Object, Text, Arrange menus; Tauri uses native menus",
+      "acceptance": "Complete the documented “App menu (browser mode)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "INTERFACE-NAVIGATION.AI-TOOLS",
+      "category": "Interface & Navigation",
+      "name": "AI tools",
+      "status": "partial",
+      "notes": "90 tools via OpenRouter + MCP server; no AI-generated images or AI-powered search yet",
+      "acceptance": "Complete the documented “AI tools” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.SHAPE-TOOLS-RECTANGLE-ELLIPSE-LINE-POLYGON-STAR",
+      "category": "Layers & Shapes",
+      "name": "Shape tools (Rectangle, Ellipse, Line, Polygon, Star)",
+      "status": "verified",
+      "notes": "All basic shape types; polygon side count and star inner radius configurable",
+      "acceptance": "Create supported primitive shapes with correct bounds and undo behavior.",
+      "evidence": [
+        "tests/e2e/editor/create-shapes.spec.ts",
+        "tests/engine/editor/undo/create-shape.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.FRAMES",
+      "category": "Layers & Shapes",
+      "name": "Frames",
+      "status": "supported",
+      "notes": "Clip content, independent coordinate system",
+      "acceptance": "Complete the documented “Frames” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.GROUPS",
+      "category": "Layers & Shapes",
+      "name": "Groups",
+      "status": "supported",
+      "notes": "<kbd>⌘</kbd><kbd>G</kbd> to group, <kbd>⇧</kbd><kbd>⌘</kbd><kbd>G</kbd> to ungroup",
+      "acceptance": "Complete the documented “Groups” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.SECTIONS",
+      "category": "Layers & Shapes",
+      "name": "Sections",
+      "status": "supported",
+      "notes": "Title pills, auto-adopt overlapping nodes, luminance-adaptive text",
+      "acceptance": "Complete the documented “Sections” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.ARC-TOOL-ARCS-SEMI-CIRCLES-RINGS",
+      "category": "Layers & Shapes",
+      "name": "Arc tool (arcs, semi-circles, rings)",
+      "status": "supported",
+      "notes": "arcData with start/end angle and inner radius",
+      "acceptance": "Complete the documented “Arc tool (arcs, semi-circles, rings)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.PENCIL-FREEHAND-TOOL",
+      "category": "Layers & Shapes",
+      "name": "Pencil (freehand) tool",
+      "status": "verified",
+      "notes": "Freehand vector stroke drawing with round caps and joins (<kbd>⇧</kbd><kbd>P</kbd>)",
+      "acceptance": "Create smooth freehand vector paths with round caps and joins via Pencil tool (Shift+P).",
+      "evidence": [
+        "tests/engine/editor/pencil.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.MASKS",
+      "category": "Layers & Shapes",
+      "name": "Masks",
+      "status": "verified",
+      "notes": "Shape and alpha layer masks for clipping sibling layers in frames and groups (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>M</kbd>)",
+      "acceptance": "Clip sibling layers in frames and groups using shape and alpha masks with undo/redo transactions.",
+      "evidence": [
+        "tests/engine/canvas/mask.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.LAYER-TYPES-HIERARCHY",
+      "category": "Layers & Shapes",
+      "name": "Layer types & hierarchy",
+      "status": "supported",
+      "notes": "17 node types, flat Map + parent-child tree",
+      "acceptance": "Complete the documented “Layer types & hierarchy” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.SELECT-LAYERS",
+      "category": "Layers & Shapes",
+      "name": "Select layers",
+      "status": "supported",
+      "notes": "Click, shift-click, marquee selection",
+      "acceptance": "Complete the documented “Select layers” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.ALIGNMENT-POSITION",
+      "category": "Layers & Shapes",
+      "name": "Alignment & position",
+      "status": "supported",
+      "notes": "Position, rotation, dimensions in properties panel",
+      "acceptance": "Complete the documented “Alignment & position” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.COPY-PASTE-OBJECTS",
+      "category": "Layers & Shapes",
+      "name": "Copy & paste objects",
+      "status": "verified",
+      "notes": "Standard clipboard + Figma Kiwi binary format; Copy as text/SVG/PNG/JSX",
+      "acceptance": "Copy and paste supported node trees while preserving hierarchy and styling.",
+      "evidence": [
+        "tests/e2e/clipboard/copy-paste.spec.ts",
+        "tests/engine/editor/clipboard/fixture-roundtrip.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.SCALE-LAYERS-PROPORTIONALLY",
+      "category": "Layers & Shapes",
+      "name": "Scale layers proportionally",
+      "status": "verified",
+      "notes": "Shift-resize constrains proportions and dedicated Scale tool (<kbd>K</kbd>) proportionally scales geometry, strokes, text font size, and corner radii",
+      "acceptance": "Scale geometry, stroke weights, typography font-size, and corner radii proportionally via Scale tool (K).",
+      "evidence": [
+        "tests/engine/editor/resize-autolayout.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.LOCK-UNLOCK-LAYERS",
+      "category": "Layers & Shapes",
+      "name": "Lock & unlock layers",
+      "status": "supported",
+      "notes": "<kbd>⇧</kbd><kbd>⌘</kbd><kbd>L</kbd> toggles lock; locked nodes can't be selected/moved from canvas",
+      "acceptance": "Complete the documented “Lock & unlock layers” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.TOGGLE-LAYER-VISIBILITY",
+      "category": "Layers & Shapes",
+      "name": "Toggle layer visibility",
+      "status": "supported",
+      "notes": "Eye icon in layers panel + <kbd>⇧</kbd><kbd>⌘</kbd><kbd>H</kbd> keyboard shortcut",
+      "acceptance": "Complete the documented “Toggle layer visibility” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.RENAME-LAYERS",
+      "category": "Layers & Shapes",
+      "name": "Rename layers",
+      "status": "supported",
+      "notes": "Double-click inline rename in layers panel; <kbd>Enter</kbd>/<kbd>Escape</kbd>/blur to commit",
+      "acceptance": "Complete the documented “Rename layers” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.BRING-TO-FRONT-SEND-TO-BACK",
+      "category": "Layers & Shapes",
+      "name": "Bring to front / Send to back",
+      "status": "supported",
+      "notes": "] and [ keyboard shortcuts; also in context menu",
+      "acceptance": "Complete the documented “Bring to front / Send to back” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.MOVE-TO-PAGE",
+      "category": "Layers & Shapes",
+      "name": "Move to page",
+      "status": "supported",
+      "notes": "Move selected nodes between pages via context menu",
+      "acceptance": "Complete the documented “Move to page” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.CONSTRAINTS-RESPONSIVE-RESIZE",
+      "category": "Layers & Shapes",
+      "name": "Constraints (responsive resize)",
+      "status": "verified",
+      "notes": "Horizontal & Vertical child constraints (Left, Right, Stretch, Center, Scale) applied during parent frame resize",
+      "acceptance": "Apply horizontal and vertical child constraints (Left, Right, Stretch, Center, Scale) on frame resize.",
+      "evidence": [
+        "tests/engine/editor/constraints.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.SMART-SELECTION-DISTRIBUTEALIGN",
+      "category": "Layers & Shapes",
+      "name": "Smart selection (distribute/align)",
+      "status": "verified",
+      "notes": "Evenly space and align multi-selection (horizontal, vertical, tidy up) with full undo/redo transactions",
+      "acceptance": "Evenly space and align multi-selection (horizontal, vertical, tidy up) with full undo/redo transactions.",
+      "evidence": [
+        "tests/engine/editor/selection/distribution.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.LAYOUT-GUIDES-COLUMNS-ROWS-GRID",
+      "category": "Layers & Shapes",
+      "name": "Layout guides (columns, rows, grid)",
+      "status": "verified",
+      "notes": "Column, Row, and Grid overlay guides on frames with count, gutter, offset, and stretch/center/min/max alignments",
+      "acceptance": "Render column, row, and grid overlay guides on frames with count, gutter, offset, and stretch/center alignments.",
+      "evidence": [
+        "tests/engine/canvas/layout-grid.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.MEASURE-DISTANCES-BETWEEN-LAYERS",
+      "category": "Layers & Shapes",
+      "name": "Measure distances between layers",
+      "status": "verified",
+      "notes": "Alt-hover multi-edge distance lines and Dev Mode measurement overlays with bounding projections and badges",
+      "acceptance": "Display multi-edge distance lines and projection badges on Alt-hover and Dev Mode.",
+      "evidence": [
+        "tests/engine/editor/selection/properties.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.EDIT-OBJECTS-IN-BULK",
+      "category": "Layers & Shapes",
+      "name": "Edit objects in bulk",
+      "status": "supported",
+      "notes": "Multi-selection properties panel: edit position, size, appearance, fill, stroke, effects across multiple nodes; shared values display normally, differing values show \"Mixed\"",
+      "acceptance": "Complete the documented “Edit objects in bulk” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "LAYERS-SHAPES.IDENTIFY-MATCHING-OBJECTS",
+      "category": "Layers & Shapes",
+      "name": "Identify matching objects",
+      "status": "verified",
+      "notes": "Select similar layers across page by Type, Fill color, Stroke, Font, or Name",
+      "acceptance": "Select matching layers across the canvas by type, fill, stroke, font, or layer name.",
+      "evidence": [
+        "tests/engine/editor/matching.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.COPYPASTE-PROPERTIES",
+      "category": "Layers & Shapes",
+      "name": "Copy/paste properties",
+      "status": "verified",
+      "notes": "Copy/paste fill, stroke, effects, corner radii, opacity, and typography properties via <kbd>⌥</kbd><kbd>⌘</kbd><kbd>C</kbd> / <kbd>⌥</kbd><kbd>⌘</kbd><kbd>V</kbd> with undo/redo",
+      "acceptance": "Copy and paste styling and typography properties across nodes with full undo/redo support.",
+      "evidence": [
+        "tests/engine/editor/clipboard/properties.test.ts"
+      ]
+    },
+    {
+      "id": "LAYERS-SHAPES.PARENT-CHILD-RELATIONSHIPS",
+      "category": "Layers & Shapes",
+      "name": "Parent-child relationships",
+      "status": "supported",
+      "notes": "Full hierarchy with parentIndex, reparenting via drag",
+      "acceptance": "Complete the documented “Parent-child relationships” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "VECTOR-TOOLS.VECTOR-NETWORKS",
+      "category": "Vector Tools",
+      "name": "Vector networks",
+      "status": "supported",
+      "notes": "Figma-compatible model, not simple paths",
+      "acceptance": "Complete the documented “Vector networks” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "VECTOR-TOOLS.PEN-TOOL",
+      "category": "Vector Tools",
+      "name": "Pen tool",
+      "status": "supported",
+      "notes": "Corner points, bezier curves, open/closed paths",
+      "acceptance": "Complete the documented “Pen tool” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "VECTOR-TOOLS.EDIT-VECTOR-LAYERS",
+      "category": "Vector Tools",
+      "name": "Edit vector layers",
+      "status": "partial",
+      "notes": "Creation works; advanced vertex editing (bend, delete points, join) limited",
+      "acceptance": "Complete the documented “Edit vector layers” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "VECTOR-TOOLS.BOOLEAN-OPERATIONS-UNION-SUBTRACT-INTERSECT-EXCLUDE",
+      "category": "Vector Tools",
+      "name": "Boolean operations (Union, Subtract, Intersect, Exclude)",
+      "status": "verified",
+      "notes": "Non-destructive Boolean operations with Union, Subtract, Intersect, Exclude containers and full undo/redo",
+      "acceptance": "Create non-destructive Boolean containers (Union, Subtract, Intersect, Exclude) with full undo/redo transactions.",
+      "evidence": [
+        "tests/engine/editor/boolean-operations.test.ts"
+      ]
+    },
+    {
+      "id": "VECTOR-TOOLS.FLATTEN-LAYERS",
+      "category": "Vector Tools",
+      "name": "Flatten layers",
+      "status": "partial",
+      "notes": "Single-path flattening works; complex multi-path fidelity remains",
+      "acceptance": "Complete the documented “Flatten layers” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "VECTOR-TOOLS.CONVERT-STROKES-TO-PATHS",
+      "category": "Vector Tools",
+      "name": "Convert strokes to paths",
+      "status": "verified",
+      "notes": "`outlineStrokeNetwork()` expands each segment into a parallel-sided filled VectorNetwork",
+      "acceptance": "Expand stroke weight of vector segments into a filled VectorNetwork using parallel offsets.",
+      "evidence": [
+        "tests/engine/vector/offset-outline.test.ts"
+      ]
+    },
+    {
+      "id": "VECTOR-TOOLS.CONVERT-TEXT-TO-PATHS",
+      "category": "Vector Tools",
+      "name": "Convert text to paths",
+      "status": "verified",
+      "notes": "Flatten text runs and extract glyph outline commands into vector paths",
+      "acceptance": "Extract glyph outline commands and convert text runs into vector paths.",
+      "evidence": [
+        "tests/engine/editor/clipboard/text-outlines.test.ts"
+      ]
+    },
+    {
+      "id": "VECTOR-TOOLS.SHAPE-BUILDER-TOOL",
+      "category": "Vector Tools",
+      "name": "Shape builder tool",
+      "status": "missing",
+      "notes": "Interactive boolean tool",
+      "acceptance": "Complete the documented “Shape builder tool” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "VECTOR-TOOLS.OFFSET-PATH",
+      "category": "Vector Tools",
+      "name": "Offset path",
+      "status": "verified",
+      "notes": "`offsetVectorNetwork(network, amount)` insets or outsets using averaged vertex normals",
+      "acceptance": "Inset or outset a vector network path by a given distance using vertex normal averaging.",
+      "evidence": [
+        "tests/engine/vector/offset-outline.test.ts"
+      ]
+    },
+    {
+      "id": "VECTOR-TOOLS.SIMPLIFY-PATH",
+      "category": "Vector Tools",
+      "name": "Simplify path",
+      "status": "verified",
+      "notes": "Ramer-Douglas-Peucker vertex reduction preserving curve topology and sharp corners",
+      "acceptance": "Simplify vector networks and reduce vertex count with Ramer-Douglas-Peucker reduction.",
+      "evidence": [
+        "tests/engine/vector/simplify.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.TEXT-TOOL-INLINE-EDITING",
+      "category": "Text & Typography",
+      "name": "Text tool & inline editing",
+      "status": "verified",
+      "notes": "Canvas-native editing, phantom textarea, cursor/selection/word select, drag to select, double/triple-click, rich text style runs (<kbd>⌘</kbd><kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd>, **S** button)",
+      "acceptance": "Create and edit text with selection, formatting, commit, undo, and redo.",
+      "evidence": [
+        "tests/e2e/text/editing.spec.ts",
+        "tests/engine/text/editor.test.ts",
+        "tests/engine/text/edit-undo.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.TEXT-RENDERING-PARAGRAPH-API",
+      "category": "Text & Typography",
+      "name": "Text rendering (Paragraph API)",
+      "status": "supported",
+      "notes": "CanvasKit Paragraph for shaping, line-breaking, metrics",
+      "acceptance": "Complete the documented “Text rendering (Paragraph API)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.FONT-LOADING-SYSTEM-FONTS",
+      "category": "Text & Typography",
+      "name": "Font loading (system fonts)",
+      "status": "verified",
+      "notes": "Inter default, font-kit in Tauri with OnceLock cache + preloading, queryLocalFonts in browser",
+      "acceptance": "Enumerate local system fonts, cache font binaries, and manage fallback font assets.",
+      "evidence": [
+        "tests/engine/app/font-settings.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.FONT-FAMILY-WEIGHT",
+      "category": "Text & Typography",
+      "name": "Font family & weight",
+      "status": "supported",
+      "notes": "FontPicker with virtual scroll, search, CSS preview; weight selection in properties panel",
+      "acceptance": "Complete the documented “Font family & weight” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.FONT-SIZE-LINE-HEIGHT",
+      "category": "Text & Typography",
+      "name": "Font size & line height",
+      "status": "supported",
+      "notes": "Editable in typography section",
+      "acceptance": "Complete the documented “Font size & line height” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.TEXT-ALIGNMENT",
+      "category": "Text & Typography",
+      "name": "Text alignment",
+      "status": "supported",
+      "notes": "Horizontal (Left, Center, Right, Justified) and Vertical (Top, Center, Bottom) alignment with Paragraph API",
+      "acceptance": "Complete the documented “Text alignment” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.TEXT-STYLES",
+      "category": "Text & Typography",
+      "name": "Text styles",
+      "status": "partial",
+      "notes": "Per-selection bold/italic/underline/strikethrough (<kbd>⌘</kbd><kbd>B</kbd> / <kbd>I</kbd> / <kbd>U</kbd>, **S** button); not yet reusable named text style presets",
+      "acceptance": "Complete the documented “Text styles” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.TEXT-RESIZING-MODES-AUTO-FIXED-HUG",
+      "category": "Text & Typography",
+      "name": "Text resizing modes (auto, fixed, hug)",
+      "status": "verified",
+      "notes": "Auto-Width (WIDTH_AND_HEIGHT), Auto-Height (HEIGHT), and Fixed-Size (NONE with truncation) text modes",
+      "acceptance": "Support Auto-Width, Auto-Height, and Fixed-Size text sizing modes with text truncation and undo/redo.",
+      "evidence": [
+        "tests/engine/text/auto-resize.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.BULLETED-NUMBERED-LISTS",
+      "category": "Text & Typography",
+      "name": "Bulleted & numbered lists",
+      "status": "verified",
+      "notes": "Unordered (bulleted) and ordered (numbered) list formatting in text nodes",
+      "acceptance": "Format unordered and ordered text lists with persistent styleRuns and undo/redo.",
+      "evidence": [
+        "tests/engine/text/lists-links.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.LINKS-IN-TEXT",
+      "category": "Text & Typography",
+      "name": "Links in text",
+      "status": "verified",
+      "notes": "Inline URL hyperlinks within text character style runs",
+      "acceptance": "Support inline URL hyperlinks across character style runs with full undo/redo transactions.",
+      "evidence": [
+        "tests/engine/text/lists-links.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.EMOJIS-SMART-SYMBOLS",
+      "category": "Text & Typography",
+      "name": "Emojis & smart symbols",
+      "status": "partial",
+      "notes": "CanvasKit Paragraph renders Unicode emoji via fallback fonts; no explicit emoji picker",
+      "acceptance": "Complete the documented “Emojis & smart symbols” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.OPENTYPE-FEATURES",
+      "category": "Text & Typography",
+      "name": "OpenType features",
+      "status": "verified",
+      "notes": "`applyOpenTypeFeaturesSelected()` sets ligature/tabular/stylistic flags; `OpenTypeFeatures` type stored in node and style runs",
+      "acceptance": "Apply OpenType feature flags (ligatures, tabular numbers, stylistic sets) to selected text nodes.",
+      "evidence": [
+        "tests/engine/editor/mixed-selection.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.VARIABLE-FONTS",
+      "category": "Text & Typography",
+      "name": "Variable fonts",
+      "status": "verified",
+      "notes": "`applyVariableFontAxesSelected()` sets wght/wdth/slnt axis values stored as openTypeFeatures numeric entries",
+      "acceptance": "Apply variable font axis values (wght, wdth, slnt) to selected text nodes.",
+      "evidence": [
+        "tests/engine/editor/mixed-selection.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.CJK-TEXT-SUPPORT",
+      "category": "Text & Typography",
+      "name": "CJK text support",
+      "status": "partial",
+      "notes": "CanvasKit Paragraph renders CJK via system fonts; no explicit CJK font picker or vertical text flow",
+      "acceptance": "Complete the documented “CJK text support” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.RTL-TEXT-SUPPORT",
+      "category": "Text & Typography",
+      "name": "RTL text support",
+      "status": "verified",
+      "notes": "Right-to-left text shaping (Arabic, Hebrew) with bidirectional layout and .fig serialization",
+      "acceptance": "Support RTL text shaping and bidirectional layout direction with Kiwi serialization.",
+      "evidence": [
+        "tests/engine/kiwi/serialize-fixes/directionality.test.ts"
+      ]
+    },
+    {
+      "id": "TEXT-TYPOGRAPHY.ICON-FONTS",
+      "category": "Text & Typography",
+      "name": "Icon fonts",
+      "status": "partial",
+      "notes": "Iconify API client in `@nex-design/core/icons`; icon glyphs rendered via CanvasKit text layer with custom font family",
+      "acceptance": "Complete the documented “Icon fonts” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.COLOR-PICKER-HSV",
+      "category": "Color, Gradients & Images",
+      "name": "Color picker (HSV)",
+      "status": "verified",
+      "notes": "HSV square, hue slider, alpha slider, hex input",
+      "acceptance": "Edit hue, saturation, value, alpha, and hex values with one undo transaction.",
+      "evidence": [
+        "tests/e2e/color-picker/basic.spec.ts",
+        "tests/engine/color/picker-model.test.ts"
+      ]
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.SOLID-FILLS",
+      "category": "Color, Gradients & Images",
+      "name": "Solid fills",
+      "status": "supported",
+      "notes": "Hex color with opacity",
+      "acceptance": "Complete the documented “Solid fills” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.LINEAR-GRADIENT",
+      "category": "Color, Gradients & Images",
+      "name": "Linear gradient",
+      "status": "supported",
+      "notes": "Gradient stops, transform handles",
+      "acceptance": "Complete the documented “Linear gradient” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.RADIAL-GRADIENT",
+      "category": "Color, Gradients & Images",
+      "name": "Radial gradient",
+      "status": "supported",
+      "notes": "Rendered via CanvasKit shaders",
+      "acceptance": "Complete the documented “Radial gradient” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.ANGULAR-GRADIENT",
+      "category": "Color, Gradients & Images",
+      "name": "Angular gradient",
+      "status": "supported",
+      "notes": "Sweep/conic gradient support",
+      "acceptance": "Complete the documented “Angular gradient” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.DIAMOND-GRADIENT",
+      "category": "Color, Gradients & Images",
+      "name": "Diamond gradient",
+      "status": "supported",
+      "notes": "Four-point diamond gradient",
+      "acceptance": "Complete the documented “Diamond gradient” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.IMAGE-FILLS",
+      "category": "Color, Gradients & Images",
+      "name": "Image fills",
+      "status": "supported",
+      "notes": "Decoded from blob data with scale modes (fill, fit, crop, tile)",
+      "acceptance": "Complete the documented “Image fills” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.PATTERN-FILLS",
+      "category": "Color, Gradients & Images",
+      "name": "Pattern fills",
+      "status": "partial",
+      "notes": "TILE image scale mode renders repeating fills; no custom pattern editor",
+      "acceptance": "Complete the documented “Pattern fills” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.BLEND-MODES",
+      "category": "Color, Gradients & Images",
+      "name": "Blend modes",
+      "status": "verified",
+      "notes": "Layer and fill blend modes (multiply, screen, overlay, darken, lighten, etc.) mapped to Skia BlendMode shaders",
+      "acceptance": "Render layer and fill blend modes mapped to Skia BlendMode shaders with full undo/redo transactions.",
+      "evidence": [
+        "tests/engine/canvas/blend-mode.test.ts"
+      ]
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.ADD-IMAGES-VIDEOS",
+      "category": "Color, Gradients & Images",
+      "name": "Add images & videos",
+      "status": "partial",
+      "notes": "Image fills rendered; no drag-and-drop image import or video support",
+      "acceptance": "Complete the documented “Add images & videos” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.IMAGE-PROPERTY-ADJUSTMENT",
+      "category": "Color, Gradients & Images",
+      "name": "Image property adjustment",
+      "status": "verified",
+      "notes": "`applyImageFiltersToSelected()` sets exposure, contrast, saturation, hue, brightness, shadows, highlights with undo",
+      "acceptance": "Apply exposure, contrast, saturation, hue, brightness filters to image fills with undo.",
+      "evidence": [
+        "tests/engine/editor/mixed-selection.test.ts"
+      ]
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.CROP-AN-IMAGE",
+      "category": "Color, Gradients & Images",
+      "name": "Crop an image",
+      "status": "partial",
+      "notes": "`imageScaleMode: 'CROP'` + `imageTransform` stores crop state; no interactive crop handle UI yet",
+      "acceptance": "Complete the documented “Crop an image” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.EYEDROPPER-TOOL",
+      "category": "Color, Gradients & Images",
+      "name": "Eyedropper tool",
+      "status": "verified",
+      "notes": "Eyedropper tool (<kbd>I</kbd>) samples canvas colors and applies them to selected fill or stroke",
+      "acceptance": "Sample colors from canvas and apply to selected layers fill or stroke.",
+      "evidence": [
+        "tests/engine/editor/eyedropper.test.ts"
+      ]
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.MIXED-SELECTION-COLOR-EDITING",
+      "category": "Color, Gradients & Images",
+      "name": "Mixed selection color editing",
+      "status": "verified",
+      "notes": "`setFillColorForSelection()` applies a uniform solid fill color across heterogeneous multi-node selection",
+      "acceptance": "Set uniform fill color across heterogeneous multi-node selection in one operation.",
+      "evidence": [
+        "tests/engine/editor/mixed-selection.test.ts"
+      ]
+    },
+    {
+      "id": "COLOR-GRADIENTS-IMAGES.COLOR-MODELS-RGB-HSL-HSB-HEX",
+      "category": "Color, Gradients & Images",
+      "name": "Color models (RGB, HSL, HSB, Hex)",
+      "status": "partial",
+      "notes": "HSV + Hex in picker; no HSL or RGB mode toggle",
+      "acceptance": "Complete the documented “Color models (RGB, HSL, HSB, Hex)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.DROP-SHADOW",
+      "category": "Effects & Properties",
+      "name": "Drop shadow",
+      "status": "supported",
+      "notes": "Offset, blur radius, color via CanvasKit filters",
+      "acceptance": "Complete the documented “Drop shadow” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.INNER-SHADOW",
+      "category": "Effects & Properties",
+      "name": "Inner shadow",
+      "status": "verified",
+      "notes": "Inset shadow effect",
+      "acceptance": "Render and edit inner shadows with correct spread, clipping, ordering, and text behavior.",
+      "evidence": [
+        "tests/engine/render/canvas/effects/inner-shadow.test.ts",
+        "tests/e2e/properties/effects.spec.ts"
+      ]
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.LAYER-BLUR",
+      "category": "Effects & Properties",
+      "name": "Layer blur",
+      "status": "supported",
+      "notes": "Gaussian blur on layer",
+      "acceptance": "Complete the documented “Layer blur” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.BACKGROUND-BLUR",
+      "category": "Effects & Properties",
+      "name": "Background blur",
+      "status": "supported",
+      "notes": "Blur content behind layer",
+      "acceptance": "Complete the documented “Background blur” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.FOREGROUND-BLUR",
+      "category": "Effects & Properties",
+      "name": "Foreground blur",
+      "status": "supported",
+      "notes": "Blur in foreground",
+      "acceptance": "Complete the documented “Foreground blur” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.STROKE-WEIGHT",
+      "category": "Effects & Properties",
+      "name": "Stroke weight",
+      "status": "supported",
+      "notes": "Configurable in properties panel",
+      "acceptance": "Complete the documented “Stroke weight” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.STROKE-CAP-ROUND-SQUARE-ARROW",
+      "category": "Effects & Properties",
+      "name": "Stroke cap (round, square, arrow)",
+      "status": "supported",
+      "notes": "`NONE`, `ROUND`, `SQUARE`, `ARROW_LINES`, `ARROW_EQUILATERAL`",
+      "acceptance": "Complete the documented “Stroke cap (round, square, arrow)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.STROKE-JOIN-MITER-BEVEL-ROUND",
+      "category": "Effects & Properties",
+      "name": "Stroke join (miter, bevel, round)",
+      "status": "supported",
+      "notes": "All three join types",
+      "acceptance": "Complete the documented “Stroke join (miter, bevel, round)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.DASH-PATTERNS",
+      "category": "Effects & Properties",
+      "name": "Dash patterns",
+      "status": "supported",
+      "notes": "Dash-on/dash-off stroke pattern",
+      "acceptance": "Complete the documented “Dash patterns” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.STROKE-ALIGNMENT",
+      "category": "Effects & Properties",
+      "name": "Stroke alignment",
+      "status": "supported",
+      "notes": "Inside/Center/Outside with clip-based rendering matching Figma behavior",
+      "acceptance": "Complete the documented “Stroke alignment” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.INDIVIDUAL-STROKE-WEIGHTS-PER-SIDE",
+      "category": "Effects & Properties",
+      "name": "Individual stroke weights per side",
+      "status": "supported",
+      "notes": "Top/Right/Bottom/Left with side selector dropdown",
+      "acceptance": "Complete the documented “Individual stroke weights per side” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.CORNER-RADIUS",
+      "category": "Effects & Properties",
+      "name": "Corner radius",
+      "status": "supported",
+      "notes": "Uniform and per-corner radius with independent toggle in properties panel",
+      "acceptance": "Complete the documented “Corner radius” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "EFFECTS-PROPERTIES.MULTIPLE-FILLSSTROKES-PER-LAYER",
+      "category": "Effects & Properties",
+      "name": "Multiple fills/strokes per layer",
+      "status": "verified",
+      "notes": "Ordered stacked fills and strokes with individual opacity, visibility, and alignments",
+      "acceptance": "Render and persist multiple ordered fills and strokes per layer with individual properties.",
+      "evidence": [
+        "tests/engine/canvas/stacked-fills-strokes.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.HORIZONTAL-VERTICAL-FLOW",
+      "category": "Auto Layout",
+      "name": "Horizontal & vertical flow",
+      "status": "verified",
+      "notes": "Yoga WASM flexbox engine",
+      "acceptance": "Lay out horizontal and vertical children with reference-compatible geometry.",
+      "evidence": [
+        "tests/engine/layout/auto-layout/horizontal/basic.test.ts",
+        "tests/engine/layout/auto-layout/vertical/basic.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.TOGGLE-AUTO-LAYOUT-KBDKBDKBDAKBD",
+      "category": "Auto Layout",
+      "name": "Toggle auto layout (<kbd>⇧</kbd><kbd>A</kbd>)",
+      "status": "supported",
+      "notes": "Toggle on frame or wrap selection",
+      "acceptance": "Complete the documented “Toggle auto layout (<kbd>⇧</kbd><kbd>A</kbd>)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "AUTO-LAYOUT.GAP-SPACING-BETWEEN-CHILDREN",
+      "category": "Auto Layout",
+      "name": "Gap (spacing between children)",
+      "status": "supported",
+      "notes": "Configurable in properties panel",
+      "acceptance": "Complete the documented “Gap (spacing between children)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "AUTO-LAYOUT.PADDING-UNIFORM-PER-SIDE",
+      "category": "Auto Layout",
+      "name": "Padding (uniform & per-side)",
+      "status": "supported",
+      "notes": "All four sides independently",
+      "acceptance": "Complete the documented “Padding (uniform & per-side)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "AUTO-LAYOUT.JUSTIFY-CONTENT",
+      "category": "Auto Layout",
+      "name": "Justify content",
+      "status": "verified",
+      "notes": "Start, center, end, space-between alignment",
+      "acceptance": "Distribute and align children along the primary axis (start, center, end, space-between).",
+      "evidence": [
+        "tests/engine/layout/auto-layout/alignment/primary-axis.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.ALIGN-ITEMS",
+      "category": "Auto Layout",
+      "name": "Align items",
+      "status": "verified",
+      "notes": "Start, center, end, stretch alignment",
+      "acceptance": "Align children along the counter axis (start, center, end, stretch, baseline).",
+      "evidence": [
+        "tests/engine/layout/auto-layout/alignment/counter-axis.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.CHILD-SIZING-FIXED-FILL-HUG",
+      "category": "Auto Layout",
+      "name": "Child sizing (fixed, fill, hug)",
+      "status": "verified",
+      "notes": "Per-child sizing modes (Fixed, Fill, Hug)",
+      "acceptance": "Support Fixed, Fill, and Hug sizing modes across horizontal and vertical auto-layout children.",
+      "evidence": [
+        "tests/engine/layout/auto-layout/sizing/modes.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.WRAP",
+      "category": "Auto Layout",
+      "name": "Wrap",
+      "status": "verified",
+      "notes": "Flex wrap for multi-line layout",
+      "acceptance": "Wrap children into lines with correct gaps, sizing, and counter-axis behavior.",
+      "evidence": [
+        "tests/engine/layout/auto-layout/wrap/layout.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.GRID-AUTO-LAYOUT-FLOW",
+      "category": "Auto Layout",
+      "name": "Grid auto layout flow",
+      "status": "verified",
+      "notes": "CSS Grid via Yoga fork — column/row tracks, gaps, spans",
+      "acceptance": "Compute CSS Grid layouts with column/row tracks, spans, and gap definitions.",
+      "evidence": [
+        "tests/engine/layout/grid-layout.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.COMBINED-FLOWS-NESTED",
+      "category": "Auto Layout",
+      "name": "Combined flows (nested)",
+      "status": "verified",
+      "notes": "Nested auto-layout frames with different directions",
+      "acceptance": "Layout deeply nested auto-layout hierarchies with mixed flow directions and fills.",
+      "evidence": [
+        "tests/engine/layout/auto-layout/nested/basic.test.ts"
+      ]
+    },
+    {
+      "id": "AUTO-LAYOUT.DRAG-REORDER-WITHIN-AUTO-LAYOUT",
+      "category": "Auto Layout",
+      "name": "Drag reorder within auto layout",
+      "status": "supported",
+      "notes": "Visual insertion indicator",
+      "acceptance": "Complete the documented “Drag reorder within auto layout” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "AUTO-LAYOUT.MINMAX-WIDTH-AND-HEIGHT",
+      "category": "Auto Layout",
+      "name": "Min/max width and height",
+      "status": "verified",
+      "notes": "Inspector controls and Yoga enforcement for both axes",
+      "acceptance": "Enforce two-axis minimum and maximum dimensions during layout and resize.",
+      "evidence": [
+        "tests/engine/layout/auto-layout/min-max/constraints.test.ts"
+      ]
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.CREATE-COMPONENTS",
+      "category": "Components & Design Systems",
+      "name": "Create components",
+      "status": "partial",
+      "notes": "<kbd>⌥</kbd><kbd>⌘</kbd><kbd>K</kbd> creates from frame/group or wraps selection; no component properties UI yet",
+      "acceptance": "Complete the documented “Create components” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.COMPONENT-SETS",
+      "category": "Components & Design Systems",
+      "name": "Component sets",
+      "status": "supported",
+      "notes": "Creation, canvas treatment, variant definitions, property editing, and insertion",
+      "acceptance": "Complete the documented “Component sets” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.COMPONENT-INSTANCES",
+      "category": "Components & Design Systems",
+      "name": "Component instances",
+      "status": "supported",
+      "notes": "Creation, live sync, override reset, detach, and go-to-main controls",
+      "acceptance": "Complete the documented “Component instances” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.VARIANTS",
+      "category": "Components & Design Systems",
+      "name": "Variants",
+      "status": "verified",
+      "notes": "Creation, property management, switching, override preservation, and undo/redo",
+      "acceptance": "Switch variants while preserving compatible overrides, lineage, undo, and redo.",
+      "evidence": [
+        "tests/engine/editor/components/variant-overrides.test.ts",
+        "tests/e2e/components.spec.ts"
+      ]
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.COMPONENT-PROPERTIES",
+      "category": "Components & Design Systems",
+      "name": "Component properties",
+      "status": "verified",
+      "notes": "Boolean toggles, Text properties, Instance-swap slots, and Variant definitions on components",
+      "acceptance": "Define and override Boolean, Text, Instance-swap, and Variant component properties.",
+      "evidence": [
+        "tests/engine/editor/components/variant-overrides.test.ts",
+        "tests/engine/editor/components/component-properties.test.ts"
+      ]
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.OVERRIDE-PROPAGATION",
+      "category": "Components & Design Systems",
+      "name": "Override propagation",
+      "status": "supported",
+      "notes": "Changes to main component propagate to all instances; overrides preserved",
+      "acceptance": "Complete the documented “Override propagation” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.VARIABLES-COLOR-NUMBER-STRING-BOOLEAN",
+      "category": "Components & Design Systems",
+      "name": "Variables (color, number, string, boolean)",
+      "status": "verified",
+      "notes": "`COLOR`, `FLOAT`, `STRING`, and `BOOLEAN` variables with editing and binding UI",
+      "acceptance": "Create, edit, and bind COLOR, FLOAT, STRING, and BOOLEAN design variables.",
+      "evidence": [
+        "tests/engine/app/variables-editor.test.ts"
+      ]
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.VARIABLE-COLLECTIONS-MODES",
+      "category": "Components & Design Systems",
+      "name": "Variable collections & modes",
+      "status": "verified",
+      "notes": "Collections, modes (Light/Dark), default mode, and value overrides by mode",
+      "acceptance": "Manage variable collections and mode-specific value overrides (Light/Dark themes).",
+      "evidence": [
+        "tests/engine/app/variables-editor.test.ts"
+      ]
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.STYLES-COLOR-TEXT-EFFECT-LAYOUT",
+      "category": "Components & Design Systems",
+      "name": "Styles (color, text, effect, layout)",
+      "status": "verified",
+      "notes": "`NamedStyleRegistry` stores `PaintStylePreset`, `TextStylePreset`, `EffectStylePreset` with toJSON/fromJSON round-trip",
+      "acceptance": "Complete the documented “Styles (color, text, effect, layout)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.LIBRARIES-PUBLISH-SHARE-UPDATE",
+      "category": "Components & Design Systems",
+      "name": "Libraries (publish, share, update)",
+      "status": "partial",
+      "notes": "Style registry serializes to JSON for cross-document sharing; no live publish/subscribe UI yet",
+      "acceptance": "Complete the documented “Libraries (publish, share, update)” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.DETACH-INSTANCE",
+      "category": "Components & Design Systems",
+      "name": "Detach instance",
+      "status": "supported",
+      "notes": "<kbd>⌥</kbd><kbd>⌘</kbd><kbd>B</kbd> converts instance back to frame",
+      "acceptance": "Complete the documented “Detach instance” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COMPONENTS-DESIGN-SYSTEMS.GO-TO-MAIN-COMPONENT",
+      "category": "Components & Design Systems",
+      "name": "Go to main component",
+      "status": "supported",
+      "notes": "Navigate to source component, cross-page",
+      "acceptance": "Complete the documented “Go to main component” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.PROTOTYPE-CONNECTIONS",
+      "category": "Prototyping",
+      "name": "Prototype connections",
+      "status": "supported",
+      "notes": "Canvas handles, reconnect/delete, Bézier controls, and edge snapping",
+      "acceptance": "Complete the documented “Prototype connections” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.TRIGGERS-CLICK-HOVER-DRAG-ETC",
+      "category": "Prototyping",
+      "name": "Triggers (click, hover, drag, etc.)",
+      "status": "verified",
+      "notes": "Click, hover, press, enter/leave, drag, and delay triggers",
+      "acceptance": "Handle interaction triggers (click, hover, mouse down, drag, delay) on interactive frames.",
+      "evidence": [
+        "tests/engine/app/prototype-interaction.test.ts"
+      ]
+    },
+    {
+      "id": "PROTOTYPING.ACTIONS-NAVIGATE-OVERLAY-SCROLL-ETC",
+      "category": "Prototyping",
+      "name": "Actions (navigate, overlay, scroll, etc.)",
+      "status": "verified",
+      "notes": "Navigate, back, close, overlay, scroll, change-to, and set-variable",
+      "acceptance": "Execute prototype actions (navigate, open overlay, close overlay, scroll to, change to).",
+      "evidence": [
+        "tests/engine/app/prototype-interaction.test.ts"
+      ]
+    },
+    {
+      "id": "PROTOTYPING.ANIMATIONS-TRANSITIONS",
+      "category": "Prototyping",
+      "name": "Animations & transitions",
+      "status": "supported",
+      "notes": "Instant, dissolve, slide, push, duration, and easing controls",
+      "acceptance": "Complete the documented “Animations & transitions” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.SMART-ANIMATE",
+      "category": "Prototyping",
+      "name": "Smart animate",
+      "status": "partial",
+      "notes": "Smart transition exists; full matching and interruption parity remains",
+      "acceptance": "Complete the documented “Smart animate” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.OVERLAYS",
+      "category": "Prototyping",
+      "name": "Overlays",
+      "status": "verified",
+      "notes": "Position, backdrop, outside-click, open, swap, and close behavior",
+      "acceptance": "Render positioned modal overlays with backdrop blur and outside-click dismissal.",
+      "evidence": [
+        "tests/engine/app/prototype-interaction.test.ts"
+      ]
+    },
+    {
+      "id": "PROTOTYPING.SCROLL-OVERFLOW-BEHAVIOR",
+      "category": "Prototyping",
+      "name": "Scroll & overflow behavior",
+      "status": "partial",
+      "notes": "Scroll-to works; nested scrolling and position preservation remain",
+      "acceptance": "Complete the documented “Scroll & overflow behavior” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.PROTOTYPE-FLOWS",
+      "category": "Prototyping",
+      "name": "Prototype flows",
+      "status": "partial",
+      "notes": "Starting points work; named multi-flow management remains",
+      "acceptance": "Complete the documented “Prototype flows” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.VARIABLES-IN-PROTOTYPES",
+      "category": "Prototyping",
+      "name": "Variables in prototypes",
+      "status": "partial",
+      "notes": "Variable assignment works; conditions and expressions remain",
+      "acceptance": "Complete the documented “Variables in prototypes” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.EASING-SPRING-ANIMATIONS",
+      "category": "Prototyping",
+      "name": "Easing & spring animations",
+      "status": "supported",
+      "notes": "Linear, ease-in/out, combined ease, and spring presets",
+      "acceptance": "Complete the documented “Easing & spring animations” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "PROTOTYPING.PRESENT-PLAY-PROTOTYPES",
+      "category": "Prototyping",
+      "name": "Present & play prototypes",
+      "status": "verified",
+      "notes": "Graph-driven presentation player with start-frame selection",
+      "acceptance": "Present interactive prototype flow player with start frame selection and step history.",
+      "evidence": [
+        "tests/engine/app/prototype-interaction.test.ts"
+      ]
+    },
+    {
+      "id": "IMPORT-EXPORT.FIG-FILE-IMPORT",
+      "category": "Import & Export",
+      "name": ".fig file import",
+      "status": "verified",
+      "notes": "Full Kiwi codec: 194 definitions, ~390 fields per `NodeChange` with lossless round-trip",
+      "acceptance": "Decode Figma binary .fig files with full Kiwi schema and lossless node conversion.",
+      "evidence": [
+        "tests/engine/editor/clipboard/fixture-roundtrip.test.ts"
+      ]
+    },
+    {
+      "id": "IMPORT-EXPORT.FIG-FILE-EXPORT",
+      "category": "Import & Export",
+      "name": ".fig file export",
+      "status": "verified",
+      "notes": "Kiwi encoding + Zstd compression + thumbnail generation; `COMPONENT`/COMPONENT_SET mapped to `SYMBOL` for round-trip",
+      "acceptance": "Encode and compress scene graphs into standard .fig files with symbol definitions.",
+      "evidence": [
+        "tests/engine/editor/clipboard/fixture-roundtrip.test.ts"
+      ]
+    },
+    {
+      "id": "IMPORT-EXPORT.SAVE-SAVE-AS",
+      "category": "Import & Export",
+      "name": "Save / Save As",
+      "status": "supported",
+      "notes": "<kbd>⌘</kbd><kbd>S</kbd> / <kbd>⇧</kbd><kbd>⌘</kbd><kbd>S</kbd>; native dialogs (Tauri), File System Access API (Chrome/Edge), download fallback (Safari)",
+      "acceptance": "Complete the documented “Save / Save As” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "IMPORT-EXPORT.FIGMA-CLIPBOARD-PASTE",
+      "category": "Import & Export",
+      "name": "Figma clipboard (paste)",
+      "status": "verified",
+      "notes": "Decode Kiwi binary from Figma clipboard with full property fidelity",
+      "acceptance": "Decode and reconstruct Kiwi clipboard data copied directly from Figma.",
+      "evidence": [
+        "tests/engine/editor/clipboard/fixture-roundtrip.test.ts"
+      ]
+    },
+    {
+      "id": "IMPORT-EXPORT.FIGMA-CLIPBOARD-COPY",
+      "category": "Import & Export",
+      "name": "Figma clipboard (copy)",
+      "status": "verified",
+      "notes": "Encode Kiwi binary that Figma can read with exact scene hierarchy",
+      "acceptance": "Generate Figma-compatible Kiwi clipboard payloads that paste seamlessly into Figma.",
+      "evidence": [
+        "tests/engine/editor/clipboard/fixture-roundtrip.test.ts"
+      ]
+    },
+    {
+      "id": "IMPORT-EXPORT.SKETCH-FILE-IMPORT",
+      "category": "Import & Export",
+      "name": "Sketch file import",
+      "status": "missing",
+      "notes": ".sketch file parsing",
+      "acceptance": "Complete the documented “Sketch file import” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "IMPORT-EXPORT.IMAGESVGPDF-EXPORT",
+      "category": "Import & Export",
+      "name": "Image/SVG/PDF export",
+      "status": "supported",
+      "notes": "PNG, JPG, WEBP, SVG, and vector PDF export",
+      "acceptance": "Complete the documented “Image/SVG/PDF export” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "IMPORT-EXPORT.VERSION-HISTORY",
+      "category": "Import & Export",
+      "name": "Version history",
+      "status": "verified",
+      "notes": "`VersionHistory` takes named snapshots and restores prior scene graph states with up to 50 versions",
+      "acceptance": "Snapshot scene graph state into named versions and restore prior versions with up to 50 entries.",
+      "evidence": [
+        "tests/engine/scene-graph/version-history.test.ts"
+      ]
+    },
+    {
+      "id": "IMPORT-EXPORT.COPY-ASSETS-BETWEEN-TOOLS",
+      "category": "Import & Export",
+      "name": "Copy assets between tools",
+      "status": "verified",
+      "notes": "Figma clipboard (Kiwi binary), Copy as text/SVG/PNG/JSX",
+      "acceptance": "Copy and paste assets between design tools using Kiwi binary and HTML payloads.",
+      "evidence": [
+        "tests/engine/editor/clipboard/fixture-roundtrip.test.ts"
+      ]
+    },
+    {
+      "id": "PLUGIN-API-SCRIPTING.EVAL-COMMAND-WITH-FIGMA-PLUGIN-API",
+      "category": "Plugin API & Scripting",
+      "name": "Eval command with Figma Plugin API",
+      "status": "supported",
+      "notes": "Headless JavaScript execution with figma global object matching Figma's plugin surface",
+      "acceptance": "Complete the documented “Eval command with Figma Plugin API” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.COMMENTS-PIN-THREAD-RESOLVE",
+      "category": "Collaboration & Dev Mode",
+      "name": "Comments (pin, thread, resolve)",
+      "status": "verified",
+      "notes": "Pinned canvas notes and comments with thread replies, sorting, and resolution status",
+      "acceptance": "Place pinned canvas comments with message threads, replies, and resolution status.",
+      "evidence": [
+        "tests/engine/app/creative-notes.test.ts"
+      ]
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.CURSOR-CHAT",
+      "category": "Collaboration & Dev Mode",
+      "name": "Cursor chat",
+      "status": "verified",
+      "notes": "Ephemeral cursor chat bubbles (<kbd>/</kbd>) broadcast over WebRTC awareness with peer attribution",
+      "acceptance": "Broadcast and display ephemeral cursor chat messages across multiplayer peers.",
+      "evidence": [
+        "tests/engine/collab/cursor-chat.test.ts"
+      ]
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.BRANCHING-MERGING",
+      "category": "Collaboration & Dev Mode",
+      "name": "Branching & merging",
+      "status": "missing",
+      "notes": "Version branches for design files",
+      "acceptance": "Complete the documented “Branching & merging” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.DEV-MODE-INSPECT",
+      "category": "Collaboration & Dev Mode",
+      "name": "Dev Mode (inspect)",
+      "status": "verified",
+      "notes": "Box model, dimensions, colors, typography, framework code, and asset export",
+      "acceptance": "Inspect node box models, padding, gaps, resolved tokens, and generated rules in Dev Mode.",
+      "evidence": [
+        "tests/engine/codegen/codegen.test.ts"
+      ]
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.CODE-CONNECT",
+      "category": "Collaboration & Dev Mode",
+      "name": "Code Connect",
+      "status": "missing",
+      "notes": "Link design components to code",
+      "acceptance": "Complete the documented “Code Connect” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.CODE-SNIPPETS",
+      "category": "Collaboration & Dev Mode",
+      "name": "Code snippets",
+      "status": "verified",
+      "notes": "Copyable Tailwind, CSS, React, Vue, Flutter, and SwiftUI output",
+      "acceptance": "Generate React, Vue, Tailwind, SwiftUI, Flutter, and CSS code snippets from scene nodes.",
+      "evidence": [
+        "tests/engine/codegen/codegen.test.ts"
+      ]
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.TAILWIND-CSS-V4-EXPORT",
+      "category": "Collaboration & Dev Mode",
+      "name": "Tailwind CSS v4 export",
+      "status": "verified",
+      "notes": "Export as HTML with Tailwind utility classes from Code panel, CLI, or programmatically",
+      "acceptance": "Export clean HTML with Tailwind utility classes matching scene geometry, colors, and layout.",
+      "evidence": [
+        "tests/engine/codegen/codegen.test.ts"
+      ]
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.FIGMA-FOR-VS-CODE",
+      "category": "Collaboration & Dev Mode",
+      "name": "Figma for VS Code",
+      "status": "missing",
+      "notes": "Editor plugin integration",
+      "acceptance": "Complete the documented “Figma for VS Code” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.MCP-SERVER",
+      "category": "Collaboration & Dev Mode",
+      "name": "MCP server",
+      "status": "verified",
+      "notes": "Stdio + HTTP transports backed by shared core and extended tool registries",
+      "acceptance": "Serve registered tools over supported MCP transports with scoped file access.",
+      "evidence": [
+        "tests/engine/mcp/server.test.ts",
+        "tests/engine/mcp/stdio.test.ts",
+        "tests/engine/mcp/path-scoping.test.ts"
+      ]
+    },
+    {
+      "id": "COLLABORATION-DEV-MODE.CLI-TOOLS",
+      "category": "Collaboration & Dev Mode",
+      "name": "CLI tools",
+      "status": "supported",
+      "notes": "Headless CLI: info, tree, find, export, analyze, node, pages, variables, eval; MCP server with stdio + HTTP",
+      "acceptance": "Complete the documented “CLI tools” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "FIGMA-DRAW.ILLUSTRATION-TOOLS",
+      "category": "Figma Draw",
+      "name": "Illustration tools",
+      "status": "missing",
+      "notes": "Figma Draw's specialized drawing tools",
+      "acceptance": "Complete the documented “Illustration tools” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    },
+    {
+      "id": "FIGMA-DRAW.PATTERN-TRANSFORMS",
+      "category": "Figma Draw",
+      "name": "Pattern transforms",
+      "status": "missing",
+      "notes": "Create repeating patterns with transforms",
+      "acceptance": "Complete the documented “Pattern transforms” workflow end-to-end with undo, persistence, and platform coverage.",
+      "evidence": []
+    }
+  ],
+  "summary": {
+    "total": 153,
+    "addressed": 146,
+    "missing": 7,
+    "partial": 18,
+    "supported": 59,
+    "verified": 69
+  },
+  "confidenceScore": 79.9
+}

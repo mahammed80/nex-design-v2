@@ -1,4 +1,3 @@
-import { DEFAULT_TEXT_HEIGHT, DEFAULT_TEXT_WIDTH } from '@nex-design/core/constants'
 import type { Editor } from '@nex-design/core/editor'
 
 import { findMoveDropTarget } from '#vue/shared/input/drop-target'
@@ -51,15 +50,15 @@ export function handleDrawUp(d: DragDraw, editor: Editor) {
   if (node && node.width < 2 && node.height < 2) {
     if (node.type === 'TEXT') {
       editor.updateNode(d.nodeId, {
-        width: DEFAULT_TEXT_WIDTH,
-        height: DEFAULT_TEXT_HEIGHT,
-        textAutoResize: 'NONE'
+        width: 80,
+        height: 20,
+        textAutoResize: 'WIDTH_AND_HEIGHT'
       })
     } else {
       editor.updateNode(d.nodeId, { width: 100, height: 100 })
     }
   } else if (node?.type === 'TEXT') {
-    editor.updateNode(d.nodeId, { textAutoResize: 'NONE' })
+    editor.updateNode(d.nodeId, { textAutoResize: 'HEIGHT' })
   }
 
   // Find target container and reparent if inside it

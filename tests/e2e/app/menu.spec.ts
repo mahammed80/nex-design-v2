@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
+import { seedLocalProfile } from '#tests/helpers/browser-session'
 import { CanvasHelper } from '#tests/helpers/canvas'
 
 let page: Page
@@ -9,7 +10,8 @@ test.describe.configure({ mode: 'serial' })
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage()
-  await page.goto('/')
+  await seedLocalProfile(page, 'playwright-menu-profile')
+  await page.goto('/demo')
   canvas = new CanvasHelper(page)
   await canvas.waitForInit()
 })
@@ -65,8 +67,34 @@ test('View menu shows zoom options', async () => {
   expect(items.some((t) => t.includes('Zoom to fit'))).toBe(true)
   expect(items.some((t) => t.includes('Zoom In'))).toBe(true)
   expect(items.some((t) => t.includes('Zoom Out'))).toBe(true)
+  await expect(
+    menu.locator('[role="menuitemcheckbox"]', { hasText: 'Show Layer Outlines' })
+  ).toBeVisible()
 
   await page.keyboard.press('Escape')
+})
+
+test('View menu toggles layer-outline mode', async () => {
+  await page.keyboard.press('Escape')
+  await page.locator('[role="menubar"] [role="menuitem"]', { hasText: 'View' }).click()
+  const outlineItem = page.locator('[role="menuitemcheckbox"]', {
+    hasText: 'Show Layer Outlines'
+  })
+  await expect(outlineItem).toBeVisible()
+  await outlineItem.click()
+  await canvas.waitForRender()
+
+  const enabled = await page.evaluate(() => {
+    const store = window.nexDesign?.getStore?.()
+    if (!store) throw new Error('NexDesign store not initialized')
+    return store.state.outlineMode
+  })
+  expect(enabled).toBe(true)
+
+  await page.keyboard.press('Shift+O')
+  await canvas.waitForRender()
+  const disabled = await page.evaluate(() => window.nexDesign?.getStore?.().state.outlineMode)
+  expect(disabled).toBe(false)
 })
 
 test('Object menu shows Group/Ungroup/Component', async () => {

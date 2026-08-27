@@ -1,9 +1,26 @@
-import type { FigmaAPI } from '#core/figma-api'
+import type { FigmaAPI, FigmaNodeProxy } from '#core/figma-api'
+import type { Fill, Stroke } from '#core/scene-graph'
+import type { Color } from '#core/types'
+
 import { defineTool } from './schema'
+
+interface DesignContentChild {
+  type: string
+  name?: string
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  layout?: string
+  content?: string
+  fills?: unknown[]
+  strokes?: unknown[]
+}
 
 export const designSkeleton = defineTool({
   name: 'design_skeleton',
-  description: 'Insert a root frame and empty section containers for a multi-section design. Use this as the first step of the layered design workflow.',
+  description:
+    'Insert a root frame and empty section containers for a multi-section design. Use this as the first step of the layered design workflow.',
   params: {
     rootFrame: {
       type: 'string',
@@ -54,10 +71,23 @@ export const designSkeleton = defineTool({
     root.paddingBottom = rootFrame.padding ?? 24
 
     if (rootFrame.fill) {
-      root.fills = [{ type: 'SOLID', color: hexToColor(rootFrame.fill), opacity: 1, visible: true, blendMode: 'NORMAL' }]
+      root.fills = [
+        {
+          type: 'SOLID',
+          color: hexToColor(rootFrame.fill),
+          opacity: 1,
+          visible: true,
+          blendMode: 'NORMAL'
+        }
+      ]
     }
 
     const sectionIds: string[] = []
+    const createdSections: Array<{
+      id: string
+      label: string
+      region: { width: number; height: number }
+    }> = []
     for (const section of sections) {
       const sectionNode = figma.createFrame()
       sectionNode.name = section.label
@@ -67,7 +97,9 @@ export const designSkeleton = defineTool({
         (section.region.width / 100) * (rootFrame.width || 1440),
         (section.region.height / 100) * (rootFrame.height || 900)
       )
+      root.appendChild(sectionNode)
       sectionIds.push(sectionNode.id)
+      createdSections.push({ id: sectionNode.id, label: section.label, region: section.region })
     }
 
     return {
@@ -75,15 +107,18 @@ export const designSkeleton = defineTool({
       phase: 'skeleton',
       rootId: root.id,
       sectionIds,
-      sections: sections.map((s) => ({ id: s.id, label: s.label, region: s.region })),
-      nextSteps: sections.map((s) => `Call design_content with sectionId: ${s.id}`)
+      sections: createdSections,
+      nextSteps: createdSections.map(
+        (section) => `Call design_content with sectionId: ${section.id}`
+      )
     }
   }
 })
 
 export const designContent = defineTool({
   name: 'design_content',
-  description: 'Insert content nodes under a section frame. Use this after design_skeleton to populate each section.',
+  description:
+    'Insert content nodes under a section frame. Use this after design_skeleton to populate each section.',
   params: {
     sectionId: {
       type: 'string',
@@ -93,7 +128,8 @@ export const designContent = defineTool({
     children: {
       type: 'string',
       required: true,
-      description: 'JSON string array of node descriptors: [{ type, name, x, y, width, height, layout?, content?, fills? }]'
+      description:
+        'JSON string array of node descriptors: [{ type, name, x, y, width, height, layout?, content?, fills? }]'
     },
     postProcess: {
       type: 'boolean',
@@ -103,18 +139,7 @@ export const designContent = defineTool({
   },
   execute(figma: FigmaAPI, args) {
     const sectionId = args.sectionId as string
-    const children = JSON.parse(args.children as string) as Array<{
-      type: string
-      name?: string
-      x?: number
-      y?: number
-      width?: number
-      height?: number
-      layout?: string
-      content?: string
-      fills?: unknown[]
-      strokes?: unknown[]
-    }>
+    const children = JSON.parse(args.children as string) as DesignContentChild[]
     const postProcess = (args.postProcess as boolean) ?? true
 
     const section = figma.getNodeById(sectionId)
@@ -127,25 +152,18 @@ export const designContent = defineTool({
 
     for (const child of children) {
       try {
-        const node = figma.createFrame()
-        node.name = child.name || 'Node'
-        node.x = child.x ?? 0
-        node.y = child.y ?? 0
-        node.resize(child.width || 200, child.height || 100)
-
-        if (child.layout === 'horizontal') {
-          node.layoutMode = 'HORIZONTAL'
-        } else if (child.layout === 'vertical') {
-          node.layoutMode = 'VERTICAL'
+        const node = createWorkflowNode(figma, child.type)
+        if (!node) {
+          warnings.push(`Unsupported node type: ${child.type}`)
+          continue
         }
-
-        if (child.fills && child.fills.length > 0) {
-          node.fills = child.fills as Fill[]
-        }
-
+        configureWorkflowNode(node, child)
+        section.appendChild(node)
         inserted.push(node.id)
       } catch (e) {
-        warnings.push(`Failed to create ${child.type}: ${e instanceof Error ? e.message : 'unknown'}`)
+        warnings.push(
+          `Failed to create ${child.type}: ${e instanceof Error ? e.message : 'unknown'}`
+        )
       }
     }
 
@@ -163,7 +181,8 @@ export const designContent = defineTool({
 
 export const designRefine = defineTool({
   name: 'design_refine',
-  description: 'Run deterministic cleanup and refinement passes on a design subtree. Use this as the final step of the layered design workflow.',
+  description:
+    'Run deterministic cleanup and refinement passes on a design subtree. Use this as the final step of the layered design workflow.',
   params: {
     rootId: {
       type: 'string',
@@ -193,13 +212,27 @@ export const designRefine = defineTool({
     const isLayoutNode = (record: { type?: string; layoutMode?: string }): boolean =>
       record.type === 'FRAME' || record.type === 'GROUP' || record.type === 'COMPONENT'
 
-    const isBentoCandidate = (record: { type?: string; layoutMode?: string }, childCount: number): boolean =>
+    const isBentoCandidate = (
+      record: { type?: string; layoutMode?: string },
+      childCount: number
+    ): boolean =>
       record.type === 'FRAME' &&
       childCount >= 3 &&
-      (record.layoutMode === 'HORIZONTAL' || record.layoutMode === 'VERTICAL' || record.layoutMode === 'GRID')
+      (record.layoutMode === 'HORIZONTAL' ||
+        record.layoutMode === 'VERTICAL' ||
+        record.layoutMode === 'GRID')
 
     const walk = (node: unknown, depth: number) => {
-      const record = node as { type?: string; children?: unknown[]; layoutMode?: string; x?: number; y?: number; name?: string; id?: string; text?: string }
+      const record = node as {
+        type?: string
+        children?: unknown[]
+        layoutMode?: string
+        x?: number
+        y?: number
+        name?: string
+        id?: string
+        text?: string
+      }
       if (!isLayoutNode(record)) {
         if (record.type === 'TEXT') {
           const text = record.text ?? ''
@@ -221,14 +254,18 @@ export const designRefine = defineTool({
         bentoCells.push({ parentId: record.id ?? 'unknown', count: childCount })
       }
 
-      const childLayouts = new Set(children.map((c) => {
-        const child = c as { type?: string; layoutMode?: string }
-        return `${child.type ?? 'UNKNOWN'}-${child.layoutMode ?? 'NONE'}`
-      }))
+      const childLayouts = new Set(
+        children.map((c) => {
+          const child = c as { type?: string; layoutMode?: string }
+          return `${child.type ?? 'UNKNOWN'}-${child.layoutMode ?? 'NONE'}`
+        })
+      )
       if (childLayouts.size === 1 && childCount >= 3) {
         const family = [...childLayouts][0]
         if (layoutFamilies.has(family)) {
-          warnings.push(`Section layout repetition: "${record.name}" uses same layout family as another section`)
+          warnings.push(
+            `Section layout repetition: "${record.name}" uses same layout family as another section`
+          )
         }
         layoutFamilies.add(family)
       }
@@ -246,37 +283,65 @@ export const designRefine = defineTool({
       allText.toLowerCase().includes('purple') &&
       (allText.toLowerCase().includes('gradient') || allText.toLowerCase().includes('glow'))
     ) {
-      warnings.push('Purple/pink/cyan gradient backgrounds are banned by default (taste-skill gate 1)')
+      warnings.push(
+        'Purple/pink/cyan gradient backgrounds are banned by default (taste-skill gate 1)'
+      )
     }
 
-    const ctaLikePhrases = ['get started', 'sign up', 'try free', 'contact us', 'get in touch', 'learn more', 'start now']
+    const ctaLikePhrases = [
+      'get started',
+      'sign up',
+      'try free',
+      'contact us',
+      'get in touch',
+      'learn more',
+      'start now'
+    ]
     const ctaIntents = new Set<string>()
     for (const phrase of ctaLikePhrases) {
       if (allText.toLowerCase().includes(phrase)) {
         if (['get started', 'try free', 'sign up free'].includes(phrase)) ctaIntents.add('signup')
-        else if (['contact us', 'get in touch', 'start now'].includes(phrase)) ctaIntents.add('contact')
+        else if (['contact us', 'get in touch', 'start now'].includes(phrase))
+          ctaIntents.add('contact')
         else if (['learn more'].includes(phrase)) ctaIntents.add('learn')
       }
     }
     if (ctaIntents.size > 1) {
-      warnings.push(`Duplicate CTA intent detected: ${[...ctaIntents].join(' + ')}. Pick one label per intent (hallmark gate 7)`)
+      warnings.push(
+        `Duplicate CTA intent detected: ${[...ctaIntents].join(' + ')}. Pick one label per intent (hallmark gate 7)`
+      )
     }
 
-    const bannedMetrics = ['92%', '4.1×', '48k', '5.8 mm', '13.4 lb', '50,000+', '10× faster', '+47%']
+    const bannedMetrics = [
+      '92%',
+      '4.1×',
+      '48k',
+      '5.8 mm',
+      '13.4 lb',
+      '50,000+',
+      '10× faster',
+      '+47%'
+    ]
     for (const metric of bannedMetrics) {
       if (allText.includes(metric)) {
-        warnings.push(`Invented metric "${metric}" detected. Use real data or placeholders (hallmark gate 23)`)
+        warnings.push(
+          `Invented metric "${metric}" detected. Use real data or placeholders (hallmark gate 23)`
+        )
         break
       }
     }
 
     if (/\b[A-Z]{2,}\b/.test(allText) && allText.includes('—')) {
-      warnings.push('Em-dash used as design flourish in text (hallmark gate 25). Remove em-dashes from copy.')
+      warnings.push(
+        'Em-dash used as design flourish in text (hallmark gate 25). Remove em-dashes from copy.'
+      )
     }
 
     for (const bc of bentoCells) {
       if (bc.count >= 3) {
-        fixes.push(`Bento grid "${bc.parentId}" has ${bc.count} cells — verify each has content (hallmark gate 17)`)
+        fixes.push(
+          `Bento grid "${bc.parentId}" has ${bc.count} cells — verify each has content (hallmark gate 17)`
+        )
       }
     }
 
@@ -299,8 +364,43 @@ export const designRefine = defineTool({
   }
 })
 
-import type { Color } from '#core/types'
-import type { Fill } from '#core/scene-graph'
+function createWorkflowNode(figma: FigmaAPI, type: string): FigmaNodeProxy | null {
+  switch (type.toUpperCase()) {
+    case 'FRAME':
+      return figma.createFrame()
+    case 'RECTANGLE':
+      return figma.createRectangle()
+    case 'ELLIPSE':
+      return figma.createEllipse()
+    case 'TEXT':
+      return figma.createText()
+    case 'LINE':
+      return figma.createLine()
+    case 'COMPONENT':
+      return figma.createComponent()
+    case 'SECTION':
+      return figma.createSection()
+    default:
+      return null
+  }
+}
+
+function configureWorkflowNode(node: FigmaNodeProxy, child: DesignContentChild): void {
+  node.name = child.name || 'Node'
+  node.x = child.x ?? 0
+  node.y = child.y ?? 0
+  node.resize(child.width || 200, child.height || 100)
+
+  if (child.layout === 'horizontal') {
+    node.layoutMode = 'HORIZONTAL'
+  } else if (child.layout === 'vertical') {
+    node.layoutMode = 'VERTICAL'
+  }
+
+  if (child.fills && child.fills.length > 0) node.fills = child.fills as Fill[]
+  if (child.strokes && child.strokes.length > 0) node.strokes = child.strokes as Stroke[]
+  if (node.type === 'TEXT' && child.content) node.characters = child.content
+}
 
 function hexToColor(hex: string): Color {
   const c = hex.replace('#', '')

@@ -11,8 +11,14 @@ import type { TreeNode } from '@nex-design/core/design-jsx'
 import { shouldSkipElement } from './filter'
 import { extractBgImageUrl, getImgAlt, getImgSrc, isImageElement, resolveImageUrl } from './image'
 import { extractLayout } from './layout'
-import { extractStyles, parsePx, rgbToHex } from './styles'
-import { cleanPageTitle, extractTextContent, isArabicText, isTextLeafElement, semanticName } from './text'
+import { extractStyles, parsePx, rgbToHex, type ExtractedStyle } from './styles'
+import {
+  cleanPageTitle,
+  extractTextContent,
+  isArabicText,
+  isTextLeafElement,
+  semanticName
+} from './text'
 
 export interface ParseOptions {
   selector?: string
@@ -55,16 +61,8 @@ function createHiddenIframe(viewportWidth: number): HTMLIFrameElement {
   return iframe
 }
 
-export async function parseHtmlToTree(
-  html: string,
-  options: ParseOptions = {}
-): Promise<TreeNode> {
-  const {
-    selector = 'body',
-    maxDepth = 15,
-    baseUrl = '',
-    viewportWidth = 1440
-  } = options
+export async function parseHtmlToTree(html: string, options: ParseOptions = {}): Promise<TreeNode> {
+  const { selector = 'body', maxDepth = 15, baseUrl = '', viewportWidth = 1440 } = options
 
   const iframe = createHiddenIframe(viewportWidth)
 
@@ -92,7 +90,16 @@ export async function parseHtmlToTree(
     const pageBg = rawBodyBg ?? rawDocBg ?? '#FFFFFF'
     const defaultTextColor = rgbToHex(bodyStyle.color) ?? rgbToHex(docStyle.color) ?? '#111827'
 
-    const tree = walkElement(root, 0, maxDepth, baseUrl, win, viewportWidth, false, defaultTextColor)
+    const tree = walkElement(
+      root,
+      0,
+      maxDepth,
+      baseUrl,
+      win,
+      viewportWidth,
+      false,
+      defaultTextColor
+    )
     if (!tree) return createFallbackNode(viewportWidth)
 
     // Set the root frame to fixed full-page width and strip accidental HUG sizing
@@ -147,11 +154,7 @@ function buildImageNode(
   }
 }
 
-function buildSvgNode(
-  el: Element,
-  style: CSSStyleDeclaration,
-  rect: DOMRect
-): TreeNode {
+function buildSvgNode(el: Element, style: CSSStyleDeclaration, rect: DOMRect): TreeNode {
   const w = Math.round(rect.width) || Math.round(parsePx(style.width)) || 24
   const h = Math.round(rect.height) || Math.round(parsePx(style.height)) || 24
   const color = style.color || '#FFFFFF'
@@ -236,7 +239,10 @@ function assignVisualProps(
   const isButtonOrBadge =
     props.name &&
     typeof props.name === 'string' &&
-    (props.name.includes('Button') || props.name.includes('Link') || props.name.includes('Badge') || props.name.includes('Chip'))
+    (props.name.includes('Button') ||
+      props.name.includes('Link') ||
+      props.name.includes('Badge') ||
+      props.name.includes('Chip'))
 
   const isMediaOrAvatar =
     props.name &&
@@ -301,7 +307,10 @@ function assignLayoutProps(
 
   const display = style.display
   const isFlexOrGrid =
-    display === 'flex' || display === 'inline-flex' || display === 'grid' || display === 'inline-grid'
+    display === 'flex' ||
+    display === 'inline-flex' ||
+    display === 'grid' ||
+    display === 'inline-grid'
 
   if (isFlexOrGrid) {
     assignFlexGridProps(props, layoutProps)
@@ -419,15 +428,7 @@ function walkElement(
     display === 'inline-grid' ||
     ((display === 'flex' || display === 'inline-flex') && !style.flexDirection.startsWith('column'))
 
-  const props = buildContainerProps(
-    el,
-    style,
-    rect,
-    name,
-    parentWidth,
-    isParentRowOrGrid,
-    baseUrl
-  )
+  const props = buildContainerProps(el, style, rect, name, parentWidth, isParentRowOrGrid, baseUrl)
 
   let currentTextColor = defaultTextColor
   if (typeof props.bg === 'string' && props.bg) {

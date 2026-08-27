@@ -33,7 +33,8 @@ export function buildRemotePeers(
       name: user.name || 'Anonymous',
       color: user.color || PEER_COLORS[clientId % PEER_COLORS.length],
       cursor: peerState.cursor as RemotePeer['cursor'],
-      selection: peerState.selection as string[]
+      selection: peerState.selection as string[],
+      cursorChat: peerState.cursorChat as RemotePeer['cursorChat']
     })
   })
 
@@ -50,7 +51,8 @@ export function remotePeersToCursors(peers: RemotePeer[], currentPageId: string)
         color: p.color,
         x: cursor.x,
         y: cursor.y,
-        selection: p.selection
+        selection: p.selection,
+        cursorChat: p.cursorChat
       }
     })
 }

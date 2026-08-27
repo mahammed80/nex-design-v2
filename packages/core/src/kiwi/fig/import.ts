@@ -3,6 +3,7 @@ import { populateAndApplyOverrides } from '#core/kiwi/instance-overrides'
 import type { InstanceNodeChange } from '#core/kiwi/instance-overrides'
 import {
   guidToString,
+  convertGuides,
   nodeChangeToProps,
   sortChildren,
   setVariableColorResolver,
@@ -283,6 +284,7 @@ function importPages(
         const page = graph.addPage(canvasNc.name ?? 'Page')
         canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true
+        page.guides = convertGuides(canvasNc)
         created.add(canvasId)
         for (const childId of childrenMap.get(canvasId) ?? []) {
           createSceneNode(childId, page.id)

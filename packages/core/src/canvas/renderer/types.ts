@@ -14,6 +14,7 @@ export interface RulerTheme {
 
 export interface RenderOverlays {
   mode?: 'DESIGN' | 'PROTOTYPE' | 'DEVELOPER'
+  altMeasurement?: boolean
   prototypeDragLine?: {
     startX: number
     startY: number

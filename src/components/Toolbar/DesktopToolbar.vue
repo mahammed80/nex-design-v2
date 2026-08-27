@@ -191,10 +191,10 @@ async function insertIcon(iconName: string) {
 </script>
 
 <template>
-  <div class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center">
+  <div class="flex items-center pointer-events-auto">
     <div
       data-test-id="toolbar"
-      class="flex gap-0.5 items-center rounded-xl border border-border bg-panel p-1 shadow-lg"
+      class="flex gap-0.5 items-center rounded-xl border border-border bg-panel p-1 shadow-lg pointer-events-auto"
     >
       <template v-for="tool in tools" :key="tool.key">
         <Tip
@@ -357,6 +357,25 @@ async function insertIcon(iconName: string) {
           </PopoverContent>
         </PopoverPortal>
       </PopoverRoot>
+
+      <!-- Separator -->
+      <div class="h-4 w-px bg-white/10 mx-0.5" />
+
+      <!-- Dev Mode Quick Switcher -->
+      <Tip :label="editor.state.mode === 'DEVELOPER' ? 'Exit Dev Mode (Shift+D)' : 'Enter Dev Mode (Shift+D)'">
+        <button
+          data-test-id="toolbar-dev-mode"
+          class="flex size-8 cursor-pointer items-center justify-center rounded-lg transition-all"
+          :class="
+            editor.state.mode === 'DEVELOPER'
+              ? 'bg-emerald-500 text-black font-bold shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+              : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+          "
+          @click="editor.state.mode = editor.state.mode === 'DEVELOPER' ? 'DESIGN' : 'DEVELOPER'"
+        >
+          <icon-lucide-code-2 class="size-4.5" />
+        </button>
+      </Tip>
     </div>
   </div>
 </template>

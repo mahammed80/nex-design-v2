@@ -1,5 +1,11 @@
 export const DESIGN_TEMPLATES = [
   {
+    id: 'stitch',
+    name: 'Google Stitch',
+    description: 'AI-first glassmorphic design system with aurora mesh glows, frosted glass cards, and pill action bars.',
+    file: 'stitch-DESIGN.md'
+  },
+  {
     id: 'stripe',
     name: 'Stripe',
     description: 'Clean, modern fintech design with deep blues and precise typography.',

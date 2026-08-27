@@ -41,7 +41,23 @@ export function createTextActions(ctx: EditorContext) {
     const node = ctx.graph.getNode(result.nodeId)
     const after = snapshotTextNode(node, result.text)
     after.text = result.text
-    ctx.graph.updateNode(result.nodeId, { text: after.text, styleRuns: after.styleRuns })
+
+    const changes: Partial<SceneNode> = { text: after.text, styleRuns: after.styleRuns }
+    if (node) {
+      const renderer = ctx.getRenderer()
+      const tempNode = { ...node, ...changes }
+      const measured = renderer?.measureTextNode(tempNode as SceneNode)
+      if (measured) {
+        if (node.textAutoResize === 'WIDTH_AND_HEIGHT' || !node.textAutoResize) {
+          changes.width = Math.max(1, measured.width)
+          changes.height = Math.max(1, measured.height)
+        } else if (node.textAutoResize === 'HEIGHT') {
+          changes.height = Math.max(1, measured.height)
+        }
+      }
+    }
+
+    ctx.graph.updateNode(result.nodeId, changes)
     ctx.state.editingTextId = null
     activeSession = null
 
@@ -49,7 +65,7 @@ export function createTextActions(ctx: EditorContext) {
       ctx.undo.push({
         label: 'Edit text',
         forward: () => {
-          ctx.graph.updateNode(result.nodeId, { text: after.text, styleRuns: after.styleRuns })
+          ctx.graph.updateNode(result.nodeId, changes)
         },
         inverse: () => {
           ctx.graph.updateNode(result.nodeId, { text: before.text, styleRuns: before.styleRuns })

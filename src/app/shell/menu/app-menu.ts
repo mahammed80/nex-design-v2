@@ -80,6 +80,7 @@ export function useAppMenu(mod: string) {
     'toggle-ui': () => {
       store.state.showUI = !store.state.showUI
     },
+    'outline-mode': () => store.toggleOutlineMode(),
     'theme-light': () => setTheme('light'),
     'theme-dark': () => setTheme('dark'),
     'theme-auto': () => setTheme('auto'),
@@ -115,6 +116,8 @@ export function useAppMenu(mod: string) {
         return store.state.autosaveEnabled
       case 'profiler':
         return store.renderer?.profiler.hudVisible ?? false
+      case 'outline-mode':
+        return store.state.outlineMode
       case 'theme-light':
         return theme.value === 'light'
       case 'theme-dark':
@@ -134,6 +137,8 @@ export function useAppMenu(mod: string) {
         }
       case 'profiler':
         return () => store.toggleProfiler()
+      case 'outline-mode':
+        return (value: boolean) => store.toggleOutlineMode(value)
       case 'theme-light':
       case 'theme-dark':
       case 'theme-auto':

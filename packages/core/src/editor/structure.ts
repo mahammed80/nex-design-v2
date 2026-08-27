@@ -62,6 +62,31 @@ export function createStructureActions(ctx: EditorContext) {
     return id
   }
 
+  function getSelectedStructureNodes(): SceneNode[] {
+    const nodes: SceneNode[] = []
+    for (const id of ctx.state.selectedIds) {
+      const node = ctx.graph.getNode(id)
+      if (node && !node.locked) nodes.push(node)
+    }
+    return nodes
+  }
+
+  function booleanUnionSelected() {
+    return createBooleanOperation(getSelectedStructureNodes(), 'UNION')
+  }
+
+  function booleanSubtractSelected() {
+    return createBooleanOperation(getSelectedStructureNodes(), 'SUBTRACT')
+  }
+
+  function booleanIntersectSelected() {
+    return createBooleanOperation(getSelectedStructureNodes(), 'INTERSECT')
+  }
+
+  function booleanExcludeSelected() {
+    return createBooleanOperation(getSelectedStructureNodes(), 'EXCLUDE')
+  }
+
   function ungroupSelected(selectedNode: SceneNode | undefined) {
     ungroupImpl(ctx, selectedNode)
   }
@@ -91,6 +116,10 @@ export function createStructureActions(ctx: EditorContext) {
     wrapInAutoLayout,
     groupSelected,
     createBooleanOperation,
+    booleanUnionSelected,
+    booleanSubtractSelected,
+    booleanIntersectSelected,
+    booleanExcludeSelected,
     ungroupSelected,
     ...stateActions,
     moveToPage,

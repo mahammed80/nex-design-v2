@@ -6,6 +6,7 @@ export interface RemotePeer {
   color: Color
   cursor?: { x: number; y: number; pageId: string }
   selection?: string[]
+  cursorChat?: { message: string; timestamp: number }
 }
 
 export interface CollabState {

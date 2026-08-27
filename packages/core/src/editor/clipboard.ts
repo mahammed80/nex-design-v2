@@ -17,6 +17,7 @@ import { fitComponentSetBounds } from './components/variants'
 import { createClipboardImageActions } from './clipboard/images'
 import { resolvePasteTarget } from './clipboard/paste-target'
 import { createClipboardPlacementActions } from './clipboard/placement'
+import { createClipboardPropertyActions } from './clipboard/properties'
 import { collectSubtrees, restoreSubtree, snapshotSubtree } from './clipboard/subtree-history'
 import type { EditorContext } from './types'
 
@@ -313,6 +314,7 @@ export function createClipboardActions(ctx: EditorContext) {
   const fontActions = createClipboardFontActions(ctx)
   const imageActions = createClipboardImageActions(ctx)
   const placementActions = createClipboardPlacementActions(ctx)
+  const propertyActions = createClipboardPropertyActions(ctx)
 
   return {
     collectSubtrees,
@@ -320,6 +322,7 @@ export function createClipboardActions(ctx: EditorContext) {
     ...fontActions,
     duplicateSelected,
     ...copyActions,
+    ...propertyActions,
     pasteFromHTML,
     warnMissingImages,
     deleteSelected,

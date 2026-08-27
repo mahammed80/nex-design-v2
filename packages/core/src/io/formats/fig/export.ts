@@ -206,6 +206,13 @@ export async function exportFigFile(
       backgroundColor: { ...CANVAS_BG_COLOR },
       backgroundEnabled: true
     })
+    if (page.guides && page.guides.length > 0) {
+      canvasNc.guides = page.guides.map((guide) => ({
+        axis: guide.type === 'vertical' ? 'X' : 'Y',
+        offset: guide.value,
+        guid: { sessionID: 0, localID: localIdCounter.value++ }
+      }))
+    }
     if (page.internalOnly) canvasNc.internalOnly = true
     nodeChanges.push(canvasNc)
 

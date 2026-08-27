@@ -3,11 +3,8 @@ import { onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { useEventListener, useUrlSearchParams } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useHead } from '@unhead/vue'
-import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
-
 import { useViewportKind } from '@nex-design/vue'
 import { useKeyboard } from '@/app/shell/keyboard/use'
-import { loadEditorLayout, saveEditorLayout } from '@/app/shell/layout-storage'
 import { useMenu } from '@/app/shell/menu/use'
 import { useCollab, COLLAB_KEY } from '@/app/collab/use'
 import { connectAutomation } from '@/app/automation/bridge/server'
@@ -20,12 +17,14 @@ import { getActiveProfileId } from '@/app/dashboard/accounts/session'
 import { createProjectRepository } from '@/app/dashboard/projects/repository'
 import { readFigFile } from '@nex-design/core/io/formats/fig'
 
-import CollabPanel from '@/components/CollabPanel/CollabPanel.vue'
+import CommandPalette from '@/components/CommandPalette/CommandPalette.vue'
 import CreativeNotesPanel from '@/components/CreativeNotes/CreativeNotesPanel.vue'
 import EditorCanvas from '@/components/EditorCanvas.vue'
+import FindReplaceModal from '@/components/FindReplace/FindReplaceModal.vue'
 import LayersPanel from '@/components/LayersPanel.vue'
 import MobileDrawer from '@/components/MobileDrawer.vue'
 import MobileHud from '@/components/MobileHud/MobileHud.vue'
+import FloatingPromptBar from '@/components/FloatingPromptBar.vue'
 import PropertiesPanel from '@/components/PropertiesPanel.vue'
 import SafariBanner from '@/components/SafariBanner.vue'
 import TabBar from '@/components/TabBar.vue'
@@ -65,7 +64,6 @@ useEventListener(
 
 const automationCleanup = ref<(() => void) | null>(null)
 const mcpCleanup = ref<(() => void) | null>(null)
-const initialEditorLayout = loadEditorLayout()
 
 watch(
   () => store.state.documentName,
@@ -149,62 +147,30 @@ onUnmounted(() => {
     </div>
 
     <!-- Desktop layout -->
-    <SplitterGroup
+    <div
       v-if="!isMobile && showChrome && store.state.showUI"
       :key="activeTab?.id"
-      direction="horizontal"
-      class="flex-1 overflow-hidden"
-      @layout="saveEditorLayout"
+      class="relative flex flex-1 overflow-hidden"
     >
-      <SplitterPanel
-        id="layers"
-        :default-size="initialEditorLayout[0]"
-        :min-size="10"
-        :max-size="30"
-        class="flex"
-      >
+      <EditorCanvas />
+      <!-- Floating Glass Left Sidebar Island (Layers & Pages) -->
+      <div class="absolute top-0 bottom-0 left-0 z-30 pointer-events-none flex">
         <LayersPanel />
-      </SplitterPanel>
-      <SplitterResizeHandle
-        data-test-id="left-splitter-handle"
-        class="group relative z-10 -mx-1 w-2 cursor-col-resize"
-      >
-        <div class="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2" />
-      </SplitterResizeHandle>
-      <SplitterPanel id="canvas" :default-size="initialEditorLayout[1]" :min-size="30" class="flex">
-        <div class="relative flex min-w-0 flex-1">
-          <EditorCanvas />
+      </div>
+      <!-- Floating Glass Right Sidebar Island (Properties, Dev Mode, AI) -->
+      <div class="absolute top-0 bottom-0 right-0 z-30 pointer-events-none flex">
+        <PropertiesPanel />
+      </div>
+      <!-- Centered Bottom Controls Stack (Prompt Bar + Toolbar aligned parallel on same axis) -->
+      <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-2.5 pointer-events-none">
+        <div v-if="showChrome && store.state.showUI && !isMobile" class="pointer-events-auto">
+          <FloatingPromptBar />
+        </div>
+        <div class="pointer-events-auto">
           <Toolbar />
         </div>
-      </SplitterPanel>
-      <SplitterResizeHandle class="group relative z-10 -mx-1 w-2 cursor-col-resize">
-        <div class="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2" />
-      </SplitterResizeHandle>
-      <SplitterPanel
-        id="properties"
-        :default-size="initialEditorLayout[2]"
-        :min-size="10"
-        :max-size="30"
-        class="flex flex-col"
-      >
-        <div
-          class="flex shrink-0 items-center justify-between border-b border-border px-1.5 py-1.5"
-        >
-          <CollabPanel />
-          <button
-            data-test-id="creative-notes-open"
-            class="flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[11px] font-medium text-muted transition-colors hover:bg-hover hover:text-surface"
-            aria-label="Open creative notes"
-            title="Creative Notes (⌘⌥N)"
-            @click="store.state.showCreativeNotes = true"
-          >
-            <icon-lucide-notebook-pen class="size-3.5 text-accent" />
-            Notes
-          </button>
-        </div>
-        <PropertiesPanel />
-      </SplitterPanel>
-    </SplitterGroup>
+      </div>
+    </div>
 
     <!-- Mobile layout -->
     <div
@@ -272,5 +238,7 @@ onUnmounted(() => {
       :show-launcher="isMobile || !store.state.showUI"
     />
     <ToolTutorial v-if="showChrome && store.state.showUI" />
+    <CommandPalette v-model:open="store.state.showCommandPalette" />
+    <FindReplaceModal v-model:open="store.state.showFindReplace" />
   </div>
 </template>

@@ -1,9 +1,13 @@
 import { reactive } from 'vue'
-import type { SceneNode, Action, Reaction } from '@nex-design/core/scene-graph'
+
 import { canConnect } from '@nex-design/core/prototype'
+import type { SceneNode, Action, Reaction } from '@nex-design/core/scene-graph'
+
 import type { EditorStore } from '@/app/editor/active-store'
-import type { PresentationManager } from './presentation-manager'
+
 import type { NavigationController } from './navigation-controller'
+import type { PresentationManager } from './presentation-manager'
+import type { TransitionDirection } from './types'
 
 export class StateManager {
   public nodesMap = reactive<Map<string, SceneNode>>(new Map())
@@ -136,9 +140,6 @@ export class TriggerManager {
     }
   }
 
-  /** Trigger types that carry a drag direction field. */
-  private static readonly DRAG_TRIGGERS = new Set(['ON_DRAG'])
-
   handleEvent(nodeId: string, eventType: string) {
     const node = this.engine.stateManager.getNode(nodeId)
     if (!node) return
@@ -160,16 +161,18 @@ export class TriggerManager {
     } else if (eventType.startsWith('drag-')) {
       const direction = eventType.split('-')[1]
       // Triggers may carry a `direction` field not present in the base type.
-      interface DragTrigger { direction?: string }
+      interface DragTrigger {
+        direction?: string
+      }
       const reactions = this.findReactions(node, 'ON_DRAG').filter(
-        (r) => ((r.trigger as DragTrigger).direction ?? 'left').toLowerCase() === direction.toLowerCase()
+        (r) =>
+          ((r.trigger as DragTrigger).direction ?? 'left').toLowerCase() === direction.toLowerCase()
       )
       for (const r of reactions) {
         this.engine.actionManager.executeReaction(node.id, r)
       }
     }
   }
-
 
   private findReactions(node: SceneNode, type: string): Reaction[] {
     let current: SceneNode | undefined = node
@@ -201,10 +204,18 @@ export class ActionManager {
           const transType = action.transition?.type ?? 'INSTANT'
           const duration = action.transition?.duration ?? 300
           // `direction` is a runtime extension not in the base transition type.
-          interface TransitionWithDirection { direction?: string }
+          interface TransitionWithDirection {
+            direction?: TransitionDirection
+          }
           const direction = (action.transition as TransitionWithDirection | undefined)?.direction
-          this.engine.navigationManager.navigate(action.destinationId, transType, direction, duration)
-          this.engine.presentation.state.transitionEasing = action.transition?.easing ?? 'EASE_IN_AND_OUT'
+          this.engine.navigationManager.navigate(
+            action.destinationId,
+            transType,
+            direction,
+            duration
+          )
+          this.engine.presentation.state.transitionEasing =
+            action.transition?.easing ?? 'EASE_IN_AND_OUT'
         }
         break
 
@@ -271,7 +282,9 @@ export class ActionManager {
     const modeId =
       this.engine.editor.graph.activeMode.get(variable.collectionId) ?? collection?.defaultModeId
     if (!modeId) return
-    variable.valuesByMode[modeId] = structuredClone(action.variableValue) as typeof variable.valuesByMode[string]
+    variable.valuesByMode[modeId] = structuredClone(
+      action.variableValue
+    ) as (typeof variable.valuesByMode)[string]
     this.engine.editor.requestRender()
   }
 }
@@ -285,14 +298,17 @@ export class ConnectionManager {
     return canConnect(source, target, actionType)
   }
 
-  createConnection(sourceId: string, targetId: string, triggerType: Reaction['trigger']['type'] = 'ON_CLICK') {
+  createConnection(
+    sourceId: string,
+    targetId: string,
+    triggerType: Reaction['trigger']['type'] = 'ON_CLICK'
+  ) {
     this.engine.editor.addConnection(sourceId, targetId, triggerType)
   }
 }
 
 export class AnimationManager {
   // No constructor needed — AnimationManager is stateless and engine-independent.
-
 
   getEasingCSS(easing: string): string {
     switch (easing) {
@@ -328,7 +344,7 @@ export class PrototypeEngine {
     this.triggerManager = new TriggerManager(this)
     this.actionManager = new ActionManager(this)
     this.connectionManager = new ConnectionManager(this)
-    this.animationManager = new AnimationManager(this)
+    this.animationManager = new AnimationManager()
     this.stateManager = new StateManager(this)
   }
 }
