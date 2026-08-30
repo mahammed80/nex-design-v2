@@ -34,6 +34,7 @@ router.beforeEach(async (to) => {
   // migrateLegacyLocalProfile() is called once at app startup in main.ts — not here.
   const isPublicRoute =
     to.path === '/login' ||
+    to.path === '/admin' ||
     to.path === '/landing' ||
     to.path === '/setup' ||
     to.path === '/account-locked' ||
