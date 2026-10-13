@@ -27,9 +27,11 @@ export default defineRule({
       }>,
       field: 'fills' | 'strokes'
     ) => {
-      for (const paint of paints) {
-        if (paint.type !== 'SOLID' || !paint.visible || !paint.color || node.boundVariables[field])
-          continue
+      for (let i = 0; i < paints.length; i++) {
+        const paint = paints[i]
+        // Bindings are keyed per paint (`fills/0/color`); the bare field key is the legacy form.
+        const bound = node.boundVariables[`${field}/${i}/color`] ?? node.boundVariables[field]
+        if (paint.type !== 'SOLID' || !paint.visible || !paint.color || bound) continue
         context.report({
           node,
           message: `Hardcoded ${field === 'fills' ? 'fill' : 'stroke'} color detected`,

@@ -1,8 +1,20 @@
+const TEMPLATE_SOURCES = import.meta.glob<string>('./*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true
+})
+
+/** DESIGN.md v2 source for a bundled template (empty string if the file is missing). */
+export function designTemplateMarkdown(file: string): string {
+  return TEMPLATE_SOURCES[`./${file}`] ?? ''
+}
+
 export const DESIGN_TEMPLATES = [
   {
     id: 'stitch',
     name: 'Google Stitch',
-    description: 'AI-first glassmorphic design system with aurora mesh glows, frosted glass cards, and pill action bars.',
+    description:
+      'AI-first glassmorphic design system with aurora mesh glows, frosted glass cards, and pill action bars.',
     file: 'stitch-DESIGN.md'
   },
   {
@@ -38,7 +50,8 @@ export const DESIGN_TEMPLATES = [
   {
     id: 'notion',
     name: 'Notion',
-    description: 'Clean, functional, whitespace-heavy with subtle borders and Inter-like typography.',
+    description:
+      'Clean, functional, whitespace-heavy with subtle borders and Inter-like typography.',
     file: 'notion-DESIGN.md'
   },
   {
@@ -61,4 +74,4 @@ export const DESIGN_TEMPLATES = [
   }
 ] as const
 
-export type DesignTemplateId = typeof DESIGN_TEMPLATES[number]['id']
+export type DesignTemplateId = (typeof DESIGN_TEMPLATES)[number]['id']

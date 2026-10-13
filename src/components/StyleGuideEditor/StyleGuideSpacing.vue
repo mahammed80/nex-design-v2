@@ -14,18 +14,26 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4">
+  <section
+    class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between border-b border-white/10 pb-3">
       <div class="flex items-center gap-2.5">
-        <div class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+        <div
+          class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30"
+        >
           <icon-lucide-layout-grid class="size-4" />
         </div>
         <div>
           <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
             8pt Spacings & Layout Gaps
-            <span class="text-[10px] font-normal text-rose-400 font-mono">{{ variables.length }} sizes</span>
+            <span class="text-[10px] font-normal text-rose-400 font-mono"
+              >{{ variables.length }} sizes</span
+            >
           </h2>
-          <p class="text-[11px] text-zinc-400">Tokens for padding, auto-layout margins, and component gaps.</p>
+          <p class="text-[11px] text-zinc-400">
+            Tokens for padding, auto-layout margins, and component gaps.
+          </p>
         </div>
       </div>
       <button
@@ -46,7 +54,9 @@ const emit = defineEmits<{
         <icon-lucide-layout-grid class="size-5" />
       </div>
       <p class="text-xs font-semibold text-white">No spacing variables defined yet</p>
-      <p class="text-[11px] text-zinc-400 max-w-sm">Establish 4px, 8px, 16px, 24px tokens or apply a starter preset.</p>
+      <p class="text-[11px] text-zinc-400 max-w-sm">
+        Establish 4px, 8px, 16px, 24px tokens or apply a starter preset.
+      </p>
       <button
         class="mt-1 flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer"
         @click="emit('add')"
@@ -70,8 +80,8 @@ const emit = defineEmits<{
           <div
             class="rounded-sm bg-rose-400/80 shadow-[0_0_8px_rgba(244,63,94,0.6)]"
             :style="{
-              width: `${Math.max(4, Math.min(Number(v.valuesByMode.default) / 2, 22))}px`,
-              height: `${Math.max(4, Math.min(Number(v.valuesByMode.default) / 2, 22))}px`
+              width: `${Math.max(4, Math.min(Number(v.value) / 2, 22))}px`,
+              height: `${Math.max(4, Math.min(Number(v.value) / 2, 22))}px`
             }"
           />
         </div>
@@ -89,10 +99,12 @@ const emit = defineEmits<{
 
         <!-- Size value input & Delete -->
         <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl px-2.5 py-1">
+          <div
+            class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl px-2.5 py-1"
+          >
             <input
               type="number"
-              :value="v.valuesByMode.default"
+              :value="v.value"
               class="w-12 bg-transparent text-right text-xs font-mono font-bold text-white outline-none focus:text-rose-300"
               @change="emit('updateValue', v.id, Number(($event.target as HTMLInputElement).value))"
             />

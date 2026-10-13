@@ -6,7 +6,7 @@ Feature-by-feature comparison of Figma Design capabilities with Nex Design's cur
 ✅ Supported — implementation exists end-to-end · 🧪 Verified — supported with current parity evidence · 🟡 Partial — core behavior exists, some sub-features missing · 🔲 Not yet implemented
 :::
 
-**Coverage:** 146 of 153 Figma feature items addressed — 59 ✅ supported, 69 🧪 verified, 18 🟡 partial, 7 🔲 not yet.
+**Coverage:** 146 of 153 Figma feature items addressed — 58 ✅ supported, 69 🧪 verified, 19 🟡 partial, 7 🔲 not yet.
 
 ## Interface & Navigation
 
@@ -172,12 +172,12 @@ Feature-by-feature comparison of Figma Design capabilities with Nex Design's cur
 
 | Feature                                   | Status | Notes                                                                  |
 | ----------------------------------------- | ------ | ---------------------------------------------------------------------- |
-| Prototype connections                     | ✅     | Canvas handles, reconnect/delete, Bézier controls, and edge snapping   |
-| Triggers (click, hover, drag, etc.)       | 🧪     | Click, hover, press, enter/leave, drag, and delay triggers             |
-| Actions (navigate, overlay, scroll, etc.) | 🧪     | Navigate, back, close, overlay, scroll, change-to, and set-variable    |
-| Animations & transitions                  | ✅     | Instant, dissolve, slide, push, duration, and easing controls          |
-| Smart animate                             | 🟡     | Smart transition exists; full matching and interruption parity remains |
-| Overlays                                  | 🧪     | Position, backdrop, outside-click, open, swap, and close behavior      |
+| Prototype connections                     | ✅     | Canvas handles, reconnect/delete, Bézier controls, edge snapping, and .fig round-trip |
+| Triggers (click, hover, drag, etc.)       | 🧪     | Click, hover, press, enter/leave, mouse down/up, drag, and delay triggers |
+| Actions (navigate, overlay, scroll, etc.) | 🧪     | Navigate, back, close, overlay, scroll, change-to, and preview-local set-variable |
+| Animations & transitions                  | 🧪     | Instant, dissolve, duration, and easing; directional push/slide/move need a direction picker |
+| Smart animate                             | 🟡     | Fade-and-scale approximation; layer matching and interruption remain   |
+| Overlays                                  | 🟡     | Open, swap, and close; position settings and overlay stacking remain   |
 | Scroll & overflow behavior                | 🟡     | Scroll-to works; nested scrolling and position preservation remain     |
 | Prototype flows                           | 🟡     | Starting points work; named multi-flow management remains              |
 | Variables in prototypes                   | 🟡     | Variable assignment works; conditions and expressions remain           |

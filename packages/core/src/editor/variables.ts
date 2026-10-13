@@ -157,6 +157,27 @@ export function createVariableActions(ctx: EditorContext) {
     ctx.requestRender()
   }
 
+  function setVariableType(id: string, type: VariableType) {
+    const variable = ctx.graph.variables.get(id)
+    if (!variable || variable.type === type) return
+    const prevType = variable.type
+    variable.type = type
+    ctx.undo.push({
+      label: 'Change variable type',
+      forward: () => {
+        const v = ctx.graph.variables.get(id)
+        if (v) v.type = type
+        ctx.requestRender()
+      },
+      inverse: () => {
+        const v = ctx.graph.variables.get(id)
+        if (v) v.type = prevType
+        ctx.requestRender()
+      }
+    })
+    ctx.requestRender()
+  }
+
   function addMode(collectionId: string, name?: string): string | undefined {
     const collection = ctx.graph.variableCollections.get(collectionId)
     if (!collection) return undefined
@@ -322,6 +343,7 @@ export function createVariableActions(ctx: EditorContext) {
     addVariable,
     removeVariable,
     renameVariable,
+    setVariableType,
     updateVariableValue,
     addMode,
     removeMode,

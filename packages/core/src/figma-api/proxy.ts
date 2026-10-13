@@ -10,6 +10,7 @@ import type {
   SceneGraph,
   SceneNode,
   NodeType,
+  Reaction,
   Fill,
   Stroke,
   Effect,
@@ -19,6 +20,7 @@ import type { Rect } from '#core/types'
 
 import { installBasicNodeProxyAccessors } from './accessors/basic'
 import { installLayoutNodeProxyAccessors } from './accessors/layout'
+import { installPrototypeNodeProxyAccessors } from './accessors/prototype'
 import { installVisualNodeProxyAccessors } from './accessors/visual'
 import type { FigmaFontName } from './fonts'
 import * as PluginData from './plugin-data'
@@ -62,6 +64,8 @@ export class FigmaNodeProxy {
   declare readonly absoluteBoundingBox: Rect
   declare readonly absoluteRenderBounds: Rect
 
+  declare readonly reactions: readonly Reaction[]
+  declare setReactionsAsync: (reactions: readonly Reaction[]) => Promise<void>
   declare fills: readonly Fill[]
   declare strokes: readonly Stroke[]
   declare effects: readonly Effect[]
@@ -537,6 +541,12 @@ installVisualNodeProxyAccessors(
 )
 
 installLayoutNodeProxyAccessors(FigmaNodeProxy.prototype, {
+  id: INTERNAL_ID,
+  graph: INTERNAL_GRAPH,
+  api: INTERNAL_API
+})
+
+installPrototypeNodeProxyAccessors(FigmaNodeProxy.prototype, {
   id: INTERNAL_ID,
   graph: INTERNAL_GRAPH,
   api: INTERNAL_API

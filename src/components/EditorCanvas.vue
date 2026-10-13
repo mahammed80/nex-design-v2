@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { ContextMenuRoot, ContextMenuTrigger, ContextMenuPortal } from 'reka-ui'
 
+import { findStyleGuidePage } from '@nex-design/core/design-system'
 import { toolCursor, useCanvas, useCanvasDrop, useCanvasInput, useTextEdit } from '@nex-design/vue'
 import { useCollabInjected } from '@/app/collab/use'
 import { useEditorStore } from '@/app/editor/active-store'
@@ -45,8 +46,8 @@ const { isDraggingOver } = useCanvasDrop(canvasRef, store)
 
 const cursor = computed(() => toolCursor(store.state.activeTool, cursorOverride.value))
 const isStyleGuidePageActive = computed(() => {
-  const page = store.graph.getNode(store.state.currentPageId)
-  return page?.name === 'Style Guide'
+  void store.state.sceneVersion
+  return store.graph.getNode(store.state.currentPageId)?.id === findStyleGuidePage(store.graph)?.id
 })
 </script>
 

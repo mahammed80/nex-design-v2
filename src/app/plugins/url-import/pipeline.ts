@@ -3,10 +3,10 @@
  */
 
 import type { SceneGraph } from '@nex-design/core/scene-graph'
+import { validateRemoteUrl } from '@nex-design/core/url-policy'
 
 import { fetchImageBytes } from './image'
-
-const URL_FETCH_PROXY = '/api/url-fetch'
+import { getUrlFetchProxy } from './proxy'
 
 export interface TreeLikeNode {
   props?: Record<string, unknown>
@@ -18,10 +18,11 @@ export async function fetchPageHtml(normalizedUrl: string): Promise<{
   baseUrl: string
   statusCode: number
 }> {
-  const proxyResp = await fetch(URL_FETCH_PROXY, {
+  const url = validateRemoteUrl(normalizedUrl)
+  const proxyResp = await fetch(getUrlFetchProxy(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: normalizedUrl })
+    body: JSON.stringify({ url: url.toString() })
   })
 
   if (!proxyResp.ok) {
@@ -142,7 +143,9 @@ export interface ImportOptions {
   selector?: string
   baseUrl?: string
   viewportWidth: number
+  maxDepth?: number
   offsetX?: number
+  offsetY?: number
   pageId: string
   loadFont?: (family: string, style?: string) => Promise<unknown>
   requestRepaint?: () => void
@@ -159,7 +162,7 @@ export async function executeSingleViewportImport(
 
   const tree = (await parseHtmlToTree(html, {
     selector: opts.selector || 'body',
-    maxDepth: 15,
+    maxDepth: opts.maxDepth ?? 15,
     baseUrl: opts.baseUrl,
     viewportWidth: opts.viewportWidth
   })) as TreeLikeNode
@@ -177,7 +180,7 @@ export async function executeSingleViewportImport(
   const rendered = await renderTree(graph, tree, {
     parentId: opts.pageId,
     x: opts.offsetX ?? 0,
-    y: 0
+    y: opts.offsetY ?? 0
   })
 
   await finalizeImportedTreeFonts(graph, rendered.id, opts.loadFont, opts.requestRepaint)

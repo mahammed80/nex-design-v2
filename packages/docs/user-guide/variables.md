@@ -53,3 +53,4 @@ When the variable's value changes (or when switching modes), all bound fills upd
 - Modes are useful for theme switching — define Light and Dark mode values in the same collection.
 - Variables support aliases — a "Semantic" collection can reference values from a "Primitives" collection.
 - See [Drawing Shapes](./drawing-shapes) for how fills and the color picker work.
+- Define a whole design system as text with [DESIGN.md](./design-md) — it creates and maintains the token variables for you.

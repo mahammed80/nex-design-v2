@@ -52,7 +52,7 @@ typography:
     letterSpacing: 0
   body-sm:
     fontFamily: Inter
-    fontSize: 13pr
+    fontSize: 13px
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: 0

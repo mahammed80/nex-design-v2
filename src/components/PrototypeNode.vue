@@ -43,6 +43,13 @@ function applyFillAndStroke(n: SceneNode, s: Record<string, string>) {
   }
 }
 
+/** Text alignment → flexbox alignment (vertical and horizontal share the start/center/end axis). */
+const FLEX_ALIGN: Record<string, string> = {
+  CENTER: 'center',
+  BOTTOM: 'flex-end',
+  RIGHT: 'flex-end'
+}
+
 function applyTextStyle(n: SceneNode, s: Record<string, string>) {
   if (n.type !== 'TEXT') return
   s.fontSize = `${n.fontSize}px`
@@ -50,14 +57,8 @@ function applyTextStyle(n: SceneNode, s: Record<string, string>) {
   s.fontWeight = String(n.fontWeight)
   s.textAlign = n.textAlignHorizontal.toLowerCase()
   s.display = 'flex'
-  s.alignItems =
-    n.textAlignVertical === 'CENTER'
-      ? 'center'
-      : (n.textAlignVertical === 'BOTTOM' ? 'flex-end' : 'flex-start')
-  s.justifyContent =
-    n.textAlignHorizontal === 'CENTER'
-      ? 'center'
-      : (n.textAlignHorizontal === 'RIGHT' ? 'flex-end' : 'flex-start')
+  s.alignItems = FLEX_ALIGN[n.textAlignVertical] ?? 'flex-start'
+  s.justifyContent = FLEX_ALIGN[n.textAlignHorizontal] ?? 'flex-start'
 
   s.whiteSpace = 'pre-wrap'
   s.wordBreak = 'break-word'
@@ -110,12 +111,23 @@ const children = computed(() => {
 let dragStartX = 0
 let dragStartY = 0
 let isDragging = false
+// A recognized drag gesture must not also fire the click that ends it.
+let suppressClick = false
+
+function onClick() {
+  if (suppressClick) {
+    suppressClick = false
+    return
+  }
+  emit('interaction', { nodeId: node.id, triggerType: 'ON_CLICK' })
+}
 
 function onMouseDown(e: MouseEvent) {
   dragStartX = e.clientX
   dragStartY = e.clientY
   isDragging = true
-  
+  suppressClick = false
+
   emit('interaction', { nodeId: node.id, triggerType: 'ON_PRESS' })
   emit('interaction', { nodeId: node.id, triggerType: 'MOUSE_DOWN' })
 
@@ -136,6 +148,8 @@ function onMouseMove(e: MouseEvent) {
       direction = dy > 0 ? 'DOWN' : 'UP'
     }
     emit('interaction', { nodeId: node.id, triggerType: `ON_DRAG_${direction}` })
+    emit('interaction', { nodeId: node.id, triggerType: 'press-end' })
+    suppressClick = true
 
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('mouseup', onMouseUp)
@@ -177,7 +191,7 @@ onUnmounted(() => {
   <div
     :data-prototype-node-id="node.id"
     :style="style"
-    @click.stop="emit('interaction', { nodeId: node.id, triggerType: 'ON_CLICK' })"
+    @click.stop="onClick"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
     @mousedown.stop="onMouseDown"
@@ -210,4 +224,3 @@ onUnmounted(() => {
     />
   </div>
 </template>
-

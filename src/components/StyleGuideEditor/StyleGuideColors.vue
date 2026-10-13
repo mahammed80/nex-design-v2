@@ -18,46 +18,60 @@ const emit = defineEmits<{
 }>()
 
 function getSwatchBackground(v: VariableItem): string {
+  const val = v.value
+  if (!val) return 'transparent'
+
   if (v.type === 'COLOR') {
-    return colorToCSS(v.valuesByMode.default as Color)
-  } else if (
-    v.type === 'STRING' &&
-    typeof v.valuesByMode.default === 'string' &&
-    v.valuesByMode.default.startsWith('linear-gradient')
-  ) {
-    return v.valuesByMode.default
+    if (typeof val === 'object' && 'r' in val && typeof (val as Color).r === 'number') {
+      return colorToCSS(val as Color)
+    } else if (typeof val === 'string') {
+      return val
+    }
+  } else if (v.type === 'STRING' && typeof val === 'string' && val.startsWith('linear-gradient')) {
+    return val
   }
   return 'transparent'
 }
 
 function getVariableValueText(v: VariableItem): string {
+  const val = v.value
+  if (!val) return ''
+
   if (v.type === 'COLOR') {
-    return colorToHex(v.valuesByMode.default as Color)
-  } else if (
-    v.type === 'STRING' &&
-    typeof v.valuesByMode.default === 'string' &&
-    v.valuesByMode.default.startsWith('linear-gradient')
-  ) {
-    const parsed = parseLinearGradient(v.valuesByMode.default)
+    if (typeof val === 'object' && 'r' in val && typeof (val as Color).r === 'number') {
+      return colorToHex(val as Color)
+    } else if (typeof val === 'string') {
+      return val.toUpperCase()
+    }
+  } else if (v.type === 'STRING' && typeof val === 'string' && val.startsWith('linear-gradient')) {
+    const parsed = parseLinearGradient(val)
     return `${parsed.color1} → ${parsed.color2}`
   }
-  return String(v.valuesByMode.default)
+  return String(val)
 }
 </script>
 
 <template>
-  <section class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4">
+  <section
+    class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between border-b border-white/10 pb-3">
       <div class="flex items-center gap-2.5">
-        <div class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+        <div
+          class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30"
+        >
           <icon-lucide-palette class="size-4" />
         </div>
         <div>
           <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
             Color & Gradient Palette
-            <span class="text-[10px] font-normal text-rose-400 font-mono">{{ variables.length }} swatches</span>
+            <span class="text-[10px] font-normal text-rose-400 font-mono"
+              >{{ variables.length }} swatches</span
+            >
           </h2>
-          <p class="text-[11px] text-zinc-400">Tokens for fills, strokes, surfaces, and semantic states.</p>
+          <p class="text-[11px] text-zinc-400">
+            Tokens for fills, strokes, surfaces, and semantic states.
+          </p>
         </div>
       </div>
       <button
@@ -78,7 +92,9 @@ function getVariableValueText(v: VariableItem): string {
         <icon-lucide-palette class="size-5" />
       </div>
       <p class="text-xs font-semibold text-white">No colors or gradients defined yet</p>
-      <p class="text-[11px] text-zinc-400 max-w-sm">Create individual color swatches or apply a starter preset from the top bar.</p>
+      <p class="text-[11px] text-zinc-400 max-w-sm">
+        Create individual color swatches or apply a starter preset from the top bar.
+      </p>
       <button
         class="mt-1 flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer"
         @click="emit('add')"

@@ -22,6 +22,10 @@ describe('agent instructions', () => {
     expect(classifyAgentIntent(request)).toBe('inspect')
     expect(classifyAgentIntent('Build a mobile checkout')).toBe('create')
     expect(classifyAgentIntent('Make the selected title larger')).toBe('modify')
+    expect(classifyAgentIntent('Convert https://example.com into editable design layers')).toBe(
+      'create'
+    )
+    expect(classifyAgentIntent('Create a page inspired by https://example.com')).toBe('reference')
   })
 
   test('summarizes the active page, layers, and selection', () => {

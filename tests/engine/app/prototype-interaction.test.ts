@@ -1,41 +1,19 @@
 import { describe, expect, test } from 'bun:test'
 
-import { reactive } from 'vue'
-
 import { createEditorStore } from '@/app/editor/session'
-import { HistoryManager } from '@/app/prototype/history-manager'
-import { InteractionEngine } from '@/app/prototype/interaction-engine'
-import { NavigationController } from '@/app/prototype/navigation-controller'
-import { TransitionEngine } from '@/app/prototype/transition-engine'
-import type { PresentationState } from '@/app/prototype/types'
+import { PresentationManager } from '@/app/prototype/presentation-manager'
 
-function createEngine() {
+function createPlayer() {
   const editor = createEditorStore()
-  const state = reactive<PresentationState>({
-    isOpen: true,
-    activeFrameId: '',
-    zoomMode: 'FIT',
-    customZoom: 1,
-    deviceType: 'NONE',
-    showDeviceFrame: false,
-    isFullscreen: false,
-    transitionName: 'instant',
-    transitionDuration: 300
-  })
-  const navigation = new NavigationController(
-    editor,
-    new HistoryManager(),
-    new TransitionEngine(),
-    state
-  )
-  return { editor, engine: new InteractionEngine(editor, navigation) }
+  const presentation = new PresentationManager(editor)
+  const start = () => presentation.prototypeEngine.stateManager.initialize()
+  return { editor, presentation, start }
 }
 
-describe('prototype interaction actions', () => {
-  test('returns overlay and scroll instructions', () => {
-    const { editor, engine } = createEngine()
-    const pageId = editor.state.currentPageId
-    const source = editor.graph.createNode('FRAME', pageId, {
+describe('prototype player actions', () => {
+  test('opens overlays and returns scroll targets per trigger', () => {
+    const { editor, presentation, start } = createPlayer()
+    const source = editor.graph.createNode('FRAME', editor.state.currentPageId, {
       reactions: [
         {
           trigger: { type: 'ON_CLICK' },
@@ -53,22 +31,40 @@ describe('prototype interaction actions', () => {
         }
       ]
     })
+    start()
 
-    expect(engine.handleInteraction(source.id, 'ON_CLICK')).toEqual({
-      handled: true,
-      actionType: 'OPEN_OVERLAY',
-      overlayId: 'overlay',
-      overlaySettings: { backdrop: true, closeOnOutsideClick: false }
+    expect(presentation.handleInteraction(source.id, 'ON_CLICK')).toBeUndefined()
+    expect(presentation.activeOverlay).toMatchObject({
+      isOpen: true,
+      nodeId: 'overlay',
+      settings: { backdrop: true, closeOnOutsideClick: false }
     })
-    expect(engine.handleInteraction(source.id, 'MOUSE_DOWN')).toEqual({
+    expect(presentation.handleInteraction(source.id, 'MOUSE_DOWN')).toEqual({
       handled: true,
-      actionType: 'SCROLL_TO',
       scrollTargetId: 'target'
     })
   })
 
-  test('sets a variable in its active mode', () => {
-    const { editor, engine } = createEngine()
+  test('mouse-down and mouse-up do not fire click reactions', () => {
+    const { editor, presentation, start } = createPlayer()
+    const source = editor.graph.createNode('FRAME', editor.state.currentPageId, {
+      reactions: [
+        { trigger: { type: 'ON_CLICK' }, actions: [{ type: 'SCROLL_TO', destinationId: 'target' }] }
+      ]
+    })
+    start()
+
+    expect(presentation.handleInteraction(source.id, 'MOUSE_DOWN')).toBeUndefined()
+    expect(presentation.handleInteraction(source.id, 'MOUSE_UP')).toBeUndefined()
+    expect(presentation.handleInteraction(source.id, 'UNKNOWN_TRIGGER')).toBeUndefined()
+    expect(presentation.handleInteraction(source.id, 'ON_CLICK')).toEqual({
+      handled: true,
+      scrollTargetId: 'target'
+    })
+  })
+
+  test('set-variable changes the preview session, not the document', () => {
+    const { editor, presentation, start } = createPlayer()
     const collection = editor.graph.createCollection('Prototype state')
     const variable = editor.graph.createVariable('Enabled', 'BOOLEAN', collection.id, false)
     const source = editor.graph.createNode('FRAME', editor.state.currentPageId, {
@@ -79,13 +75,15 @@ describe('prototype interaction actions', () => {
         }
       ]
     })
+    start()
 
-    expect(engine.handleInteraction(source.id, 'ON_CLICK')).toBe(true)
-    expect(variable.valuesByMode[collection.defaultModeId]).toBe(true)
+    presentation.handleInteraction(source.id, 'ON_CLICK')
+    expect(presentation.prototypeEngine.stateManager.getVariableValue(variable.id)).toBe(true)
+    expect(variable.valuesByMode[collection.defaultModeId]).toBe(false)
   })
 
-  test('changes an instance to the matching component variant', () => {
-    const { editor, engine } = createEngine()
+  test('change-to resolves the matching variant inside the preview only', () => {
+    const { editor, presentation, start } = createPlayer()
     const pageId = editor.state.currentPageId
     const componentSet = editor.graph.createNode('COMPONENT_SET', pageId, {
       componentPropertyDefinitions: [
@@ -115,8 +113,11 @@ describe('prototype interaction actions', () => {
         }
       ]
     })
+    start()
 
-    expect(engine.handleInteraction(instance.id, 'ON_CLICK')).toBe(true)
-    expect(editor.graph.getNode(instance.id)?.componentId).toBe(onComponent.id)
+    presentation.handleInteraction(instance.id, 'ON_CLICK')
+    const state = presentation.prototypeEngine.stateManager
+    expect(state.getNode(instance.id)?.componentId).toBe(onComponent.id)
+    expect(editor.graph.getNode(instance.id)?.componentId).toBe(offComponent.id)
   })
 })

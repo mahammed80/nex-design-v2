@@ -21,6 +21,7 @@
       "#core/*": ["./packages/core/src/*"],
       "#cli/*": ["./packages/cli/src/*"],
       "#mcp/*": ["./packages/mcp/src/*"],
+      "#functions/*": ["./functions/*"],
       "#scripts/*": ["./scripts/*"],
       "#tests/*": ["./tests/*"],
       "tinykeys": ["./node_modules/tinykeys/dist/tinykeys.d.ts"],
@@ -29,6 +30,6 @@
       "@nex-design/core/*": ["./packages/core/src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue"],
+  "include": ["src/**/*.ts", "src/**/*.vue", "functions/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

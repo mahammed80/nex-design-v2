@@ -1,5 +1,5 @@
-import { colorToCSS, parseColor } from '@nex-design/core/color'
-import type { Fill } from '@nex-design/core/scene-graph'
+import { colorToCSS, colorToHex, parseColor } from '@nex-design/core/color'
+import type { Fill, Variable, VariableValue } from '@nex-design/core/scene-graph'
 import type { Color } from '@nex-design/core/types'
 
 export interface VariableItem {
@@ -8,12 +8,21 @@ export interface VariableItem {
   type: string
   resolvedType?: string
   valuesByMode: Record<string, unknown>
+  /** Value in the collection's default mode (resolved by the Style Guide root). */
+  value?: unknown
 }
 
-export function randomHex(length = 8): string {
-  const arr = new Uint8Array(length / 2)
-  crypto.getRandomValues(arr)
-  return Array.from(arr, (dec) => dec.toString(16).padStart(2, '0')).join('')
+/** A document variable plus its resolved default-mode value. */
+export type StyleGuideVariable = Variable & { value: VariableValue | undefined }
+
+function isColor(value: unknown): value is Color {
+  return typeof value === 'object' && value !== null && 'r' in value && typeof value.r === 'number'
+}
+
+/** Serialize a token value for CSS/Tailwind/JSON export (colors as hex, gradients verbatim). */
+export function tokenCssValue(v: VariableItem): string {
+  if (isColor(v.value)) return colorToHex(v.value)
+  return String(v.value ?? '')
 }
 
 export function parseLinearGradient(css: unknown): {
@@ -118,19 +127,19 @@ export function gradientStringToFill(css: string): Fill {
 }
 
 export function getFillFromVariable(v: VariableItem): Fill {
-  if (v.type === 'COLOR') {
+  if (v.type === 'COLOR' && isColor(v.value)) {
     return {
       type: 'SOLID',
       visible: true,
       opacity: 1,
-      color: v.valuesByMode.default as Color
+      color: v.value
     }
   } else if (
     v.type === 'STRING' &&
-    typeof v.valuesByMode.default === 'string' &&
-    v.valuesByMode.default.startsWith('linear-gradient')
+    typeof v.value === 'string' &&
+    v.value.startsWith('linear-gradient')
   ) {
-    return gradientStringToFill(v.valuesByMode.default)
+    return gradientStringToFill(v.value)
   }
   return {
     type: 'SOLID',
@@ -328,49 +337,57 @@ export const DESIGN_SYSTEM_TUTORIAL_STEPS: TutorialStep[] = [
     step: 1,
     title: 'Brand Vision & Direction (DESIGN.md)',
     icon: '📝',
-    summary: 'Define your design system single source of truth in portable, human-readable markdown format.',
+    summary:
+      'Define your design system single source of truth in portable, human-readable markdown format.',
     points: [
       'Encapsulates visual personality, target audience, density, and brand philosophy.',
       'Propagates directly into the canvas scene graph and connected component libraries.',
       'Provides a portable file that can be committed to Git and shared across design and frontend teams.'
     ],
-    proTip: 'Keep your direction description focused on brand tone, visual density, contrast standards, and elevation hierarchy.'
+    proTip:
+      'Keep your direction description focused on brand tone, visual density, contrast standards, and elevation hierarchy.'
   },
   {
     step: 2,
     title: 'Color Palette & 60-30-10 Distribution',
     icon: '🎨',
-    summary: 'Structure a predictable color system: neutral surfaces, primary brand colors, and functional states.',
+    summary:
+      'Structure a predictable color system: neutral surfaces, primary brand colors, and functional states.',
     points: [
       '60% Neutral Canvas & Surfaces: Base backgrounds, card surfaces, and subtle border lines.',
       '30% Brand & Interactive: Primary actions, interactive highlights, and active selection frames.',
       '10% Semantic States: Success, warning, danger/error badges, and high-priority indicators.'
     ],
-    proTip: 'Always name tokens semantically (e.g. `brand-primary`, `surface-card`, `text-primary`) rather than literal colors.'
+    proTip:
+      'Always name tokens semantically (e.g. `brand-primary`, `surface-card`, `text-primary`) rather than literal colors.'
   },
   {
     step: 3,
     title: 'Modular Typography Scale',
     icon: '🔤',
-    summary: 'Establish a mathematically proportional hierarchy from small captions up to hero displays.',
+    summary:
+      'Establish a mathematically proportional hierarchy from small captions up to hero displays.',
     points: [
       'Standardize on a clean primary font family (e.g. Inter) and consistent weights.',
       'Maintain modular step ratios (12px, 14px, 16px, 20px, 24px, 36px, 48px).',
       'Enforce proportionate line heights (1.5 for body copy, 1.2 for compact headlines).'
     ],
-    proTip: 'Stick to 1 primary typeface for standard UI and at most 1 display/mono accent font for technical blocks.'
+    proTip:
+      'Stick to 1 primary typeface for standard UI and at most 1 display/mono accent font for technical blocks.'
   },
   {
     step: 4,
     title: '8pt Spacing Grid & Spatial Rhythm',
     icon: '📐',
-    summary: 'Use 4px & 8px multiples to guarantee consistent layout alignment across screens and devices.',
+    summary:
+      'Use 4px & 8px multiples to guarantee consistent layout alignment across screens and devices.',
     points: [
       'Micro Spacing (4px, 8px): Padding inside buttons, icon gaps, and input insets.',
       'Macro Spacing (16px, 24px, 32px): Card internal padding, stack gaps, and column gutters.',
       'Layout Spacing (48px, 64px): Section separations and page container margins.'
     ],
-    proTip: 'Avoid arbitrary odd values (like 17px). Consistent 8pt multiples produce instant visual harmony.'
+    proTip:
+      'Avoid arbitrary odd values (like 17px). Consistent 8pt multiples produce instant visual harmony.'
   },
   {
     step: 5,
@@ -382,6 +399,7 @@ export const DESIGN_SYSTEM_TUTORIAL_STEPS: TutorialStep[] = [
       'Export production-ready CSS Custom Properties, Tailwind CSS theme configs, or JSON design tokens.',
       'Ensure total parity between design deliverables and production frontend codebases.'
     ],
-    proTip: 'Use the "Starter Presets" button above to load a complete production-grade token architecture in one click.'
+    proTip:
+      'Use the "Starter Presets" button above to load a complete production-grade token architecture in one click.'
   }
 ]

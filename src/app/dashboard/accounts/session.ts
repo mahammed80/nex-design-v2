@@ -3,6 +3,8 @@ import { GUEST_TRIAL_DURATION_MS, IS_BROWSER } from '@/constants'
 import { getAccountStorage } from './storage'
 
 export type LocalProfileKind = 'local' | 'guest'
+export type LocalUserType = 'student' | 'graduate' | 'professional'
+export type LocalPreferredOS = 'windows' | 'mac_arm' | 'mac_intel' | 'linux'
 
 export interface LocalProfile {
   id: string
@@ -12,6 +14,24 @@ export interface LocalProfile {
   trialExpiresAt?: number
   remoteAccountId?: string
   email?: string
+  avatar?: string
+
+  // Academic & Career Details
+  userType?: LocalUserType
+  institution?: string
+  facultyMajor?: string
+  graduationYear?: number
+  studentIdNumber?: string
+  currentRole?: string
+  portfolioUrl?: string
+
+  // Preferences & Meta
+  preferredOs?: LocalPreferredOS
+  primaryUseCase?: string
+  referralSource?: string
+  waitlistNumber?: number
+  planId?: string
+  status?: string
 }
 
 export interface GuestTrialStatus {
@@ -48,7 +68,7 @@ export function listLocalProfiles(): LocalProfile[] {
   }
 }
 
-function persistProfiles(profiles: LocalProfile[]) {
+export function replaceLocalProfiles(profiles: LocalProfile[]): void {
   storage()?.setItem(PROFILES_KEY, JSON.stringify(profiles))
 }
 
@@ -56,9 +76,60 @@ export function createLocalProfile(name: string): LocalProfile {
   const normalizedName = name.trim()
   if (!normalizedName) throw new Error('Profile name is required')
   const profile = { id: crypto.randomUUID(), name: normalizedName, createdAt: Date.now() }
-  persistProfiles([...listLocalProfiles(), profile])
+  replaceLocalProfiles([...listLocalProfiles(), profile])
   setActiveProfile(profile.id)
   return profile
+}
+
+export function linkRemoteAccount(
+  accountId: string,
+  name: string,
+  email: string,
+  extraDetails?: Partial<LocalProfile>
+): LocalProfile {
+  const profiles = listLocalProfiles()
+  const existing = profiles.find(
+    (profile) => profile.remoteAccountId === accountId || (profile.email && profile.email.toLowerCase() === email.toLowerCase())
+  )
+  if (existing) {
+    existing.name = name.trim() || existing.name
+    existing.email = email
+    existing.remoteAccountId = accountId
+    if (extraDetails) {
+      Object.assign(existing, extraDetails)
+    }
+    replaceLocalProfiles(profiles)
+    setActiveProfile(existing.id)
+    return existing
+  }
+  const profile: LocalProfile = {
+    id: crypto.randomUUID(),
+    name: name.trim() || email,
+    email,
+    remoteAccountId: accountId,
+    kind: 'local',
+    createdAt: Date.now(),
+    ...extraDetails
+  }
+  replaceLocalProfiles([...profiles, profile])
+  setActiveProfile(profile.id)
+  return profile
+}
+
+export function updateLocalProfileDetails(
+  profileId: string,
+  updates: Partial<Omit<LocalProfile, 'id' | 'createdAt'>>
+): boolean {
+  const profiles = listLocalProfiles()
+  const profile = profiles.find((item) => item.id === profileId)
+  if (!profile) return false
+  if (updates.name !== undefined) {
+    const trimmed = updates.name.trim()
+    if (trimmed) profile.name = trimmed
+  }
+  Object.assign(profile, updates)
+  replaceLocalProfiles(profiles)
+  return true
 }
 
 export function createGuestProfile(now = Date.now()): LocalProfile {
@@ -75,7 +146,7 @@ export function createGuestProfile(now = Date.now()): LocalProfile {
     createdAt: now,
     trialExpiresAt: now + GUEST_TRIAL_DURATION_MS
   }
-  persistProfiles([...listLocalProfiles(), profile])
+  replaceLocalProfiles([...listLocalProfiles(), profile])
   setActiveProfile(profile.id)
   return profile
 }
@@ -118,7 +189,7 @@ export function renameLocalProfile(profileId: string, name: string): boolean {
   const profile = profiles.find((item) => item.id === profileId)
   if (!profile) return false
   profile.name = normalizedName
-  persistProfiles(profiles)
+  replaceLocalProfiles(profiles)
   return true
 }
 

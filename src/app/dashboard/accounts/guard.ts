@@ -8,14 +8,15 @@ import { isAccountApiConfigured, validateLinkedAccount } from './api'
 import { getActiveProfile, getGuestTrialStatus } from './session'
 
 export async function resolveAccountAccess(): Promise<AccountAccessDecision> {
-  const guestTrial = getGuestTrialStatus(getActiveProfile())
+  const activeProfile = getActiveProfile()
+  const guestTrial = getGuestTrialStatus(activeProfile)
   if (guestTrial && !guestTrial.active) {
     return { mode: 'read-only', reason: 'trial-expired' }
   }
 
   let session = readLinkedAccountSession()
   let validatedOnline = false
-  if (session && navigator.onLine) {
+  if (session && session.accessToken && navigator.onLine) {
     try {
       if (isAccountApiConfigured()) {
         session = await validateLinkedAccount()
@@ -30,6 +31,9 @@ export async function resolveAccountAccess(): Promise<AccountAccessDecision> {
       return { mode: 'read-only', reason: 'lease-expired' }
     }
     return decideAccountAccess(session, false)
+  }
+  if (!session && activeProfile?.remoteAccountId) {
+    return { mode: 'read-only', reason: 'authentication-required' }
   }
   return decideAccountAccess(session, validatedOnline)
 }

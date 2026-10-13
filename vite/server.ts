@@ -23,6 +23,13 @@ export function createDevServerOptions(host: string | undefined): ServerOptions 
           port: 1421
         }
       : undefined,
+    proxy: {
+      '/api': {
+        target: 'https://nex-design.online',
+        changeOrigin: true,
+        secure: true
+      }
+    },
     watch: {
       ignored: WATCH_IGNORED
     }

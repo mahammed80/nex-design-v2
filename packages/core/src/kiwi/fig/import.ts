@@ -9,6 +9,8 @@ import {
   setVariableColorResolver,
   VARIABLE_BINDING_FIELDS_INVERSE
 } from '#core/kiwi/node-change/convert'
+import { extractPluginData } from '#core/kiwi/node-change/plugin-data'
+import { readPrototypeNodeChanges } from '#core/kiwi/node-change/prototype'
 import { SceneGraph } from '#core/scene-graph'
 import type { VariableType, VariableValue } from '#core/scene-graph'
 
@@ -285,6 +287,7 @@ function importPages(
         canvasIdToPageId.set(canvasId, page.id)
         if (canvasNc.internalOnly) page.internalOnly = true
         page.guides = convertGuides(canvasNc)
+        page.pluginData = extractPluginData(canvasNc)
         created.add(canvasId)
         for (const childId of childrenMap.get(canvasId) ?? []) {
           createSceneNode(childId, page.id)
@@ -394,6 +397,7 @@ export function importNodeChanges(
   importVariableEntries(changeMap, parentMap, graph, assetRefs)
   importVariableBindings(changeMap, guidToNodeId, graph)
   remapComponentIds(graph, guidToNodeId)
+  readPrototypeNodeChanges(graph, changeMap, guidToNodeId, canvasIdToPageId)
 
   const firstPageId = graph.getPages()[0]?.id
   const componentPageIds = new Set<string>()

@@ -9,6 +9,11 @@ import type { Color } from '#core/types'
 
 const toRgb = converter('rgb')
 
+/** Like `parseColor`, but returns null for unparseable input instead of falling back to black. */
+export function tryParseColor(input: string): Color | null {
+  return parse(input) ? parseColor(input) : null
+}
+
 export function parseColor(input: string): Color {
   const parsed = parse(input)
   if (!parsed) return { ...BLACK }
@@ -22,11 +27,27 @@ export function parseColor(input: string): Color {
 }
 
 export function colorToHex(color: Color): string {
+  if (
+    !color ||
+    typeof color.r !== 'number' ||
+    typeof color.g !== 'number' ||
+    typeof color.b !== 'number'
+  ) {
+    return '#000000'
+  }
   return formatHex({ mode: 'rgb', r: color.r, g: color.g, b: color.b }).toUpperCase()
 }
 
 export function colorToHex8(color: Color, alpha?: number): string {
-  const a = alpha ?? color.a
+  if (
+    !color ||
+    typeof color.r !== 'number' ||
+    typeof color.g !== 'number' ||
+    typeof color.b !== 'number'
+  ) {
+    return '#000000FF'
+  }
+  const a = alpha ?? color.a ?? 1
   if (a >= 1) return colorToHex(color)
   return formatHex8({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: a }).toUpperCase()
 }
@@ -36,21 +57,31 @@ export function colorToHexRaw(color: Color): string {
 }
 
 export function colorToRgba255(color: Color) {
+  if (!color || typeof color.r !== 'number') return { r: 0, g: 0, b: 0, a: 1 }
   return {
     r: Math.round(color.r * 255),
     g: Math.round(color.g * 255),
     b: Math.round(color.b * 255),
-    a: color.a
+    a: color.a ?? 1
   }
 }
 
 export function colorToCSS(color: Color): string {
-  return formatRgb({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: color.a })
+  if (
+    !color ||
+    typeof color.r !== 'number' ||
+    typeof color.g !== 'number' ||
+    typeof color.b !== 'number'
+  ) {
+    return 'rgb(0,0,0)'
+  }
+  return formatRgb({ mode: 'rgb', r: color.r, g: color.g, b: color.b, alpha: color.a ?? 1 })
 }
 
 export function colorToCSSCompact(color: Color): string {
+  if (!color || typeof color.r !== 'number') return 'rgb(0,0,0)'
   const { r, g, b } = colorToRgba255(color)
-  const a = Number(color.a.toFixed(3))
+  const a = Number((color.a ?? 1).toFixed(3))
   if (a >= 1) return `rgb(${r},${g},${b})`
   return `rgba(${r},${g},${b},${a})`
 }

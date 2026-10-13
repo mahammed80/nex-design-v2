@@ -6,7 +6,6 @@ import {
   diffCreate,
   diffShow
 } from './analyze'
-import { designSkeleton, designContent, designRefine } from './design-workflow'
 import { designToComponentMap, designToTokens } from './codegen'
 import {
   createComponent,
@@ -21,6 +20,7 @@ import {
   insertIcon,
   searchIconsTool
 } from './create'
+import { designSkeleton, designContent, designRefine } from './design-workflow'
 import {
   setBlend,
   setConstraints,
@@ -36,6 +36,7 @@ import {
   setTextResize,
   setVisible
 } from './modify'
+import { addNavigation, listReactions, setFlowStart, setReactions } from './prototype'
 import {
   diffJsx,
   getComponents,
@@ -101,6 +102,11 @@ import {
  * codegen, advanced structure, path manipulation, etc.
  */
 export const EXTENDED_TOOLS: ToolDef[] = [
+  // Prototyping
+  listReactions,
+  setReactions,
+  addNavigation,
+  setFlowStart,
   // Read (advanced)
   getPageTree,
   getCurrentPage,

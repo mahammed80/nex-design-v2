@@ -15,18 +15,26 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4">
+  <section
+    class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-4"
+  >
     <div class="flex items-center justify-between border-b border-white/10 pb-3">
       <div class="flex items-center gap-2.5">
-        <div class="flex size-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+        <div
+          class="flex size-7 items-center justify-center rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30"
+        >
           <icon-lucide-image class="size-4" />
         </div>
         <div>
           <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
             Brand Logos & Identity Assets
-            <span class="text-[10px] font-normal text-amber-400 font-mono">{{ variables.length }} logos</span>
+            <span class="text-[10px] font-normal text-amber-400 font-mono"
+              >{{ variables.length }} logos</span
+            >
           </h2>
-          <p class="text-[11px] text-zinc-400">Vector logos, logomarks, and identity graphic assets.</p>
+          <p class="text-[11px] text-zinc-400">
+            Vector logos, logomarks, and identity graphic assets.
+          </p>
         </div>
       </div>
       <button
@@ -43,11 +51,15 @@ const emit = defineEmits<{
       v-if="variables.length === 0"
       class="rounded-2xl border border-dashed border-white/15 bg-black/40 p-8 text-center flex flex-col items-center justify-center gap-2.5"
     >
-      <div class="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+      <div
+        class="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400"
+      >
         <icon-lucide-image class="size-5" />
       </div>
       <p class="text-xs font-semibold text-white">No brand logos uploaded yet</p>
-      <p class="text-[11px] text-zinc-400 max-w-sm">Upload PNG or SVG logo files to reference them as variables in your designs.</p>
+      <p class="text-[11px] text-zinc-400 max-w-sm">
+        Upload PNG or SVG logo files to reference them as variables in your designs.
+      </p>
       <button
         class="mt-1 flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer"
         @click="emit('upload')"
@@ -69,8 +81,8 @@ const emit = defineEmits<{
           class="relative flex items-center justify-center w-full aspect-video rounded-xl bg-checkerboard border border-white/10 overflow-hidden mb-2.5"
         >
           <img
-            v-if="v.valuesByMode.default"
-            :src="resolveImageHash(String(v.valuesByMode.default))"
+            v-if="v.value"
+            :src="resolveImageHash(String(v.value))"
             alt="Brand Logo"
             class="max-w-[85%] max-h-[85%] object-contain"
           />

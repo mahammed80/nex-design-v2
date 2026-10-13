@@ -40,6 +40,8 @@ The root app (`src/`) is the Tauri/Vite desktop editor. App-specific editor, doc
 | `@nex-design/core/profiler`    | render profiling                                   | —                  |
 | `@nex-design/core/canvaskit`   | getCanvasKit loader                                | canvaskit-wasm     |
 | `@nex-design/core/layout`      | computeLayout                                      | yoga-layout        |
+| `@nex-design/core/url-policy`  | Public URL validation and CSS asset URL rewriting  | —                  |
+| `@nex-design/core/design-system` | DESIGN.md v2 codec, token variables, exporters   | yaml               |
 
 Runtime `canvaskit-wasm` import exists only in `canvaskit.ts` — all other files use `import type`. CanvasKit instance is passed as a parameter everywhere.
 
@@ -202,7 +204,7 @@ Release commits are the exception: keep using `Release v0.x.y`.
 - AI adapter (`packages/core/src/tools/ai-adapter.ts`): `toolsToAI()` converts ToolDefs → valibot schemas + Vercel AI `tool()` wrappers
 - Agent skills (`src/app/ai/skills/`) are progressively resolved by task intent and model tier. Agent orchestration, local document-scoped generation memory, and authorized reference study live under `src/app/ai/orchestration/`, `memory/`, and `reference/`.
 - The built-in app agent is fixed to `poolside/laguna-s-2.1`. The client calls the same-origin Poolside proxy; credentials must remain in the server-only `POOLSIDE_API_KEY` environment variable. Never use a `VITE_*` variable for this secret. Production requires the `AI_RATE_LIMITER` Cloudflare binding and fails closed without it.
-- Portable design-system context uses `DESIGN.md`, parsed and applied through `src/app/design-system/design-markdown.ts` and surfaced by the Style Guide editor.
+- Portable design-system context uses `DESIGN.md` v2 (YAML front-matter + markdown prose). The codec, token ⇄ variable mapping (`colors/…`, `typography/<name>/<prop>`, `rounded/…`, `spacing/…` in one "Design System" collection), apply plan, undo snapshots, exporters, and Style Guide page storage live in `packages/core/src/design-system/` (`@nex-design/core/design-system`). `src/app/design-system/design-markdown.ts` is the app wrapper (undo + document name). The Style Guide page is found by its pluginData marker (`findStyleGuidePage`), never by name. AI tools: `read_design_system`, `apply_design_system`, `bind_to_token`.
 - `src/app/ai/tools/index.ts` is just a thin wire: creates FigmaAPI from editor store, calls `toolsToAI()`
 - CLI commands (`packages/cli/src/commands/`) are **not** generated from ToolDefs — they have custom agentfmt formatting, tree walking, pagination. The `eval` command is the CLI's access to all ToolDef operations via FigmaAPI.
 - MCP adapter (`packages/mcp/src/server.ts`): `startServer()` creates unified HTTP + WebSocket server. Registers all ToolDefs as MCP tools (zod schemas). Single entry point: `index.ts` (Hono + Streamable HTTP with sessions). Browser connects via WebSocket, tool calls proxied through.

@@ -1,22 +1,31 @@
 import { reactive } from 'vue'
 
 import { canConnect } from '@nex-design/core/prototype'
-import type { SceneNode, Action, Reaction } from '@nex-design/core/scene-graph'
+import type { SceneNode, Action, Reaction, VariableValue } from '@nex-design/core/scene-graph'
 
 import type { EditorStore } from '@/app/editor/active-store'
+import { openExternalLink } from '@/app/shell/ui'
 
 import type { NavigationController } from './navigation-controller'
 import type { PresentationManager } from './presentation-manager'
-import type { TransitionDirection } from './types'
 
 export class StateManager {
-  public nodesMap = reactive<Map<string, SceneNode>>(new Map())
+  // Deeply reactive so in-session variant swaps re-render, but typed as a plain Map: Vue's
+  // `UnwrapRef` view of SceneNode (Uint8Array fields etc.) isn't assignable back to SceneNode.
+  public nodesMap: Map<string, SceneNode> = reactive(new Map<string, SceneNode>()) as Map<
+    string,
+    SceneNode
+  >
+
+  /** Preview-session variable values; the document's variables are never mutated. */
+  public variableValues = reactive<Map<string, VariableValue>>(new Map())
   private originalVariants = new Map<string, string>()
 
   constructor(private engine: PrototypeEngine) {}
 
   initialize() {
     this.originalVariants.clear()
+    this.variableValues.clear()
     this.nodesMap.clear()
     for (const [id, node] of this.engine.editor.graph.nodes) {
       this.nodesMap.set(id, structuredClone(node))
@@ -84,6 +93,22 @@ export class StateManager {
 
   getNode(nodeId: string): SceneNode | undefined {
     return this.nodesMap.get(nodeId)
+  }
+
+  setVariableValue(variableId: string, value: VariableValue) {
+    this.variableValues.set(variableId, structuredClone(value))
+  }
+
+  /** Session value if the prototype changed it, else the document's value for the active mode. */
+  getVariableValue(variableId: string): VariableValue | undefined {
+    if (this.variableValues.has(variableId)) return this.variableValues.get(variableId)
+    const graph = this.engine.editor.graph
+    const variable = graph.variables.get(variableId)
+    if (!variable) return undefined
+    const modeId =
+      graph.activeMode.get(variable.collectionId) ??
+      graph.variableCollections.get(variable.collectionId)?.defaultModeId
+    return modeId ? variable.valuesByMode[modeId] : undefined
   }
 }
 
@@ -158,20 +183,42 @@ export class TriggerManager {
       this.fireReactions(node, 'MOUSE_ENTER')
     } else if (eventType === 'mouse-leave') {
       this.fireReactions(node, 'MOUSE_LEAVE')
+    } else if (eventType === 'mouse-down') {
+      this.fireReactions(node, 'MOUSE_DOWN')
+    } else if (eventType === 'mouse-up') {
+      this.fireReactions(node, 'MOUSE_UP')
+    } else if (eventType === 'after-delay') {
+      this.fireReactions(node, 'AFTER_DELAY')
     } else if (eventType.startsWith('drag-')) {
       const direction = eventType.split('-')[1]
-      // Triggers may carry a `direction` field not present in the base type.
-      interface DragTrigger {
-        direction?: string
-      }
       const reactions = this.findReactions(node, 'ON_DRAG').filter(
-        (r) =>
-          ((r.trigger as DragTrigger).direction ?? 'left').toLowerCase() === direction.toLowerCase()
+        (r) => (r.trigger.direction ?? 'left') === direction.toLowerCase()
       )
       for (const r of reactions) {
         this.engine.actionManager.executeReaction(node.id, r)
       }
     }
+  }
+
+  /**
+   * Fire ON_KEY_DOWN reactions in the visible subtree of `frameId` that list `code`
+   * (a `KeyboardEvent.code`). Returns whether anything handled the key.
+   */
+  handleKey(frameId: string, code: string): boolean {
+    let handled = false
+    const visit = (nodeId: string) => {
+      const node = this.engine.stateManager.getNode(nodeId)
+      if (!node?.visible) return
+      for (const reaction of node.reactions ?? []) {
+        if (reaction.trigger.type === 'ON_KEY_DOWN' && reaction.trigger.keys?.includes(code)) {
+          this.engine.actionManager.executeReaction(node.id, reaction)
+          handled = true
+        }
+      }
+      for (const childId of node.childIds) visit(childId)
+    }
+    visit(frameId)
+    return handled
   }
 
   private findReactions(node: SceneNode, type: string): Reaction[] {
@@ -200,60 +247,57 @@ export class ActionManager {
   private executeAction(sourceNodeId: string, action: Action, changedInstances: Set<string>) {
     switch (action.type) {
       case 'NAVIGATE':
-        if (action.destinationId) {
-          const transType = action.transition?.type ?? 'INSTANT'
-          const duration = action.transition?.duration ?? 300
-          // `direction` is a runtime extension not in the base transition type.
-          interface TransitionWithDirection {
-            direction?: TransitionDirection
-          }
-          const direction = (action.transition as TransitionWithDirection | undefined)?.direction
-          this.engine.navigationManager.navigate(
-            action.destinationId,
-            transType,
-            direction,
-            duration
-          )
-          this.engine.presentation.state.transitionEasing =
-            action.transition?.easing ?? 'EASE_IN_AND_OUT'
-        }
+        this.executeNavigate(action)
         break
-
       case 'BACK':
         this.engine.navigationManager.goBack()
         break
-
-      case 'CLOSE':
-        if (this.engine.presentation.activeOverlay.isOpen) {
-          this.engine.presentation.activeOverlay.isOpen = false
-        } else {
-          this.engine.presentation.stopPresentation()
-        }
+      case 'URL':
+        if (action.url && isOpenableUrl(action.url)) void openExternalLink(action.url)
         break
-
+      case 'CLOSE':
+        this.executeClose()
+        break
       case 'OPEN_OVERLAY':
       case 'SWAP_OVERLAY':
-        if (action.destinationId) {
-          this.engine.presentation.activeOverlay.isOpen = true
-          this.engine.presentation.activeOverlay.nodeId = action.destinationId
-          this.engine.presentation.activeOverlay.settings = action.overlay
-        }
+        this.executeOverlay(action)
         break
-
       case 'SCROLL_TO':
-        if (action.destinationId) {
+        if (action.destinationId)
           this.engine.presentation.state.scrollTargetId = action.destinationId
-        }
         break
-
       case 'CHANGE_TO':
         this.executeChangeTo(sourceNodeId, action, changedInstances)
         break
-
       case 'SET_VARIABLE':
         this.executeSetVariable(action)
         break
     }
+  }
+
+  private executeNavigate(action: Action) {
+    if (!action.destinationId) return
+    this.engine.navigationManager.navigate(
+      action.destinationId,
+      action.transition?.type ?? 'INSTANT',
+      action.transition?.direction,
+      action.transition?.duration ?? 300
+    )
+    this.engine.presentation.state.transitionEasing = action.transition?.easing ?? 'EASE_IN_AND_OUT'
+  }
+
+  private executeClose() {
+    const overlay = this.engine.presentation.activeOverlay
+    if (overlay.isOpen) overlay.isOpen = false
+    else this.engine.presentation.stopPresentation()
+  }
+
+  private executeOverlay(action: Action) {
+    if (!action.destinationId) return
+    const overlay = this.engine.presentation.activeOverlay
+    overlay.isOpen = true
+    overlay.nodeId = action.destinationId
+    overlay.settings = action.overlay
   }
 
   private executeChangeTo(sourceNodeId: string, action: Action, changedInstances: Set<string>) {
@@ -268,24 +312,38 @@ export class ActionManager {
       currentId = node?.parentId ?? null
     }
 
-    if (instanceNode && action.destinationId) {
-      this.engine.stateManager.overrideInstanceVariant(instanceNode.id, action.destinationId)
+    if (!instanceNode) return
+    const targetId =
+      action.destinationId ??
+      (action.variantProperties
+        ? this.resolveVariant(instanceNode, action.variantProperties)
+        : undefined)
+    if (targetId) {
+      this.engine.stateManager.overrideInstanceVariant(instanceNode.id, targetId)
       changedInstances.add(instanceNode.id)
     }
   }
 
+  /** Find the sibling variant whose properties equal the current ones with `changes` applied. */
+  private resolveVariant(instance: SceneNode, changes: Record<string, string>): string | undefined {
+    const state = this.engine.stateManager
+    const current = instance.componentId ? state.getNode(instance.componentId) : undefined
+    const set = current?.parentId ? state.getNode(current.parentId) : undefined
+    if (!current || set?.type !== 'COMPONENT_SET') return undefined
+    const wanted = { ...current.componentPropertyValues, ...changes }
+    for (const childId of set.childIds) {
+      const variant = state.getNode(childId)
+      if (variant?.type !== 'COMPONENT') continue
+      const values = variant.componentPropertyValues
+      if (Object.entries(wanted).every(([key, value]) => values[key] === value)) return variant.id
+    }
+    return undefined
+  }
+
   private executeSetVariable(action: Action) {
-    if (!action.variableId || action.variableValue === undefined) return
-    const variable = this.engine.editor.graph.variables.get(action.variableId)
-    if (!variable) return
-    const collection = this.engine.editor.graph.variableCollections.get(variable.collectionId)
-    const modeId =
-      this.engine.editor.graph.activeMode.get(variable.collectionId) ?? collection?.defaultModeId
-    if (!modeId) return
-    variable.valuesByMode[modeId] = structuredClone(
-      action.variableValue
-    ) as (typeof variable.valuesByMode)[string]
-    this.engine.editor.requestRender()
+    if (!action.variableId || !isVariableValue(action.variableValue)) return
+    if (!this.engine.editor.graph.variables.has(action.variableId)) return
+    this.engine.stateManager.setVariableValue(action.variableId, action.variableValue)
   }
 }
 
@@ -326,6 +384,32 @@ export class AnimationManager {
         return 'ease'
     }
   }
+}
+
+/** Prototype links are document data: only open web and mail links, never `javascript:` etc. */
+export function isOpenableUrl(url: string): boolean {
+  try {
+    return ['http:', 'https:', 'mailto:'].includes(new URL(url).protocol)
+  } catch {
+    return false
+  }
+}
+
+function isVariableValue(value: unknown): value is VariableValue {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+    return true
+  if (!value || typeof value !== 'object') return false
+  if ('aliasId' in value) return typeof value.aliasId === 'string'
+  return (
+    'r' in value &&
+    'g' in value &&
+    'b' in value &&
+    'a' in value &&
+    typeof value.r === 'number' &&
+    typeof value.g === 'number' &&
+    typeof value.b === 'number' &&
+    typeof value.a === 'number'
+  )
 }
 
 export class PrototypeEngine {

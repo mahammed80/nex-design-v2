@@ -3,6 +3,7 @@ import { calc } from './calc'
 import { render } from './create'
 import { describe } from './describe'
 import { designAudit } from './design-audit'
+import { applyDesignSystemTool, bindToToken, readDesignSystemTool } from './design-system'
 import {
   setFill,
   setLayout,
@@ -47,6 +48,10 @@ export const CORE_TOOLS: ToolDef[] = [
   batchUpdate,
   // Stock photos
   stockPhoto,
+  // Design system
+  readDesignSystemTool,
+  applyDesignSystemTool,
+  bindToToken,
   // Inspect & utility
   describe,
   designAudit,

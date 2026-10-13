@@ -13,7 +13,7 @@ import type {
   PrototypeConnection,
   PrototypeStateSnapshot
 } from '#core/prototype'
-import type { Reaction, SceneNode } from '#core/scene-graph'
+import type { Action, PrototypeFlow, Reaction, SceneNode } from '#core/scene-graph'
 
 import type { EditorContext } from './types'
 
@@ -79,53 +79,129 @@ function updateConnectionObject(
   return updated
 }
 
+/** Copy an action so stored reactions never share nested objects with caller state. */
+function copyAction(action: Action): Action {
+  return {
+    ...action,
+    transition: action.transition ? { ...action.transition } : undefined,
+    overlay: action.overlay ? { ...action.overlay } : undefined,
+    variantProperties: action.variantProperties ? { ...action.variantProperties } : undefined
+  }
+}
+
 export function createPrototypeActions(ctx: EditorContext) {
-  function addReaction(nodeId: string, reaction: Reaction) {
+  /** Mutate a node's reactions as one undoable step (falls back to a plain write off-page). */
+  function mutateReactions(
+    nodeId: string,
+    label: string,
+    next: (current: Reaction[]) => Reaction[]
+  ) {
     const node = ctx.graph.getNode(nodeId)
     if (!node) return
-    const reactions = node.reactions ? [...node.reactions, reaction] : [reaction]
-    ctx.graph.updateNode(nodeId, { reactions })
+    const write = () => ctx.graph.updateNode(nodeId, { reactions: next(node.reactions ?? []) })
+    const pageId = pageIdForNode(ctx, nodeId)
+    if (pageId) {
+      withPrototypeUndo(ctx, pageId, label, write)
+      return
+    }
+    write()
     syncNodePage(ctx, nodeId)
     ctx.requestRender()
+  }
+
+  function addReaction(nodeId: string, reaction: Reaction) {
+    mutateReactions(nodeId, 'Add interaction', (current) => [
+      ...current,
+      { trigger: { ...reaction.trigger }, actions: reaction.actions.map(copyAction) }
+    ])
   }
 
   function removeReaction(nodeId: string, index: number) {
     const node = ctx.graph.getNode(nodeId)
     if (!node?.reactions || index < 0 || index >= node.reactions.length) return
-    const reactions = [...node.reactions]
-    reactions.splice(index, 1)
-    ctx.graph.updateNode(nodeId, { reactions })
-    syncNodePage(ctx, nodeId)
-    ctx.requestRender()
+    mutateReactions(nodeId, 'Remove interaction', (current) =>
+      current.filter((_, i) => i !== index)
+    )
   }
 
   function updateReaction(nodeId: string, index: number, updates: Partial<Reaction>) {
     const node = ctx.graph.getNode(nodeId)
     if (!node?.reactions || index < 0 || index >= node.reactions.length) return
-    const reactions = node.reactions.map((r, i) => {
-      if (i === index) {
-        return {
-          trigger: { ...r.trigger, ...updates.trigger },
-          actions: updates.actions
-            ? updates.actions.map((a) => ({
-                ...a,
-                transition: a.transition ? { ...a.transition } : undefined
-              }))
-            : r.actions
-        }
-      }
-      return r
-    })
-    ctx.graph.updateNode(nodeId, { reactions })
-    syncNodePage(ctx, nodeId)
-    ctx.requestRender()
+    mutateReactions(nodeId, 'Edit interaction', (current) =>
+      current.map((r, i) =>
+        i === index
+          ? {
+              ...r,
+              // A provided trigger replaces the old one, so switching type drops stale
+              // delay / keys / direction fields.
+              trigger: updates.trigger ? { ...updates.trigger } : r.trigger,
+              actions: (updates.actions ?? r.actions).map(copyAction)
+            }
+          : r
+      )
+    )
+  }
+
+  /** Replace a page's flows as one undo step (flows are small; snapshot the whole list). */
+  function mutateFlows(
+    pageId: string,
+    label: string,
+    next: (flows: PrototypeFlow[]) => PrototypeFlow[]
+  ) {
+    const page = ctx.graph.getNode(pageId)
+    if (page?.type !== 'CANVAS') return
+    const before = structuredClone(page.prototypeFlows ?? [])
+    const after = next(structuredClone(before))
+    const apply = (flows: PrototypeFlow[]) => {
+      ctx.graph.updateNode(pageId, { prototypeFlows: structuredClone(flows) })
+      ctx.requestRender()
+    }
+    apply(after)
+    ctx.undo.push({ label, forward: () => apply(after), inverse: () => apply(before) })
+  }
+
+  /** Add a named flow starting at `nodeId` (a top-level frame). Returns the flow name used. */
+  function addFlow(pageId: string, nodeId: string, name?: string): string | null {
+    const page = ctx.graph.getNode(pageId)
+    if (page?.type !== 'CANVAS' || !ctx.graph.getNode(nodeId)) return null
+    const existing = page.prototypeFlows ?? []
+    if (existing.some((flow) => flow.startNodeId === nodeId)) return null
+    const flowName = name?.trim() || `Flow ${existing.length + 1}`
+    mutateFlows(pageId, 'Add flow', (flows) => [...flows, { name: flowName, startNodeId: nodeId }])
+    return flowName
+  }
+
+  function removeFlow(pageId: string, startNodeId: string) {
+    mutateFlows(pageId, 'Remove flow', (flows) =>
+      flows.filter((flow) => flow.startNodeId !== startNodeId)
+    )
+  }
+
+  function updateFlow(
+    pageId: string,
+    startNodeId: string,
+    changes: Partial<Pick<PrototypeFlow, 'name' | 'description'>>
+  ) {
+    mutateFlows(pageId, 'Edit flow', (flows) =>
+      flows.map((flow) => (flow.startNodeId === startNodeId ? { ...flow, ...changes } : flow))
+    )
   }
 
   function setPrototypeStartNode(pageId: string, nodeId: string | null) {
     const page = ctx.graph.getNode(pageId)
     if (page?.type !== 'CANVAS') return
-    ctx.graph.updateNode(pageId, { prototypeStartNodeId: nodeId })
-    ctx.requestRender()
+    const before = page.prototypeStartNodeId ?? null
+    if (before === nodeId) return
+    const apply = (value: string | null) => {
+      ctx.graph.updateNode(pageId, { prototypeStartNodeId: value })
+      ctx.requestRender()
+    }
+    apply(nodeId)
+    ctx.undo.push({
+      label: 'Set flow starting point',
+      forward: () => apply(nodeId),
+      inverse: () => apply(before)
+    })
   }
 
   function addConnection(
@@ -261,6 +337,9 @@ export function createPrototypeActions(ctx: EditorContext) {
     addReaction,
     removeReaction,
     updateReaction,
+    addFlow,
+    removeFlow,
+    updateFlow,
     setPrototypeStartNode,
     addConnection,
     removeConnection,

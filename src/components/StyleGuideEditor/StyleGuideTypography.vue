@@ -21,18 +21,26 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-5">
+  <section
+    class="rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_12px_32px_rgba(0,0,0,0.4)] flex flex-col gap-5"
+  >
     <div class="flex items-center justify-between border-b border-white/10 pb-3">
       <div class="flex items-center gap-2.5">
-        <div class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30">
+        <div
+          class="flex size-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30"
+        >
           <icon-lucide-type class="size-4" />
         </div>
         <div>
           <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
             Typography & Fonts
-            <span class="text-[10px] font-normal text-rose-400 font-mono">{{ fontVariables.length }} families</span>
+            <span class="text-[10px] font-normal text-rose-400 font-mono"
+              >{{ fontVariables.length }} families</span
+            >
           </h2>
-          <p class="text-[11px] text-zinc-400">Font families, weights, and modular type scale sizes.</p>
+          <p class="text-[11px] text-zinc-400">
+            Font families, weights, and modular type scale sizes.
+          </p>
         </div>
       </div>
       <button
@@ -53,7 +61,9 @@ const emit = defineEmits<{
         <icon-lucide-type class="size-5" />
       </div>
       <p class="text-xs font-semibold text-white">No font families defined yet</p>
-      <p class="text-[11px] text-zinc-400 max-w-sm">Pick primary & secondary Google Fonts or load a starter preset.</p>
+      <p class="text-[11px] text-zinc-400 max-w-sm">
+        Pick primary & secondary Google Fonts or load a starter preset.
+      </p>
       <button
         class="mt-1 flex items-center gap-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 text-xs font-bold text-white transition-colors cursor-pointer"
         @click="emit('addFont')"
@@ -74,10 +84,10 @@ const emit = defineEmits<{
           <!-- Aa Box preview -->
           <div
             class="w-full aspect-video rounded-xl bg-black/60 border border-white/10 flex items-center justify-center flex-col gap-1 mb-3"
-            :style="{ fontFamily: `'${v.valuesByMode.default}', sans-serif` }"
+            :style="{ fontFamily: `'${v.value}', sans-serif` }"
           >
             <span class="text-4xl font-bold text-white tracking-tight">Aa</span>
-            <span class="text-[10px] text-zinc-400 font-mono">{{ v.valuesByMode.default }}</span>
+            <span class="text-[10px] text-zinc-400 font-mono">{{ v.value }}</span>
           </div>
 
           <!-- Font Details (Variable name, Picker, Delete) -->
@@ -101,7 +111,7 @@ const emit = defineEmits<{
 
             <FontPicker
               class="w-full bg-black/40 border border-white/10 rounded-xl text-xs text-white"
-              :model-value="String(v.valuesByMode.default)"
+              :model-value="String(v.value)"
               @select="emit('updateValue', v.id, $event)"
             />
           </div>
@@ -114,7 +124,9 @@ const emit = defineEmits<{
           <icon-lucide-ruler class="size-3.5 text-rose-400" />
           <span>Type Scale Ladder (px)</span>
         </h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3.5 rounded-2xl bg-black/50 border border-white/10 shadow-sm">
+        <div
+          class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3.5 rounded-2xl bg-black/50 border border-white/10 shadow-sm"
+        >
           <div
             v-for="v in fontSizeVariables"
             :key="v.id"
@@ -126,7 +138,7 @@ const emit = defineEmits<{
             <div class="flex items-center gap-1.5">
               <input
                 type="number"
-                :value="v.valuesByMode.default"
+                :value="v.value"
                 class="w-full bg-transparent text-xs font-mono font-bold text-white border-none outline-none p-0 focus:text-rose-300"
                 @change="
                   emit('updateValue', v.id, Number(($event.target as HTMLInputElement).value))
@@ -150,10 +162,10 @@ const emit = defineEmits<{
         >
           <div class="flex flex-col border-b border-white/10 pb-3">
             <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
-              >Display 1 ({{ getFontSizeVal('font-size-display-1') }}px)</span
+              >Display 1 ({{ getFontSizeVal('font-size-display') }}px)</span
             >
             <h1
-              :style="{ fontSize: `${getFontSizeVal('font-size-display-1')}px` }"
+              :style="{ fontSize: `${getFontSizeVal('font-size-display')}px` }"
               class="font-bold leading-none tracking-tight text-white"
             >
               Display Hero
@@ -162,10 +174,10 @@ const emit = defineEmits<{
 
           <div class="flex flex-col border-b border-white/10 pb-3">
             <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
-              >Heading 1 ({{ getFontSizeVal('font-size-heading-1') }}px)</span
+              >Heading 1 ({{ getFontSizeVal('font-size-h1') }}px)</span
             >
             <h2
-              :style="{ fontSize: `${getFontSizeVal('font-size-heading-1')}px` }"
+              :style="{ fontSize: `${getFontSizeVal('font-size-h1')}px` }"
               class="font-bold leading-tight text-white"
             >
               Main Headline
@@ -174,10 +186,10 @@ const emit = defineEmits<{
 
           <div class="flex flex-col border-b border-white/10 pb-3">
             <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1"
-              >Heading 2 ({{ getFontSizeVal('font-size-heading-2') }}px)</span
+              >Heading 2 ({{ getFontSizeVal('font-size-h2') }}px)</span
             >
             <h3
-              :style="{ fontSize: `${getFontSizeVal('font-size-heading-2')}px` }"
+              :style="{ fontSize: `${getFontSizeVal('font-size-h2')}px` }"
               class="font-bold leading-snug text-white"
             >
               Section Title
@@ -192,24 +204,25 @@ const emit = defineEmits<{
               :style="{ fontSize: `${getFontSizeVal('font-size-body')}px` }"
               class="font-normal text-zinc-300 leading-relaxed"
             >
-              NexDesign gives creators instant design variables, scalable UI components, and real-time collaboration.
+              NexDesign gives creators instant design variables, scalable UI components, and
+              real-time collaboration.
             </p>
           </div>
 
           <div class="flex flex-col">
             <span class="text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-2"
-              >Interactive Button ({{ getFontSizeVal('font-size-button') }}px)</span
+              >Interactive Button ({{ getFontSizeVal('font-size-small') }}px)</span
             >
             <div class="flex items-center gap-3">
               <button
-                :style="{ fontSize: `${getFontSizeVal('font-size-button')}px` }"
+                :style="{ fontSize: `${getFontSizeVal('font-size-small')}px` }"
                 class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-4 py-2 rounded-xl shadow-md shadow-rose-600/20 transition-colors cursor-default"
               >
                 Primary Action
               </button>
               <a
                 href="#"
-                :style="{ fontSize: `${getFontSizeVal('font-size-button')}px` }"
+                :style="{ fontSize: `${getFontSizeVal('font-size-small')}px` }"
                 class="text-rose-400 hover:underline font-semibold"
                 @click.prevent
               >

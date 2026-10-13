@@ -1,5 +1,6 @@
 import { shallowReactive } from 'vue'
 
+import { ensureStyleGuidePage } from '@nex-design/core/design-system'
 import { createEditor } from '@nex-design/core/editor'
 import { BUILTIN_IO_FORMATS, IORegistry } from '@nex-design/core/io'
 import { SceneGraph } from '@nex-design/core/scene-graph'
@@ -23,11 +24,8 @@ export type { EditorToolDef as ToolDef, Tool } from '@nex-design/core/editor'
 export function createEditorStore(initialGraph?: SceneGraph) {
   const graph = initialGraph ?? new SceneGraph()
 
-  // Ensure "Style Guide" page exists
-  const hasStyleGuide = graph.getPages().some((p) => p.name === 'Style Guide')
-  if (!hasStyleGuide) {
-    graph.addPage('Style Guide')
-  }
+  // Ensure a marked Style Guide page exists (migrates legacy name-matched pages to the marker)
+  ensureStyleGuidePage(graph)
 
   const state = shallowReactive<AppEditorState>(createInitialAppEditorState(graph.getPages()[0].id))
 

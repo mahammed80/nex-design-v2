@@ -60,7 +60,7 @@ function goToWorkspace() {
         Workspace
       </button>
 
-      <UserMenu />
+      <UserMenu direction="down" />
     </div>
   </header>
 </template>

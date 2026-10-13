@@ -2,7 +2,14 @@
 
 ## Unreleased
 
+- Make URL-to-design available to the built-in AI as a real editable-layer import, including scoped and multi-viewport imports, and add a license-aware finder for free community UI kits, icons, illustrations, and photos.
+- Make Website URL to Design production-safe and consistent with development: proxy images and external CSS, rewrite relative CSS assets, block private-network redirects, sandbox imported markup without scripts, preserve absolute positioning, and derive block spacing from the captured page.
+
 ### Added
+
+- Add DESIGN.md v2: the Style Guide reads and writes the YAML front-matter format used by the bundled templates (colors with light/dark modes and `{colors.x}` references, composite typography, rounded, spacing, components, and free-form prose), with the legacy bullet format still importable. Tokens become slash-path variables in one Design System collection; applying shows errors and a create/update/remove preview first, is a single undo step, and adopts older Style Guide variables in place. The DESIGN.md source and Style Guide page marker are saved in `.fig` files.
+- Add the ten bundled DESIGN.md templates to the Style Guide presets, and CSS, Tailwind v4 `@theme`, JSON, and W3C DTCG token export.
+- Give the built-in AI agent the document's design tokens with every request, plus `read_design_system`, `apply_design_system`, and `bind_to_token` tools (also available over MCP and CLI `eval`).
 
 - Add a generated Figma-parity capability registry with stable IDs, acceptance criteria, test evidence, current coverage totals, a category report, stale-documentation checks, and an implementation-grade 99% parity roadmap.
 
@@ -57,6 +64,15 @@
 
 ### Fixes
 
+- Save prototype interactions, flow starting points, start screens, and connection geometry to `.fig` files and restore them on open; previously all prototyping was lost on save. Native Figma prototype fields are used where they exist, so interactions also round-trip with Figma.
+- Sync prototype interactions, connections, flows, and plugin data correctly between collaborators instead of delivering them as raw JSON strings.
+- Save page-level plugin data in `.fig` files (previously dropped on save).
+- Make adding, editing, and removing prototype interactions and setting the flow start undoable.
+- Stop a single click in the prototype player from firing click actions up to three times, make after-delay triggers actually fire, and stop a drag gesture from leaving press states stuck or also triggering a click.
+- Keep prototype `Set variable` changes inside the preview session instead of overwriting the document's variable values, and resolve `Change to` targets from variant properties.
+- Stop the Style Guide from adding duplicate typography variables every time it opens, read and write tokens in each collection's real default mode, show colors as hex in CSS/Tailwind/JSON token export instead of `[object Object]`, keep unapplied DESIGN.md edits when the document changes, and make palette type changes undoable.
+- Treat per-paint color bindings (`fills/0/color`) as bound in the `no-hardcoded-colors` lint rule.
+- Connect the `/admin` dashboard to the live nex-design.online admin API through a typed client (`src/app/admin/cloud/`) that authenticates with the Bearer token from sign-in, signs out on expired or revoked tokens, reports API failures instead of swallowing them, debounces search, and downloads the CSV export with the token instead of opening an unauthenticated tab.
 - Restore zero-error app and Vue SDK type checking by reconciling rendering, layout, prototype transition, URL import, account, admin, and profile-scoped project contracts.
 
 - Expose prototype overlay swapping and variable assignment in the inspector, and repair the AI wireframe workflow so generated sections and typed content are nested under their intended frames with usable generated IDs.

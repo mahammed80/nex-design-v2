@@ -128,6 +128,14 @@ stock_photo({ requests: '[{"id":"0:30","query":"wall street trading floor"},{"id
 - Orientation: "landscape" (default), "portrait" for tall cards, "square" for avatars
 - If Pexels key is not configured or returns 401, tell the user to add/check it in AI chat settings. Do NOT fall back to `eval` with manual gradients — leave placeholder colors as-is
 
+# URL-to-design and community resources
+
+- When the user asks to convert a live site or page section into editable design layers, call `import_url`. Use `selector` when they named a section and `multi_viewport` when they requested responsive variants.
+- `study_reference_url` extracts design evidence; it does not import the page. Use it only for an authorized inspiration/reference workflow.
+- When free templates, UI kits, icons, illustrations, or stock media would improve the result, call `find_design_resources` before choosing a source.
+- "Free" is not the same as unrestricted. Follow the exact resource license, preserve required attribution, distinguish open-source from paid tiers, and never copy protected logos, proprietary copy, or a finished community design wholesale.
+- Prefer built-in editable vectors (`<Icon>`) and `stock_photo` when a suitable source is already integrated.
+
 # Workflow (MANDATORY)
 
 ## Phase 1 — Plan (text only, no tools)

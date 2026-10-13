@@ -1,8 +1,11 @@
+import { colorToHex, tryParseColor } from '#core/color'
+import { extractDesignTokens } from '#core/design-system/apply/extract'
 import type { SceneGraph, SceneNode } from '#core/scene-graph'
 
 import { presets } from './presets'
 import { allRules } from './rules'
 import type {
+  DesignTokenIndex,
   LintConfig,
   LintMessage,
   LintNode,
@@ -18,6 +21,7 @@ export class Linter {
   private ruleConfigs = new Map<string, { severity: Severity; options?: Record<string, unknown> }>()
   private messages: LintMessage[] = []
   private nodes = new Map<string, LintNode>()
+  private designTokens: DesignTokenIndex | null = null
 
   constructor(options: { config?: LintConfig; preset?: string; rules?: string[] } = {}) {
     let baseConfig: Record<
@@ -46,6 +50,7 @@ export class Linter {
   lintGraph(graph: SceneGraph, rootIds?: string[]): LintResult {
     this.messages = []
     this.nodes.clear()
+    this.designTokens = buildDesignTokenIndex(graph)
     const roots = rootIds && rootIds.length > 0 ? rootIds : graph.getPages().map((p) => p.id)
     for (const id of roots) this.capture(graph, id, undefined)
     for (const id of roots) this.lintNode(id)
@@ -134,12 +139,31 @@ export class Linter {
         getChildren: (node) =>
           node.childIds
             .map((childId) => this.nodes.get(childId))
-            .filter((child): child is LintNode => !!child)
+            .filter((child): child is LintNode => !!child),
+        getDesignTokens: () => this.designTokens
       }
       rule.check(node, context)
     }
     for (const childId of node.childIds) this.lintNode(childId)
   }
+}
+
+/** Index literal token values (default-mode colors; references are skipped) for lint rules. */
+export function buildDesignTokenIndex(graph: SceneGraph): DesignTokenIndex | null {
+  const tokens = extractDesignTokens(graph)
+  const index: DesignTokenIndex = { colors: new Map(), spacing: new Map(), rounded: new Map() }
+  for (const [name, value] of Object.entries(tokens.colors)) {
+    const text = typeof value === 'string' ? value : Object.values(value)[0]
+    const color = text ? tryParseColor(text) : null
+    if (color && !index.colors.has(colorToHex(color))) index.colors.set(colorToHex(color), name)
+  }
+  for (const group of ['spacing', 'rounded'] as const) {
+    for (const [name, value] of Object.entries(tokens[group])) {
+      if (!index[group].has(value)) index[group].set(value, name)
+    }
+  }
+  const empty = index.colors.size + index.spacing.size + index.rounded.size === 0
+  return empty ? null : index
 }
 
 export function createLinter(options?: { config?: LintConfig; preset?: string; rules?: string[] }) {

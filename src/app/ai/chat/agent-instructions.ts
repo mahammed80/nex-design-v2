@@ -1,5 +1,6 @@
 import type { ModelMessage } from 'ai'
 
+import { findStyleGuidePage, readDesignSystem } from '@nex-design/core/design-system'
 import type { SceneGraph, SceneNode } from '@nex-design/core/scene-graph'
 
 import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
@@ -17,6 +18,9 @@ const CREATE_PATTERN = /\b(create|design|build|make|generate|draft|new)\b/i
 const INSPECT_PATTERN = /\b(analy[sz]e|audit|check|explain|inspect|review|what is|find)\b/i
 const MODIFY_PATTERN = /\b(change|edit|fix|make the|modify|move|resize|replace|update)\b/i
 const REFERENCE_PATTERN = /\b(reference|inspired by|study|from this (?:site|url)|https?:\/\/)/i
+const URL_IMPORT_PATTERN =
+  /\b(import|convert|turn|capture|recreate|url[- ]to[- ]design|website[- ]to[- ]design)\b/i
+const URL_PATTERN = /https?:\/\//i
 
 function messageText(message: ModelMessage): string {
   if (typeof message.content === 'string') return message.content
@@ -38,6 +42,7 @@ export function getLatestUserRequest(messages: ModelMessage[] | undefined): stri
 }
 
 export function classifyAgentIntent(request: string): AgentTaskIntent {
+  if (URL_IMPORT_PATTERN.test(request) && URL_PATTERN.test(request)) return 'create'
   if (REFERENCE_PATTERN.test(request)) return 'reference'
   if (INSPECT_PATTERN.test(request)) return 'inspect'
   if (MODIFY_PATTERN.test(request)) return 'modify'
@@ -73,9 +78,8 @@ export function buildAgentDocumentContext(store: AgentDocumentState): string {
   const selected = [...store.state.selectedIds]
     .map((id) => store.graph.getNode(id))
     .filter((node): node is SceneNode => !!node)
-  const styleGuide = store.graph
-    .getPages(true)
-    .find((candidate) => candidate.name === 'Style Guide')
+  const styleGuide = findStyleGuidePage(store.graph)
+  const tokens = designTokenSummary(store.graph)
 
   return [
     `Current page: ${page.name} (${countDescendants(store.graph, page)} nodes).`,
@@ -88,8 +92,66 @@ export function buildAgentDocumentContext(store: AgentDocumentState): string {
             .join('; ')
         : 'none'
     }.`,
-    `Style guide: ${styleGuide ? `available as page ${styleGuide.id}` : 'not present'}.`
+    `Style guide: ${styleGuide ? `available as page ${styleGuide.id}` : 'not present'}.`,
+    ...(tokens ? [tokens] : [])
   ].join('\n')
+}
+
+const TOKEN_SUMMARY_MAX_CHARS = 2000
+
+function joinCapped(label: string, items: string[]): string | null {
+  return items.length > 0 ? `- ${label}: ${items.join(', ')}` : null
+}
+
+/**
+ * Compact design-token summary for the agent (variables named `colors/…`, `spacing/…`, etc.),
+ * so generated designs reuse the document's tokens instead of inventing values.
+ */
+export function designTokenSummary(graph: SceneGraph): string | null {
+  const system = readDesignSystem(graph)
+  const colorValue = (value: (typeof system.colors)[string]) =>
+    typeof value === 'string'
+      ? value
+      : Object.entries(value)
+          .map(([mode, v]) => `${mode} ${v}`)
+          .join(' / ')
+  const lines = [
+    joinCapped(
+      'colors',
+      Object.entries(system.colors).map(([name, value]) => `${name} ${colorValue(value)}`)
+    ),
+    joinCapped(
+      'typography',
+      Object.entries(system.typography).map(([name, t]) =>
+        [
+          name,
+          t.fontFamily?.split(',')[0],
+          t.fontSize && `${t.fontSize}px`,
+          t.fontWeight,
+          t.lineHeight && `lh ${t.lineHeight}`
+        ]
+          .filter(Boolean)
+          .join(' ')
+      )
+    ),
+    joinCapped(
+      'rounded',
+      Object.entries(system.rounded).map(([name, v]) => `${name} ${v}`)
+    ),
+    joinCapped(
+      'spacing',
+      Object.entries(system.spacing).map(([name, v]) => `${name} ${v}`)
+    )
+  ].filter((line): line is string => line !== null)
+  if (lines.length === 0) return null
+
+  const text = [
+    `Design system "${system.name}" (bind these variables instead of hardcoding values; read the full spec with read_design_system):`,
+    ...lines
+  ].join('\n')
+  return text.length > TOKEN_SUMMARY_MAX_CHARS
+    ? `${text.slice(0, TOKEN_SUMMARY_MAX_CHARS)}… (truncated; call read_design_system)`
+    : text
 }
 
 function workflowFor(intent: AgentTaskIntent): string {
@@ -117,9 +179,7 @@ export function buildAgentInstructions(options: {
 }): string {
   const intent = classifyAgentIntent(options.request)
   const base = SYSTEM_PROMPT
-  const hasStyleGuide = options.store.graph
-    .getPages(true)
-    .some((page) => page.name === 'Style Guide')
+  const hasStyleGuide = designTokenSummary(options.store.graph) !== null
   const skills = resolveAgentSkills({
     intent,
     request: options.request,

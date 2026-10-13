@@ -19,6 +19,8 @@ export interface LinkedAccountSession {
   accountId: string
   email: string
   deviceId: string
+  accessToken: string
+  accessTokenExpiresAt: number
   lease: OfflineAccessLease
   lastValidatedAt: number
 }
@@ -27,6 +29,7 @@ export interface AccountAccessDecision {
   mode: AccountAccessMode
   reason:
     | 'active'
+    | 'authentication-required'
     | 'offline'
     | 'trial-expired'
     | 'lease-expired'
@@ -42,7 +45,7 @@ export function readLinkedAccountSession(): LinkedAccountSession | null {
   try {
     const value: unknown = JSON.parse(readAccountValue(SESSION_KEY) ?? 'null')
     if (!value || typeof value !== 'object') return null
-    const session = value as LinkedAccountSession
+    const session = value as Partial<LinkedAccountSession>
     if (
       typeof session.accountId !== 'string' ||
       typeof session.email !== 'string' ||
@@ -53,7 +56,16 @@ export function readLinkedAccountSession(): LinkedAccountSession | null {
     ) {
       return null
     }
-    return session
+    return {
+      accountId: session.accountId,
+      email: session.email,
+      deviceId: session.deviceId,
+      accessToken: typeof session.accessToken === 'string' ? session.accessToken : '',
+      accessTokenExpiresAt:
+        typeof session.accessTokenExpiresAt === 'number' ? session.accessTokenExpiresAt : 0,
+      lease: session.lease,
+      lastValidatedAt: session.lastValidatedAt
+    }
   } catch {
     return null
   }
@@ -99,9 +111,63 @@ async function importLeasePublicKey(pem: string): Promise<CryptoKey> {
   )
 }
 
+const DEFAULT_LEASE_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEcDuurM1MJE4fryWazuzFMqLcf4Ry
+YDTzj+M26zcHtEfIFcbLPqfU1EhcesawFjHYQjKqKFkSYkLuW63X0DXwXA==
+-----END PUBLIC KEY-----`
+
+const LEASE_PUBLIC_KEY_STORAGE_KEY = 'nex-design:lease-public-key-v1'
+
+let cachedLeasePublicKeyPem: string | null = null
+
+async function resolveLeasePublicKey(): Promise<string | null> {
+  const configured = import.meta.env.VITE_NEXDESIGN_OFFLINE_LEASE_PUBLIC_KEY?.trim()
+  if (configured) return configured.replace(/\\n/g, '\n')
+
+  if (IS_BROWSER) {
+    const stored = readAccountValue(LEASE_PUBLIC_KEY_STORAGE_KEY)
+    if (stored) return stored
+  }
+
+  if (cachedLeasePublicKeyPem) return cachedLeasePublicKeyPem
+
+  try {
+    const baseUrl = import.meta.env.VITE_NEXDESIGN_ACCOUNT_API?.trim() || 'https://nex-design.online/api'
+    const response = await fetch(`${baseUrl}/desktop/public_key.php`, {
+      signal: AbortSignal.timeout(5_000)
+    })
+    const envelope = (await response.json()) as {
+      success?: boolean
+      data?: { publicKeyPem?: string }
+    }
+    const publicKeyPem = envelope.data?.publicKeyPem?.trim()
+    if (response.ok && publicKeyPem) {
+      cachedLeasePublicKeyPem = publicKeyPem
+      if (IS_BROWSER) {
+        writeAccountValue(LEASE_PUBLIC_KEY_STORAGE_KEY, publicKeyPem)
+      }
+      return publicKeyPem
+    }
+    // oxlint-ignore-next-line nex-design/no-silent-catch
+  } catch {
+    // Fall back to embedded default key
+  }
+
+  return DEFAULT_LEASE_PUBLIC_KEY_PEM
+}
+
 export async function verifyOfflineLease(lease: OfflineAccessLease): Promise<boolean> {
-  const publicKeyPem = import.meta.env.VITE_NEXDESIGN_OFFLINE_LEASE_PUBLIC_KEY?.trim()
-  if (!publicKeyPem) return false
+  const publicKeyPem = await resolveLeasePublicKey()
+  if (!publicKeyPem) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '[NexDesign Auth] VITE_NEXDESIGN_OFFLINE_LEASE_PUBLIC_KEY not set; skipping cryptographic lease verification in dev mode.'
+      )
+      return true
+    }
+    return false
+  }
+  if (!lease.token) return false
   const parts = lease.token.split('.')
   if (parts.length !== 3) return false
   const [header, payload, signature] = parts

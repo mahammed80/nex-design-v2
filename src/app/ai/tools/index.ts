@@ -10,12 +10,13 @@ import type { StepBudget, ToolLogEntry } from '@nex-design/core/tools'
 
 import { getAgentMemoryRequest, recordGenerationMemory } from '@/app/ai/memory/storage'
 import { finishAgentToolProgress, recordAgentToolProgress } from '@/app/ai/orchestration/progress'
-import { studyReference } from '@/app/ai/reference/tool'
-import { studyReferenceUrl } from '@/app/ai/reference/study-url'
-import { makeFigmaFromStore } from '@/app/automation/bridge/figma-factory'
-import { getActiveEditorStore } from '@/app/editor/active-store'
 import { runOrchestratorTool } from '@/app/ai/orchestrator/tool'
-import type { EditorStore } from '@/app/editor/active-store'
+import { studyReferenceUrl } from '@/app/ai/reference/study-url'
+import { studyReference } from '@/app/ai/reference/tool'
+import { findDesignResourcesTool } from '@/app/ai/resources/tool'
+import { createUrlImportTool } from '@/app/ai/tools/url-import'
+import { makeFigmaFromStore } from '@/app/automation/bridge/figma-factory'
+import { getActiveEditorStore, type EditorStore } from '@/app/editor/active-store'
 
 export const MAX_AGENT_STEPS = 50
 
@@ -92,7 +93,14 @@ export function createAITools(store: EditorStore) {
   const runState = getRunState(store)
 
   return toolsToAI(
-    [...CORE_TOOLS, studyReference, studyReferenceUrl, runOrchestratorTool],
+    [
+      ...CORE_TOOLS,
+      createUrlImportTool(store),
+      findDesignResourcesTool,
+      studyReference,
+      studyReferenceUrl,
+      runOrchestratorTool
+    ],
     {
       getFigma: () => makeFigmaFromStore(store),
       onBeforeExecute: (def) => {

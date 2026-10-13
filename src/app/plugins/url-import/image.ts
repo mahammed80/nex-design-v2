@@ -2,7 +2,9 @@
  * image.ts — Handle <img>, <picture>, and background-image CSS fills.
  */
 
-const URL_FETCH_PROXY = '/api/url-fetch'
+import { validateRemoteUrl } from '@nex-design/core/url-policy'
+
+import { getUrlFetchProxy } from './proxy'
 
 export function resolveImageUrl(src: string, baseUrl: string): string {
   try {
@@ -21,10 +23,11 @@ export async function fetchImageBytes(imageUrl: string): Promise<Uint8Array | nu
   if (typeof fetch === 'undefined') return null
 
   try {
-    const resp = await fetch(URL_FETCH_PROXY, {
+    const url = validateRemoteUrl(imageUrl)
+    const resp = await fetch(getUrlFetchProxy(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: imageUrl, raw: true })
+      body: JSON.stringify({ url: url.toString(), raw: true })
     })
     if (!resp.ok) return null
 

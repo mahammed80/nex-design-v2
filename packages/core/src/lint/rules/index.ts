@@ -15,6 +15,7 @@ export { default as noGroups } from './no-groups'
 export { default as effectStyleRequired } from './effect-style-required'
 export { default as noMixedStyles } from './no-mixed-styles'
 export { default as noDetachedInstances } from './no-detached-instances'
+export { default as tokenCompliance } from './token-compliance'
 
 import type { Rule } from '#core/lint/types'
 
@@ -34,6 +35,7 @@ import noMixedStyles from './no-mixed-styles'
 import pixelPerfect from './pixel-perfect'
 import preferAutoLayout from './prefer-auto-layout'
 import textStyleRequired from './text-style-required'
+import tokenCompliance from './token-compliance'
 import touchTargetSize from './touch-target-size'
 
 export const allRules: Record<string, Rule> = {
@@ -53,5 +55,6 @@ export const allRules: Record<string, Rule> = {
   'no-groups': noGroups,
   'effect-style-required': effectStyleRequired,
   'no-mixed-styles': noMixedStyles,
-  'no-detached-instances': noDetachedInstances
+  'no-detached-instances': noDetachedInstances,
+  'token-compliance': tokenCompliance
 }

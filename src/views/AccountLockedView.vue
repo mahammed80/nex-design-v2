@@ -15,6 +15,8 @@ const message = computed(() => {
     return 'Your seven-day guest trial has ended. Link or create an account to continue editing. Your local projects remain safe.'
   if (reason.value === 'lease-expired')
     return 'Connect to the internet so this device can validate your account.'
+  if (reason.value === 'authentication-required')
+    return 'Sign in again to validate this linked account. Your local projects remain safe.'
   if (reason.value === 'suspended')
     return 'This account is suspended. Contact support or use another account.'
   if (reason.value === 'deleted') return 'This account is no longer available.'

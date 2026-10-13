@@ -15,7 +15,10 @@ const FILL_CATEGORY: Record<string, FillCategory> = {
 }
 
 function gradientCSS(stops: GradientStop[]): string {
-  return stops.map((s) => `${colorToCSS(s.color)} ${s.position * 100}%`).join(', ')
+  return stops
+    .filter((s) => s.color && typeof s.color.r === 'number')
+    .map((s) => `${colorToCSS(s.color)} ${s.position * 100}%`)
+    .join(', ')
 }
 
 /**
@@ -57,6 +60,7 @@ export function useFillPicker(fill: Ref<Fill>, onUpdate: (fill: Fill) => void) {
   const swatchBg = computed(() => {
     if (category.value === 'GRADIENT' && fill.value.gradientStops?.length)
       return `linear-gradient(to right, ${gradientCSS(fill.value.gradientStops)})`
+    if (category.value === 'IMAGE' || !fill.value.color) return 'transparent'
     return colorToCSS(fill.value.color)
   })
 

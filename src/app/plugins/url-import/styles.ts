@@ -21,6 +21,7 @@ export interface ExtractedStyle {
   fontWeight?: number
   textAlign?: 'left' | 'center' | 'right' | 'justified'
   overflow?: 'hidden' | 'visible'
+  position?: 'absolute'
 }
 
 export function parsePx(val: string): number {
@@ -139,11 +140,7 @@ export function extractStyles(style: CSSStyleDeclaration): ExtractedStyle {
 
   extractTextProps(style, result)
 
-  if (
-    style.overflow === 'hidden' ||
-    style.overflowX === 'hidden' ||
-    style.overflowY === 'hidden'
-  ) {
+  if (style.overflow === 'hidden' || style.overflowX === 'hidden' || style.overflowY === 'hidden') {
     result.overflow = 'hidden'
   }
 

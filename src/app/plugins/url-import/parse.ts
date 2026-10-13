@@ -28,7 +28,8 @@ export interface ParseOptions {
 }
 
 function injectBaseTag(html: string, baseUrl: string, viewportWidth: number): string {
-  const baseTag = baseUrl ? `<base href="${baseUrl}">` : ''
+  const escapedBaseUrl = baseUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+  const baseTag = escapedBaseUrl ? `<base href="${escapedBaseUrl}">` : ''
   const metaTag = `<meta name="viewport" content="width=${viewportWidth}, initial-scale=1">`
   const injected = `${baseTag}${metaTag}`
   if (html.includes('<head>')) {
@@ -42,6 +43,8 @@ function injectBaseTag(html: string, baseUrl: string, viewportWidth: number): st
 
 function createHiddenIframe(viewportWidth: number): HTMLIFrameElement {
   const iframe = document.createElement('iframe')
+  iframe.setAttribute('sandbox', 'allow-same-origin')
+  iframe.setAttribute('aria-hidden', 'true')
   iframe.width = String(viewportWidth)
   iframe.height = '3000'
   iframe.style.cssText = `
@@ -61,6 +64,28 @@ function createHiddenIframe(viewportWidth: number): HTMLIFrameElement {
   return iframe
 }
 
+async function waitForDocumentStyles(doc: Document): Promise<void> {
+  const stylesheetLoads = Array.from(
+    doc.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
+  )
+    .slice(0, 16)
+    .map(
+      (link) =>
+        new Promise<void>((resolve) => {
+          if (link.sheet) {
+            resolve()
+            return
+          }
+          link.addEventListener('load', () => resolve(), { once: true })
+          link.addEventListener('error', () => resolve(), { once: true })
+        })
+    )
+  const fontsReady = 'fonts' in doc ? doc.fonts.ready.then(() => undefined) : Promise.resolve()
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 2500))
+  await Promise.race([Promise.all([...stylesheetLoads, fontsReady]).then(() => undefined), timeout])
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+}
+
 export async function parseHtmlToTree(html: string, options: ParseOptions = {}): Promise<TreeNode> {
   const { selector = 'body', maxDepth = 15, baseUrl = '', viewportWidth = 1440 } = options
 
@@ -75,12 +100,12 @@ export async function parseHtmlToTree(html: string, options: ParseOptions = {}):
     doc.write(injectedHtml)
     doc.close()
 
-    // Wait for remote stylesheets, Google Fonts, JS-injected styles (React, Next.js, etc.), and layout computation
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // Scripts stay disabled in the sandbox. Wait only for declarative styles, fonts, and layout.
+    await waitForDocumentStyles(doc)
 
     const targetEl = selector && selector !== 'body' ? doc.querySelector(selector) : doc.body
-    const root = targetEl ?? doc.body
-    if (!root) throw new Error(`Selector "${selector}" matched no elements`)
+    if (!targetEl) throw new Error(`Selector "${selector}" matched no elements`)
+    const root = targetEl
 
     const win = iframe.contentWindow ?? window
     const bodyStyle = win.getComputedStyle(doc.body)
@@ -148,6 +173,7 @@ function buildImageNode(
       name: `Image / ${alt}`,
       w: w > 0 ? w : 200,
       h: h > 0 ? h : 200,
+      ...absolutePositionProps(el, style, rect),
       ...(resolvedSrc ? { imageSrc: resolvedSrc } : { bg: '#E5E7EB' })
     },
     children: []
@@ -165,9 +191,24 @@ function buildSvgNode(el: Element, style: CSSStyleDeclaration, rect: DOMRect): T
       name: `Icon / ${el.id || el.getAttribute('aria-label') || 'svg'}`,
       w: w > 0 ? w : 24,
       h: h > 0 ? h : 24,
+      ...absolutePositionProps(el, style, rect),
       bg: color
     },
     children: []
+  }
+}
+
+function absolutePositionProps(
+  el: Element,
+  style: CSSStyleDeclaration,
+  rect: DOMRect
+): Record<string, unknown> {
+  if (style.position !== 'absolute' && style.position !== 'fixed') return {}
+  const parentRect = el.parentElement?.getBoundingClientRect()
+  return {
+    position: 'absolute',
+    x: Math.round(rect.left - (parentRect?.left ?? 0)),
+    y: Math.round(rect.top - (parentRect?.top ?? 0))
   }
 }
 
@@ -186,7 +227,8 @@ function buildTextNode(
   text: string,
   style: CSSStyleDeclaration,
   name: string,
-  defaultTextColor = '#111827'
+  defaultTextColor = '#111827',
+  extraProps: Record<string, unknown> = {}
 ): TreeNode {
   const styleProps = extractStyles(style)
   const isArabic = isArabicText(text)
@@ -207,7 +249,8 @@ function buildTextNode(
       ...(isSingleLine ? {} : { w: 'fill' }),
       ...(styleProps.fontWeight ? { weight: styleProps.fontWeight } : {}),
       ...(textAlign ? { textAlign } : {}),
-      ...(styleProps.opacity !== undefined ? { opacity: styleProps.opacity } : {})
+      ...(styleProps.opacity !== undefined ? { opacity: styleProps.opacity } : {}),
+      ...extraProps
     },
     children: [text]
   }
@@ -236,20 +279,14 @@ function assignVisualProps(
   resolvedBgImage: string | null
 ): void {
   const rw = Math.round(rect.width)
-  const isButtonOrBadge =
-    props.name &&
-    typeof props.name === 'string' &&
-    (props.name.includes('Button') ||
-      props.name.includes('Link') ||
-      props.name.includes('Badge') ||
-      props.name.includes('Chip'))
+  const rh = Math.round(rect.height)
+  const isButtonOrBadge = hasNamePart(props, ['Button', 'Link', 'Badge', 'Chip'])
+  const isMediaOrAvatar = hasNamePart(props, ['Avatar', 'Icon', 'Image'])
 
-  const isMediaOrAvatar =
-    props.name &&
-    typeof props.name === 'string' &&
-    (props.name.includes('Avatar') || props.name.includes('Icon') || props.name.includes('Image'))
-
-  if (isButtonOrBadge) {
+  if (styleProps.position === 'absolute') {
+    props.w = rw > 0 ? rw : 1
+    props.h = rh > 0 ? rh : 1
+  } else if (isButtonOrBadge) {
     // Buttons and badges hug their contents + padding for fluid text editing
     props._counterAxisSizing = 'HUG'
     props._primaryAxisSizing = 'HUG'
@@ -271,13 +308,18 @@ function assignVisualProps(
   assignBorderAndCornerProps(props, styleProps)
 }
 
+function hasNamePart(props: Record<string, unknown>, parts: string[]): boolean {
+  const name = props.name
+  return typeof name === 'string' && parts.some((part) => name.includes(part))
+}
+
 function assignFlexGridProps(
   props: Record<string, unknown>,
   layoutProps: ReturnType<typeof extractLayout>
 ): void {
   props.flex = layoutProps.flex ?? 'row'
   if (layoutProps.wrap) props.wrap = true
-  props.gap = layoutProps.gap ?? 24
+  props.gap = layoutProps.gap ?? 0
   if (layoutProps.rowGap) props.rowGap = layoutProps.rowGap
   if (layoutProps.justify && layoutProps.justify !== 'start') props.justify = layoutProps.justify
   if (layoutProps.items && layoutProps.items !== 'start') props.items = layoutProps.items
@@ -286,23 +328,46 @@ function assignFlexGridProps(
 function assignBlockProps(
   props: Record<string, unknown>,
   layoutProps: ReturnType<typeof extractLayout>,
-  tag: string
+  inferredGap: number
 ): void {
   props.flex = 'col'
-  const isSection =
-    tag === 'section' || tag === 'main' || tag === 'article' || tag === 'header' || tag === 'footer'
-  props.gap = layoutProps.gap ?? (isSection ? 32 : 16)
+  props.gap = layoutProps.gap ?? inferredGap
   props.items = layoutProps.items ?? 'stretch'
+}
+
+function inferBlockGap(el: Element, win: Window): number {
+  const rects = Array.from(el.children)
+    .filter((child) => {
+      const childStyle = win.getComputedStyle(child)
+      return (
+        childStyle.display !== 'none' &&
+        childStyle.position !== 'absolute' &&
+        childStyle.position !== 'fixed'
+      )
+    })
+    .map((child) => child.getBoundingClientRect())
+    .filter((rect) => rect.width > 0 || rect.height > 0)
+  const gaps: number[] = []
+  for (let index = 1; index < rects.length; index++) {
+    const gap = Math.round(rects[index].top - rects[index - 1].bottom)
+    if (gap >= 0 && gap <= 256) gaps.push(gap)
+  }
+  if (gaps.length === 0) return 0
+  gaps.sort((left, right) => left - right)
+  return gaps[Math.floor(gaps.length / 2)]
 }
 
 function assignLayoutProps(
   props: Record<string, unknown>,
   layoutProps: ReturnType<typeof extractLayout>,
   style: CSSStyleDeclaration,
-  tag: string
+  el: Element,
+  win: Window
 ): void {
-  if (style.position === 'absolute') {
+  if (style.position === 'absolute' || style.position === 'fixed') {
     props.position = 'absolute'
+    const rect = el.getBoundingClientRect()
+    Object.assign(props, absolutePositionProps(el, style, rect))
   }
 
   const display = style.display
@@ -315,7 +380,7 @@ function assignLayoutProps(
   if (isFlexOrGrid) {
     assignFlexGridProps(props, layoutProps)
   } else {
-    assignBlockProps(props, layoutProps, tag)
+    assignBlockProps(props, layoutProps, inferBlockGap(el, win))
   }
 
   if (layoutProps.dir) props.dir = layoutProps.dir
@@ -332,7 +397,8 @@ function buildContainerProps(
   name: string,
   parentWidth: number,
   isParentRowOrGrid: boolean,
-  baseUrl: string
+  baseUrl: string,
+  win: Window
 ): Record<string, unknown> {
   const styleProps = extractStyles(style)
   const layoutProps = extractLayout(style)
@@ -340,8 +406,11 @@ function buildContainerProps(
   const resolvedBgImage = bgImageUrl ? resolveImageUrl(bgImageUrl, baseUrl) : null
 
   const props: Record<string, unknown> = { name }
+  if (style.position === 'absolute' || style.position === 'fixed') {
+    styleProps.position = 'absolute'
+  }
   assignVisualProps(props, styleProps, rect, parentWidth, isParentRowOrGrid, resolvedBgImage)
-  assignLayoutProps(props, layoutProps, style, el.tagName.toLowerCase())
+  assignLayoutProps(props, layoutProps, style, el, win)
   return props
 }
 
@@ -412,14 +481,8 @@ function walkElement(
   const name = semanticName(el)
   const tag = el.tagName.toLowerCase()
 
-  if (isImageElement(el)) return buildImageNode(el, style, rect, baseUrl)
-  if (tag === 'svg') return buildSvgNode(el, style, rect)
-
-  if (isTextLeafElement(el)) {
-    const text = extractTextContent(el)
-    if (!text) return null
-    return buildTextNode(text, style, name, defaultTextColor)
-  }
+  const leaf = buildLeafElement(el, style, rect, baseUrl, name, tag, defaultTextColor)
+  if (leaf !== undefined) return leaf
 
   const currentWidth = Math.round(rect.width) || parentWidth
   const display = style.display
@@ -428,7 +491,16 @@ function walkElement(
     display === 'inline-grid' ||
     ((display === 'flex' || display === 'inline-flex') && !style.flexDirection.startsWith('column'))
 
-  const props = buildContainerProps(el, style, rect, name, parentWidth, isParentRowOrGrid, baseUrl)
+  const props = buildContainerProps(
+    el,
+    style,
+    rect,
+    name,
+    parentWidth,
+    isParentRowOrGrid,
+    baseUrl,
+    win
+  )
 
   let currentTextColor = defaultTextColor
   if (typeof props.bg === 'string' && props.bg) {
@@ -452,4 +524,27 @@ function walkElement(
   }
 
   return { type: 'frame', props, children }
+}
+
+function buildLeafElement(
+  el: Element,
+  style: CSSStyleDeclaration,
+  rect: DOMRect,
+  baseUrl: string,
+  name: string,
+  tag: string,
+  defaultTextColor: string
+): TreeNode | null | undefined {
+  if (isImageElement(el)) return buildImageNode(el, style, rect, baseUrl)
+  if (tag === 'svg') return buildSvgNode(el, style, rect)
+  if (!isTextLeafElement(el)) return undefined
+
+  const text = extractTextContent(el)
+  if (!text) return null
+  const positionProps = absolutePositionProps(el, style, rect)
+  if (positionProps.position === 'absolute' && rect.width > 0) {
+    positionProps.w = Math.round(rect.width)
+    positionProps.textAutoResize = 'height'
+  }
+  return buildTextNode(text, style, name, defaultTextColor, positionProps)
 }

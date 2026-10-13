@@ -210,6 +210,11 @@ export const CAPABILITY_EVIDENCE: Record<string, CapabilityEvidence> = {
     acceptance: 'Execute prototype actions (navigate, open overlay, close overlay, scroll to, change to).',
     tests: ['tests/engine/app/prototype-interaction.test.ts']
   },
+  'PROTOTYPING.ANIMATIONS-TRANSITIONS': {
+    acceptance:
+      'Persist transition type, direction, duration, and easing through `.fig` round-trip and undoable edits.',
+    tests: ['tests/engine/fig/roundtrip/prototype.test.ts', 'tests/engine/editor/prototype-undo.test.ts']
+  },
   'PROTOTYPING.OVERLAYS': {
     acceptance: 'Render positioned modal overlays with backdrop blur and outside-click dismissal.',
     tests: ['tests/engine/app/prototype-interaction.test.ts']

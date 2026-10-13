@@ -1,159 +1,137 @@
+import {
+  DESIGN_SYSTEM_COLLECTION_NAME,
+  getDesignCollectionId,
+  setDesignCollectionId,
+  tokenVariableName,
+  type TokenRef
+} from '@nex-design/core/design-system'
 import type { Editor } from '@nex-design/core/editor'
-import type { Fill, VariableValue } from '@nex-design/core/scene-graph'
+import { randomHex } from '@nex-design/core/random'
+import type { Fill, VariableType, VariableValue } from '@nex-design/core/scene-graph'
 
-import { fillToGradientString, randomHex, type VariableItem } from './utils'
+import { fillToGradientString } from './utils'
 
+/** The document's design-system collection, created (and recorded) on first use. */
 export function ensureDefaultCollection(editor: Editor) {
-  const cols = editor.getCollections()
-  if (cols.length === 0) {
-    const colId = 'col:default'
-    const col = {
-      id: colId,
-      name: 'Default',
-      modes: [{ modeId: 'default', name: 'Mode 1' }],
-      defaultModeId: 'default',
-      variableIds: []
-    }
-    editor.addCollection(col)
-    return col
+  const existingId = getDesignCollectionId(editor.graph)
+  const existing = existingId ? editor.getCollection(existingId) : undefined
+  if (existing) return existing
+  const collection = {
+    id: `col:${randomHex(4)}`,
+    name: DESIGN_SYSTEM_COLLECTION_NAME,
+    modes: [{ modeId: 'default', name: 'Default' }],
+    defaultModeId: 'default',
+    variableIds: []
   }
-  return cols[0]
+  editor.undo.beginBatch('Create design system')
+  editor.addCollection(collection)
+  setDesignCollectionId(editor.graph, collection.id)
+  editor.undo.commitBatch()
+  return collection
 }
 
-export function initDefaultTypographyVariables(editor: Editor, variables: VariableItem[]) {
+function addTokenVariable(
+  editor: Editor,
+  label: string,
+  ref: TokenRef,
+  type: VariableType,
+  value: VariableValue
+) {
   const col = ensureDefaultCollection(editor)
-  const defaults = [
-    { name: 'font-size-display-1', val: 72 },
-    { name: 'font-size-heading-1', val: 54 },
-    { name: 'font-size-heading-2', val: 40 },
-    { name: 'font-size-heading-3', val: 32 },
-    { name: 'font-size-body', val: 16 },
-    { name: 'font-size-button', val: 14 }
-  ]
-
-  editor.undo.beginBatch('Initialize typography variables')
-  let changed = false
-  for (const item of defaults) {
-    const exists = variables.find((v) => v.type === 'FLOAT' && v.name === item.name)
-    if (!exists) {
-      const id = `var:${randomHex(8)}`
-      editor.addVariable({
-        id,
-        name: item.name,
-        type: 'FLOAT',
-        collectionId: col.id,
-        valuesByMode: { default: item.val },
-        description: '',
-        hiddenFromPublishing: false
-      })
-      changed = true
-    }
-  }
+  editor.undo.beginBatch(label)
+  editor.addVariable({
+    id: `var:${randomHex(4)}`,
+    name: tokenVariableName(ref),
+    type,
+    collectionId: col.id,
+    valuesByMode: { [col.defaultModeId]: value },
+    description: '',
+    hiddenFromPublishing: false
+  })
   editor.undo.commitBatch()
-  if (changed) {
-    editor.requestRender()
-    editor.state.sceneVersion++
-  }
+  editor.requestRender()
 }
 
 export function addColorVariable(editor: Editor) {
-  const col = ensureDefaultCollection(editor)
-  const id = `var:${randomHex(8)}`
-  editor.undo.beginBatch('Add color variable')
-  editor.addVariable({
-    id,
-    name: 'color-' + randomHex(4),
-    type: 'COLOR',
-    collectionId: col.id,
-    valuesByMode: { default: { r: 0.9, g: 0.2, b: 0.2, a: 1 } },
-    description: '',
-    hiddenFromPublishing: false
-  })
-  editor.undo.commitBatch()
-  editor.requestRender()
-  editor.state.sceneVersion++
+  addTokenVariable(
+    editor,
+    'Add color token',
+    { group: 'colors', token: `color-${randomHex(2)}` },
+    'COLOR',
+    { r: 0.9, g: 0.2, b: 0.2, a: 1 }
+  )
 }
 
 export function addSpacingVariable(editor: Editor) {
-  const col = ensureDefaultCollection(editor)
-  const id = `var:${randomHex(8)}`
-  editor.undo.beginBatch('Add float variable')
-  editor.addVariable({
-    id,
-    name: 'spacing-' + randomHex(4),
-    type: 'FLOAT',
-    collectionId: col.id,
-    valuesByMode: { default: 16 },
-    description: '',
-    hiddenFromPublishing: false
-  })
-  editor.undo.commitBatch()
-  editor.requestRender()
-  editor.state.sceneVersion++
+  addTokenVariable(
+    editor,
+    'Add spacing token',
+    { group: 'spacing', token: `space-${randomHex(2)}` },
+    'FLOAT',
+    16
+  )
 }
 
 export function addFontVariable(editor: Editor) {
-  const col = ensureDefaultCollection(editor)
-  const id = `var:${randomHex(8)}`
-  editor.undo.beginBatch('Add font variable')
-  editor.addVariable({
-    id,
-    name: 'font-' + randomHex(4),
-    type: 'STRING',
-    collectionId: col.id,
-    valuesByMode: { default: 'Inter' },
-    description: '',
-    hiddenFromPublishing: false
-  })
-  editor.undo.commitBatch()
-  editor.requestRender()
-  editor.state.sceneVersion++
+  addTokenVariable(
+    editor,
+    'Add font token',
+    { group: 'typography', token: `font-${randomHex(2)}`, prop: 'fontFamily' },
+    'STRING',
+    'Inter'
+  )
 }
 
 export function removeVariable(editor: Editor, id: string) {
-  editor.undo.beginBatch('Remove variable')
   editor.removeVariable(id)
-  editor.undo.commitBatch()
   editor.requestRender()
-  editor.state.sceneVersion++
 }
 
 export function updateVariableName(editor: Editor, id: string, name: string) {
   editor.renameVariable(id, name)
-  editor.state.sceneVersion++
+  editor.requestRender()
+}
+
+/** The default mode of the variable's collection — never assume a literal 'default' id. */
+function defaultModeIdFor(editor: Editor, id: string): string {
+  const variable = editor.graph.variables.get(id)
+  const collection = variable ? editor.getCollection(variable.collectionId) : undefined
+  return collection?.defaultModeId ?? ensureDefaultCollection(editor).defaultModeId
 }
 
 export function updateVariableValue(editor: Editor, id: string, val: VariableValue) {
-  editor.updateVariableValue(id, 'default', val)
-  editor.state.sceneVersion++
+  editor.updateVariableValue(id, defaultModeIdFor(editor, id), val)
+  editor.requestRender()
+}
+
+/** `colors/x` ⇄ `gradient-x` (and the legacy `color-x`): gradients are STRING variables. */
+function paletteRename(name: string, toGradient: boolean): string | null {
+  if (toGradient) {
+    const base = name.match(/^(?:colors\/|color-)(.+)$/)?.[1]
+    return base ? `gradient-${base}` : null
+  }
+  const base = name.match(/^gradient-(.+)$/)?.[1]
+  return base ? tokenVariableName({ group: 'colors', token: base }) : null
 }
 
 export function handleFillUpdate(editor: Editor, id: string, newFill: Fill) {
   const v = editor.graph.variables.get(id)
   if (!v) return
 
+  const toGradient = newFill.type.startsWith('GRADIENT')
+  if (!toGradient && newFill.type !== 'SOLID') return
   editor.undo.beginBatch('Update palette style')
-  if (newFill.type === 'SOLID') {
-    if (v.type !== 'COLOR') {
-      v.type = 'COLOR'
-      if (v.name.startsWith('gradient-')) {
-        const baseName = v.name.substring(9)
-        editor.renameVariable(id, 'color-' + baseName)
-      }
-    }
-    editor.updateVariableValue(id, 'default', newFill.color)
-  } else if (newFill.type.startsWith('GRADIENT')) {
-    const cssGradient = fillToGradientString(newFill)
-    if (v.type !== 'STRING') {
-      v.type = 'STRING'
-      if (v.name.startsWith('color-')) {
-        const baseName = v.name.substring(6)
-        editor.renameVariable(id, 'gradient-' + baseName)
-      }
-    }
-    editor.updateVariableValue(id, 'default', cssGradient)
+  const wantedType: VariableType = toGradient ? 'STRING' : 'COLOR'
+  if (v.type !== wantedType) {
+    editor.setVariableType(id, wantedType)
+    const renamed = paletteRename(v.name, toGradient)
+    if (renamed) editor.renameVariable(id, renamed)
   }
+  editor.updateVariableValue(
+    id,
+    defaultModeIdFor(editor, id),
+    toGradient ? fillToGradientString(newFill) : newFill.color
+  )
   editor.undo.commitBatch()
   editor.requestRender()
-  editor.state.sceneVersion++
 }

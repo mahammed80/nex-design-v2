@@ -8,17 +8,24 @@ const emit = defineEmits<{
 
 const { signIn } = useAuthStore()
 
-const email = ref('mohamed@example.com')
-const password = ref('••••••••••••')
+const email = ref('')
+const password = ref('')
 const showPassword = ref(false)
 const rememberMe = ref(true)
 const errorMessage = ref('')
+const isLoading = ref(false)
 
-function handleSignIn() {
+async function handleSignIn() {
+  if (isLoading.value) return
   errorMessage.value = ''
-  const res = signIn(email.value, password.value)
-  if (!res.success) {
-    errorMessage.value = res.message
+  isLoading.value = true
+  try {
+    const res = await signIn(email.value, password.value)
+    if (!res.success) {
+      errorMessage.value = res.message
+    }
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -86,9 +93,10 @@ function handleSignIn() {
 
       <button
         type="submit"
-        class="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 font-semibold text-white shadow-lg shadow-rose-600/20 transition"
+        :disabled="isLoading"
+        class="w-full py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 font-semibold text-white shadow-lg shadow-rose-600/20 transition disabled:opacity-50"
       >
-        Sign In
+        {{ isLoading ? 'Signing In…' : 'Sign In' }}
       </button>
     </form>
 

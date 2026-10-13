@@ -1,4 +1,4 @@
-export type { TransitionType } from '@nex-design/core/scene-graph'
+export type { TransitionDirection, TransitionType } from '@nex-design/core/scene-graph'
 
 export type ZoomMode = 'FIT' | 'FILL' | '100%'
 
@@ -14,8 +14,6 @@ export interface DevicePreset {
   hasHomeIndicator?: boolean
   os: 'ios' | 'android' | 'desktop' | 'none'
 }
-
-export type TransitionDirection = 'LEFT' | 'RIGHT' | 'TOP' | 'BOTTOM'
 
 export interface PresentationState {
   isOpen: boolean

@@ -11,7 +11,7 @@ import CollabPanel from '@/components/CollabPanel/CollabPanel.vue'
 import ChatPanel from './ChatPanel.vue'
 import DevInspectorPanel from './DevMode/DevInspectorPanel.vue'
 import DesignPanel from './DesignPanel.vue'
-import PrototypePanel from './properties/PrototypePanel.vue'
+import PrototypePanel from './properties/PrototypePanel/PrototypePanel.vue'
 import ZoomDropdown from './ZoomDropdown.vue'
 
 const { activeTab } = useAIChat()

@@ -2,7 +2,8 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
-import { applyDesignMarkdown } from '@/app/design-system/design-markdown'
+import { applyDesignMarkdown, defaultModeValue } from '@/app/design-system/design-markdown'
+import { DESIGN_TEMPLATES, designTemplateMarkdown } from '@/app/design-system/templates'
 import StyleGuideColors from '@/components/StyleGuideEditor/StyleGuideColors.vue'
 import StyleGuideDesignMarkdown from '@/components/StyleGuideEditor/StyleGuideDesignMarkdown.vue'
 import StyleGuideLogos from '@/components/StyleGuideEditor/StyleGuideLogos.vue'
@@ -14,17 +15,24 @@ import {
   addSpacingVariable as addSpacing,
   ensureDefaultCollection,
   handleFillUpdate as handleFill,
-  initDefaultTypographyVariables,
   removeVariable as removeVar,
   updateVariableName as renameVar,
   updateVariableValue as updateVal
 } from '@/components/StyleGuideEditor/store-helpers'
+import { useStyleGuideCategories } from '@/components/StyleGuideEditor/useStyleGuideCategories'
 import {
   DESIGN_SYSTEM_TUTORIAL_STEPS,
-  randomHex,
   STYLE_GUIDE_PRESETS,
-  type DesignPreset
+  type DesignPreset,
+  type StyleGuideVariable
 } from '@/components/StyleGuideEditor/utils'
+import {
+  exportDesignTokens,
+  findStyleGuidePage,
+  readDesignSystem,
+  type DesignExportFormat
+} from '@nex-design/core/design-system'
+import { randomHex } from '@nex-design/core/random'
 import type { Fill, VariableValue } from '@nex-design/core/scene-graph'
 
 const store = useEditorStore()
@@ -34,45 +42,31 @@ const showTutorial = ref(false)
 const activeTutorialStep = ref(1)
 const showPresetModal = ref(false)
 const showExportModal = ref(false)
-const exportFormat = ref<'css' | 'tailwind' | 'json'>('css')
+const exportFormat = ref<DesignExportFormat>('css')
 const copiedCode = ref(false)
 
-const variables = computed(() => {
+const variables = computed<StyleGuideVariable[]>(() => {
   void store.state.sceneVersion
-  return [...store.graph.variables.values()]
+  return [...store.graph.variables.values()].map((v) => ({
+    ...v,
+    value: defaultModeValue(store.graph, v)
+  }))
 })
 
-const colorPaletteVariables = computed(() =>
-  variables.value.filter(
-    (v) => v.type === 'COLOR' || (v.type === 'STRING' && v.name.startsWith('gradient-'))
-  )
-)
-const fontSizeVariables = computed(() =>
-  variables.value.filter((v) => v.type === 'FLOAT' && v.name.startsWith('font-size-'))
-)
-const spacingVariables = computed(() =>
-  variables.value.filter((v) => v.type === 'FLOAT' && !v.name.startsWith('font-size-'))
-)
-const fontVariables = computed(() =>
-  variables.value.filter(
-    (v) =>
-      v.type === 'STRING' &&
-      (v.name.startsWith('font-') || v.name.startsWith('font-family-')) &&
-      !v.name.startsWith('font-size-')
-  )
-)
-const logoVariables = computed(() =>
-  variables.value.filter((v) => v.type === 'STRING' && v.name.startsWith('logo-'))
-)
+const {
+  colorPaletteVariables,
+  fontSizeVariables,
+  fontVariables,
+  spacingVariables,
+  logoVariables,
+  getFontSizeVal,
+  getFontSizeLabel
+} = useStyleGuideCategories(variables)
 
 const previewFontFamily = computed(() => {
-  if (fontVariables.value.length > 0) {
-    return fontVariables.value[0].valuesByMode.default as string
-  }
-  return 'Inter'
+  const value = fontVariables.value[0]?.value
+  return typeof value === 'string' ? value : 'Inter'
 })
-
-initDefaultTypographyVariables(store, variables.value)
 
 function onAddColor() {
   addColor(store)
@@ -96,73 +90,28 @@ function onUpdateFill(id: string, fill: Fill) {
   handleFill(store, id, fill)
 }
 
-function getFontSizeVal(name: string): number {
-  const v = variables.value.find((v) => v.type === 'FLOAT' && v.name === name)
-  return v ? (v.valuesByMode.default as number) : 16
-}
-
-function getFontSizeLabel(name: string): string {
-  return name
-    .replace('font-size-', '')
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-}
-
-// ── 1-Click Starter Preset Loader ──
-function loadPreset(preset: DesignPreset) {
+// ── 1-Click Starter Preset / Template Loader ──
+function loadPreset(preset: Pick<DesignPreset, 'markdown'>) {
   applyDesignMarkdown(store, preset.markdown)
   showPresetModal.value = false
-  store.state.sceneVersion++
-  store.requestRender()
 }
 
 // ── Return to Canvas / First Non-StyleGuide Page ──
 function returnToCanvas() {
-  const pages = store.pages
-  const nonStyleGuidePage = pages.find((p) => p.name !== 'Style Guide')
+  const styleGuideId = findStyleGuidePage(store.graph)?.id
+  const nonStyleGuidePage = store.graph.getPages().find((p) => p.id !== styleGuideId)
   if (nonStyleGuidePage) {
-    store.switchPage(nonStyleGuidePage.id)
+    void store.switchPage(nonStyleGuidePage.id)
+  } else {
+    const newPageId = store.addPage('Page 1')
+    void store.switchPage(newPageId)
   }
 }
 
-// ── Code Generator (CSS / Tailwind / JSON) ──
+// ── Code Generator (CSS / Tailwind v4 / JSON / W3C DTCG) ──
 const generatedTokensCode = computed(() => {
-  if (exportFormat.value === 'css') {
-    let css = ':root {\n  /* Colors */\n'
-    for (const v of colorPaletteVariables.value) {
-      css += `  --${v.name}: ${v.valuesByMode.default};\n`
-    }
-    css += '\n  /* Typography */\n'
-    for (const v of fontVariables.value) {
-      css += `  --${v.name}: '${v.valuesByMode.default}', sans-serif;\n`
-    }
-    for (const v of fontSizeVariables.value) {
-      css += `  --${v.name}: ${v.valuesByMode.default}px;\n`
-    }
-    css += '\n  /* Spacing */\n'
-    for (const v of spacingVariables.value) {
-      css += `  --${v.name}: ${v.valuesByMode.default}px;\n`
-    }
-    css += '}'
-    return css
-  }
-
-  if (exportFormat.value === 'tailwind') {
-    const theme = {
-      colors: Object.fromEntries(colorPaletteVariables.value.map((v) => [v.name, v.valuesByMode.default])),
-      fontFamily: Object.fromEntries(fontVariables.value.map((v) => [v.name, [v.valuesByMode.default]])),
-      spacing: Object.fromEntries(spacingVariables.value.map((v) => [v.name, `${v.valuesByMode.default}px`]))
-    }
-    return `// tailwind.config.js\nmodule.exports = {\n  theme: {\n    extend: ${JSON.stringify(theme, null, 6).slice(0, -1)}    }\n  }\n}`
-  }
-
-  // JSON Design Tokens
-  const json: Record<string, unknown> = {}
-  for (const v of variables.value) {
-    json[v.name] = { value: v.valuesByMode.default, type: v.type.toLowerCase() }
-  }
-  return JSON.stringify(json, null, 2)
+  void store.state.sceneVersion
+  return exportDesignTokens(readDesignSystem(store.graph), exportFormat.value)
 })
 
 function copyCode() {
@@ -197,7 +146,7 @@ async function handleLogoUpload(e: Event) {
   const hash = store.storeImage(bytes)
 
   if (replacingLogoId.value) {
-    const prevVal = store.graph.variables.get(replacingLogoId.value)?.valuesByMode.default as string
+    const prevVal = String(variables.value.find((v) => v.id === replacingLogoId.value)?.value ?? '')
     onUpdateVal(replacingLogoId.value, hash)
     if (prevVal && imageSrcs[prevVal]) {
       URL.revokeObjectURL(imageSrcs[prevVal])
@@ -206,7 +155,7 @@ async function handleLogoUpload(e: Event) {
     replacingLogoId.value = null
   } else {
     const col = ensureDefaultCollection(store)
-    const id = `var:${randomHex(8)}`
+    const id = `var:${randomHex(4)}`
     const cleanName =
       'logo-' +
       file.name
@@ -218,7 +167,7 @@ async function handleLogoUpload(e: Event) {
       name: cleanName,
       type: 'STRING',
       collectionId: col.id,
-      valuesByMode: { default: hash },
+      valuesByMode: { [col.defaultModeId]: hash },
       description: '',
       hiddenFromPublishing: false
     })
@@ -250,9 +199,9 @@ function resolveImageHash(hash: string) {
 }
 
 function deleteLogoVariable(id: string) {
-  const v = store.graph.variables.get(id)
+  const v = variables.value.find((item) => item.id === id)
   if (v && v.type === 'STRING') {
-    const hash = v.valuesByMode.default as string
+    const hash = String(v.value ?? '')
     if (imageSrcs[hash]) {
       URL.revokeObjectURL(imageSrcs[hash])
       delete imageSrcs[hash]
@@ -269,11 +218,17 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="absolute inset-0 flex flex-col bg-zinc-950/95 backdrop-blur-3xl p-6 lg:p-10 overflow-y-auto z-40 select-none scrollbar-thin text-white">
+  <div
+    class="absolute inset-0 flex flex-col bg-zinc-950/95 backdrop-blur-3xl p-6 lg:p-10 overflow-y-auto z-40 select-none scrollbar-thin text-white"
+  >
     <!-- ── TOP GLASS NAV BAR ── -->
-    <header class="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_16px_36px_rgba(0,0,0,0.5)] shrink-0">
+    <header
+      class="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-[28px] border border-white/15 bg-white/5 backdrop-blur-2xl p-5 shadow-[0_16px_36px_rgba(0,0,0,0.5)] shrink-0"
+    >
       <div class="flex items-center gap-3.5">
-        <div class="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-[0_0_24px_rgba(225,29,72,0.45)]">
+        <div
+          class="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-rose-600 to-red-600 text-white shadow-[0_0_24px_rgba(225,29,72,0.45)]"
+        >
           <icon-lucide-layers class="size-5" />
         </div>
         <div>
@@ -281,12 +236,15 @@ onBeforeUnmount(() => {
             <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
               Style Guide & Design Tokens
             </h1>
-            <span class="rounded-full bg-rose-500/15 px-2.5 py-0.5 text-[11px] font-mono font-bold text-rose-300 border border-rose-500/30">
+            <span
+              class="rounded-full bg-rose-500/15 px-2.5 py-0.5 text-[11px] font-mono font-bold text-rose-300 border border-rose-500/30"
+            >
               {{ variables.length }} Tokens
             </span>
           </div>
           <p class="text-xs text-zinc-400 mt-0.5">
-            Single source of truth. Changes instantly propagate to shapes and code generators across pages.
+            Single source of truth. Changes instantly propagate to shapes and code generators across
+            pages.
           </p>
         </div>
       </div>
@@ -344,7 +302,9 @@ onBeforeUnmount(() => {
       >
         <div class="flex items-center justify-between border-b border-rose-500/20 pb-4 mb-5">
           <div class="flex items-center gap-3">
-            <div class="flex size-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+            <div
+              class="flex size-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30"
+            >
               <icon-lucide-book-open class="size-4.5" />
             </div>
             <div>
@@ -352,7 +312,8 @@ onBeforeUnmount(() => {
                 Design System Architecture & Engineering Principles
               </h2>
               <p class="text-xs text-zinc-400">
-                Step-by-step principles for structuring bulletproof design tokens and scalable UI component libraries.
+                Step-by-step principles for structuring bulletproof design tokens and scalable UI
+                component libraries.
               </p>
             </div>
           </div>
@@ -397,7 +358,9 @@ onBeforeUnmount(() => {
                 {{ DESIGN_SYSTEM_TUTORIAL_STEPS[activeTutorialStep - 1].summary }}
               </p>
             </div>
-            <span class="rounded-full bg-rose-500/20 px-3 py-1 text-[11px] font-mono text-rose-300 font-bold shrink-0 border border-rose-500/30">
+            <span
+              class="rounded-full bg-rose-500/20 px-3 py-1 text-[11px] font-mono text-rose-300 font-bold shrink-0 border border-rose-500/30"
+            >
               Step {{ activeTutorialStep }} of 5
             </span>
           </div>
@@ -413,7 +376,9 @@ onBeforeUnmount(() => {
             </li>
           </ul>
 
-          <div class="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-200">
+          <div
+            class="mt-4 flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-200"
+          >
             <span class="font-bold shrink-0">Architecture Best Practice:</span>
             <span>{{ DESIGN_SYSTEM_TUTORIAL_STEPS[activeTutorialStep - 1].proTip }}</span>
           </div>
@@ -507,12 +472,16 @@ onBeforeUnmount(() => {
       >
         <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
           <div class="flex items-center gap-2.5">
-            <div class="flex size-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+            <div
+              class="flex size-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30"
+            >
               <icon-lucide-layers class="size-5" />
             </div>
             <div>
               <h3 class="text-base font-bold text-white">Starter Design System Presets</h3>
-              <p class="text-xs text-zinc-400">Instantly apply brand colors, typography hierarchy, and spacing tokens.</p>
+              <p class="text-xs text-zinc-400">
+                Instantly apply brand colors, typography hierarchy, and spacing tokens.
+              </p>
             </div>
           </div>
           <button
@@ -534,7 +503,9 @@ onBeforeUnmount(() => {
             <div>
               <div class="flex items-center gap-2 mb-2">
                 <span class="text-xl">{{ preset.icon }}</span>
-                <h4 class="text-sm font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4
+                  class="text-sm font-bold text-white group-hover:text-rose-300 transition-colors"
+                >
                   {{ preset.name }}
                 </h4>
               </div>
@@ -548,6 +519,22 @@ onBeforeUnmount(() => {
               <icon-lucide-arrow-right class="size-3.5" />
             </button>
           </div>
+        </div>
+
+        <h4 class="mt-6 mb-3 text-xs font-bold uppercase tracking-wider text-zinc-400">
+          DESIGN.md templates
+        </h4>
+        <div class="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 scrollbar-thin">
+          <button
+            v-for="template in DESIGN_TEMPLATES"
+            :key="template.id"
+            :data-test-id="`style-guide-template-${template.id}`"
+            class="flex flex-col items-start gap-1 rounded-xl border border-white/10 bg-white/5 p-3 text-left transition-colors hover:border-rose-500/40 hover:bg-white/10 cursor-pointer"
+            @click="loadPreset({ markdown: designTemplateMarkdown(template.file) })"
+          >
+            <span class="text-xs font-bold text-white">{{ template.name }}</span>
+            <span class="text-[11px] leading-snug text-zinc-400">{{ template.description }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -564,12 +551,16 @@ onBeforeUnmount(() => {
       >
         <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-5">
           <div class="flex items-center gap-2.5">
-            <div class="flex size-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
+            <div
+              class="flex size-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30"
+            >
               <icon-lucide-code-2 class="size-5" />
             </div>
             <div>
               <h3 class="text-base font-bold text-white">Export Design System Tokens</h3>
-              <p class="text-xs text-zinc-400">Copy code for use in frontend codebases and stylesheets.</p>
+              <p class="text-xs text-zinc-400">
+                Copy code for use in frontend codebases and stylesheets.
+              </p>
             </div>
           </div>
           <button
@@ -584,32 +575,54 @@ onBeforeUnmount(() => {
         <div class="flex items-center gap-2 mb-4 bg-white/5 p-1 rounded-xl border border-white/10">
           <button
             class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer"
-            :class="exportFormat === 'css' ? 'bg-rose-600 text-white' : 'text-zinc-400 hover:text-white'"
+            :class="
+              exportFormat === 'css' ? 'bg-rose-600 text-white' : 'text-zinc-400 hover:text-white'
+            "
             @click="exportFormat = 'css'"
           >
             CSS Variables
           </button>
           <button
             class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer"
-            :class="exportFormat === 'tailwind' ? 'bg-rose-600 text-white' : 'text-zinc-400 hover:text-white'"
+            :class="
+              exportFormat === 'tailwind'
+                ? 'bg-rose-600 text-white'
+                : 'text-zinc-400 hover:text-white'
+            "
             @click="exportFormat = 'tailwind'"
           >
-            Tailwind Config
+            Tailwind v4
           </button>
           <button
             class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer"
-            :class="exportFormat === 'json' ? 'bg-rose-600 text-white' : 'text-zinc-400 hover:text-white'"
+            :class="
+              exportFormat === 'json' ? 'bg-rose-600 text-white' : 'text-zinc-400 hover:text-white'
+            "
             @click="exportFormat = 'json'"
           >
             JSON Tokens
           </button>
+          <button
+            class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer"
+            :class="
+              exportFormat === 'dtcg' ? 'bg-rose-600 text-white' : 'text-zinc-400 hover:text-white'
+            "
+            @click="exportFormat = 'dtcg'"
+          >
+            W3C DTCG
+          </button>
         </div>
 
         <!-- Code Preview Box -->
-        <pre class="h-64 overflow-y-auto rounded-2xl border border-white/10 bg-black/70 p-4 font-mono text-xs text-zinc-300 scrollbar-thin select-text">{{ generatedTokensCode }}</pre>
+        <pre
+          class="h-64 overflow-y-auto rounded-2xl border border-white/10 bg-black/70 p-4 font-mono text-xs text-zinc-300 scrollbar-thin select-text"
+          >{{ generatedTokensCode }}</pre
+        >
 
         <div class="mt-4 flex items-center justify-between">
-          <span class="text-xs text-zinc-400 font-mono">{{ variables.length }} variables exported</span>
+          <span class="text-xs text-zinc-400 font-mono"
+            >{{ variables.length }} variables exported</span
+          >
           <button
             class="flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-xs font-bold shadow-md cursor-pointer transition-all"
             @click="copyCode"

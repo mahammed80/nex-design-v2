@@ -219,6 +219,19 @@ function updateSubscriberStatus(id: string, status: SubscriptionStatus) {
   if (index !== -1) {
     subscribers.value[index].status = status
     saveSubscribersToStorage(subscribers.value)
+
+    // Sync live with nex-design.online backend if user is numeric ID
+    if (/^\d+$/.test(id)) {
+      void fetch('https://nex-design.online/api/admin/update_user.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          user_id: Number(id),
+          status
+        })
+      }).catch((err) => console.warn('[NexDesign Admin] Cloud status sync failed:', err))
+    }
   }
 }
 
@@ -227,6 +240,63 @@ function updateSubscriberPlan(id: string, planId: string) {
   if (index !== -1) {
     subscribers.value[index].planId = planId
     saveSubscribersToStorage(subscribers.value)
+
+    // Sync live with nex-design.online backend if user is numeric ID
+    if (/^\d+$/.test(id)) {
+      const planSlug = planId.includes('team') ? 'teams' : (planId.includes('pro') ? 'professional' : 'starter')
+      void fetch('https://nex-design.online/api/admin/update_user.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          user_id: Number(id),
+          plan_slug: planSlug
+        })
+      }).catch((err) => console.warn('[NexDesign Admin] Cloud plan sync failed:', err))
+    }
+  }
+}
+
+async function fetchLiveUsers() {
+  try {
+    const res = await fetch('https://nex-design.online/api/admin/users.php?limit=100', {
+      credentials: 'include'
+    })
+    const data = (await res.json()) as {
+      success?: boolean
+      data?: {
+        users?: Array<{
+          id: number | string
+          email: string
+          name: string
+          plan_slug?: string
+          status?: string
+          created_at: string
+          plan_expires_at?: string
+        }>
+      }
+    }
+    if (data?.success && Array.isArray(data.data?.users)) {
+      const liveList: Subscriber[] = data.data.users.map((u) => ({
+        id: String(u.id),
+        email: u.email,
+        name: u.name,
+        planId: u.plan_slug === 'teams' ? 'plan-team' : (u.plan_slug === 'professional' ? 'plan-pro' : 'plan-free'),
+        status: (u.status === 'suspended' ? 'suspended' : (u.status === 'active' ? 'active' : 'trialing')) as SubscriptionStatus,
+        billingCycle: 'monthly',
+        currentPeriodStart: new Date(u.created_at).getTime() || Date.now(),
+        currentPeriodEnd: u.plan_expires_at ? new Date(u.plan_expires_at).getTime() : Date.now() + 30 * 86400000,
+        cancelAtPeriodEnd: false,
+        topupCreditsRemaining: 500,
+        createdAt: new Date(u.created_at).getTime() || Date.now()
+      }))
+      if (liveList.length > 0) {
+        subscribers.value = liveList
+        saveSubscribersToStorage(liveList)
+      }
+    }
+  } catch (err) {
+    console.warn('[NexDesign Admin] Cloud users sync error:', err)
   }
 }
 
@@ -336,6 +406,7 @@ export function useAdminStore() {
     updateSubscriberStatus,
     updateSubscriberPlan,
     topupSubscriberCredits,
+    fetchLiveUsers,
 
     createPlugin,
     updatePlugin,

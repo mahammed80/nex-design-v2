@@ -2,11 +2,14 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 
 import type { Plugin } from 'vite'
 
+import { rewriteCssUrls, validateRemoteUrl } from '@nex-design/core/url-policy'
+
 const PROXY_PATH = '/api/url-fetch'
 const MAX_RESPONSE_BYTES = 5_000_000 // 5 MB
 const FETCH_TIMEOUT_MS = 20_000
 const MAX_CSS_BYTES = 3_000_000 // 3 MB total inline CSS budget
 const MAX_CSS_PER_FILE = 600_000 // 600 KB per CSS file
+const MAX_REDIRECTS = 5
 
 function sendJson(response: ServerResponse, status: number, body: Record<string, unknown>): void {
   response.statusCode = status
@@ -30,6 +33,30 @@ function readBody(request: IncomingMessage): Promise<string> {
   })
 }
 
+function requestUrl(body: Record<string, unknown>): URL {
+  if (typeof body.url !== 'string') throw new Error('url must be a valid HTTP(S) URL')
+  return validateRemoteUrl(body.url)
+}
+
+async function fetchPublicUrl(
+  initialUrl: URL,
+  options: { headers: Record<string, string>; signal: AbortSignal }
+): Promise<Response> {
+  let currentUrl = initialUrl
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
+    const response = await fetch(currentUrl, {
+      headers: options.headers,
+      redirect: 'manual',
+      signal: options.signal
+    })
+    if (response.status < 300 || response.status >= 400) return response
+    const location = response.headers.get('location')
+    if (!location) return response
+    currentUrl = validateRemoteUrl(location, currentUrl.toString())
+  }
+  throw new Error(`URL redirected more than ${MAX_REDIRECTS} times.`)
+}
+
 /** Resolve a possibly-relative URL against the page base URL. */
 function resolveHref(href: string, baseUrl: string): string {
   if (href.startsWith('http://') || href.startsWith('https://')) return href
@@ -46,19 +73,19 @@ function resolveHref(href: string, baseUrl: string): string {
  */
 async function fetchCss(cssUrl: string, signal: AbortSignal): Promise<string | null> {
   try {
-    const res = await fetch(cssUrl, {
+    const res = await fetchPublicUrl(validateRemoteUrl(cssUrl), {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         Accept: 'text/css,*/*'
       },
-      redirect: 'follow',
       signal
     })
     if (!res.ok) return null
     const buffer = await res.arrayBuffer()
     if (buffer.byteLength > MAX_CSS_PER_FILE) return null
-    return new TextDecoder('utf-8', { fatal: false }).decode(buffer)
+    const css = new TextDecoder('utf-8', { fatal: false }).decode(buffer)
+    return rewriteCssUrls(css, res.url || cssUrl)
   } catch {
     return null
   }
@@ -71,7 +98,11 @@ async function fetchCss(cssUrl: string, signal: AbortSignal): Promise<string | n
  * By inlining on the server side (Node.js has no CORS), styles are
  * available immediately when the iframe renders.
  */
-async function inlineExternalCss(html: string, baseUrl: string, signal: AbortSignal): Promise<string> {
+async function inlineExternalCss(
+  html: string,
+  baseUrl: string,
+  signal: AbortSignal
+): Promise<string> {
   const links: Array<{ tag: string; href: string }> = []
   let m: RegExpExecArray | null
 
@@ -132,9 +163,13 @@ async function proxyUrlFetch(request: IncomingMessage, response: ServerResponse)
     return
   }
 
-  const url = body.url
-  if (typeof url !== 'string' || !url.startsWith('http')) {
-    sendJson(response, 400, { error: 'url must be a valid http(s) URL' })
+  let url: URL
+  try {
+    url = requestUrl(body)
+  } catch (error) {
+    sendJson(response, 400, {
+      error: error instanceof Error ? error.message : 'Invalid URL'
+    })
     return
   }
 
@@ -144,7 +179,7 @@ async function proxyUrlFetch(request: IncomingMessage, response: ServerResponse)
   const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
   try {
-    const upstream = await fetch(url, {
+    const upstream = await fetchPublicUrl(url, {
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -152,7 +187,6 @@ async function proxyUrlFetch(request: IncomingMessage, response: ServerResponse)
           ? 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*'
           : 'text/html,application/xhtml+xml,*/*'
       },
-      redirect: 'follow',
       signal: controller.signal
     })
     clearTimeout(timeoutId)

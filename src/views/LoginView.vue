@@ -6,15 +6,41 @@ import {
   createGuestProfile,
   createLocalProfile,
   listLocalProfiles,
-  setActiveProfile
+  setActiveProfile,
+  linkRemoteAccount
 } from '@/app/dashboard/accounts/session'
+import { loginLinkedAccount } from '@/app/dashboard/accounts/api'
 
 const router = useRouter()
 const profiles = ref(listLocalProfiles())
 const profileName = ref('')
 const error = ref('')
+const accountEmail = ref('')
+const accountPassword = ref('')
+const signingIn = ref(false)
+
+async function signInToAccount() {
+  error.value = ''
+  signingIn.value = true
+  try {
+    const { session, user } = await loginLinkedAccount(accountEmail.value, accountPassword.value)
+    const profile = linkRemoteAccount(session.accountId, user.name, session.email)
+    setActiveProfile(profile.id)
+    await router.replace('/')
+  } catch (cause) {
+    error.value = cause instanceof Error ? cause.message : 'Could not sign in'
+  } finally {
+    signingIn.value = false
+  }
+}
 
 function openProfile(profileId: string) {
+  const profile = profiles.value.find((item) => item.id === profileId)
+  if (profile?.remoteAccountId) {
+    accountEmail.value = profile.email ?? ''
+    error.value = 'Sign in again to open this linked account.'
+    return
+  }
   setActiveProfile(profileId)
   void router.replace('/')
 }
@@ -56,8 +82,17 @@ function continueAsGuest() {
       </div>
 
       <p class="text-sm leading-6 text-[#a1a1aa]">
-        Choose a local profile. Your projects stay on this computer and save automatically.
+        Sign in with your nex-design.online account, or continue with a local workspace.
       </p>
+
+      <form class="space-y-3" @submit.prevent="signInToAccount">
+        <input v-model="accountEmail" type="email" autocomplete="email" required placeholder="Account email" class="w-full rounded-xl border border-[#3f3f46] bg-[#09090b] px-3.5 py-2.5 text-sm outline-none focus:border-rose-500" />
+        <input v-model="accountPassword" type="password" autocomplete="current-password" required placeholder="Password" class="w-full rounded-xl border border-[#3f3f46] bg-[#09090b] px-3.5 py-2.5 text-sm outline-none focus:border-rose-500" />
+        <button type="submit" :disabled="signingIn" class="w-full rounded-xl bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-50">
+          {{ signingIn ? 'Signing in…' : 'Sign in to NexDesign' }}
+        </button>
+        <a href="https://nex-design.online/signup?source=desktop" target="_blank" rel="noreferrer" class="block text-center text-xs text-rose-400 hover:text-rose-300">Create an account online</a>
+      </form>
 
       <div v-if="profiles.length" class="space-y-2 pt-2">
         <p class="text-xs font-medium uppercase tracking-wider text-[#71717a]">Existing Profiles</p>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch, onUnmounted } from 'vue'
 import { DialogRoot, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from 'reka-ui'
-import { useElementSize } from '@vueuse/core'
+import { useElementSize, useEventListener } from '@vueuse/core'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { PresentationManager } from '@/app/prototype/presentation-manager'
@@ -121,6 +121,19 @@ const layout = computed(() => {
     presentationManager.state.zoomMode,
     presentationManager.state.customZoom
   )
+})
+
+// Keyboard triggers: the open overlay gets first pick, then the active screen.
+useEventListener(window, 'keydown', (event: KeyboardEvent) => {
+  if (!open || event.repeat) return
+  const triggers = presentationManager.prototypeEngine.triggerManager
+  const overlayId = presentationManager.activeOverlay.isOpen
+    ? presentationManager.activeOverlay.nodeId
+    : ''
+  const handled =
+    (overlayId !== '' && triggers.handleKey(overlayId, event.code)) ||
+    (activeFrameId.value !== '' && triggers.handleKey(activeFrameId.value, event.code))
+  if (handled) event.preventDefault()
 })
 
 onUnmounted(() => {
@@ -352,7 +365,10 @@ onUnmounted(() => {
                   :name="presentationManager.state.transitionName"
                   :style="{
                     '--transition-duration': `${presentationManager.state.transitionDuration}ms`,
-                    '--transition-easing': presentationManager.prototypeEngine.animationManager.getEasingCSS(presentationManager.state.transitionEasing || 'EASE_IN_AND_OUT')
+                    '--transition-easing':
+                      presentationManager.prototypeEngine.animationManager.getEasingCSS(
+                        presentationManager.state.transitionEasing || 'EASE_IN_AND_OUT'
+                      )
                   }"
                 >
                   <!-- Outer div: handles transition animations (sliding/moving/fade) -->
@@ -431,7 +447,8 @@ onUnmounted(() => {
 /* Push Left Transition */
 .push-left-enter-active,
 .push-left-leave-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .push-left-enter-from {
   transform: translateX(100%);
@@ -443,7 +460,8 @@ onUnmounted(() => {
 /* Push Right Transition */
 .push-right-enter-active,
 .push-right-leave-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .push-right-enter-from {
   transform: translateX(-100%);
@@ -455,7 +473,8 @@ onUnmounted(() => {
 /* Push Top Transition */
 .push-top-enter-active,
 .push-top-leave-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .push-top-enter-from {
   transform: translateY(100%);
@@ -467,7 +486,8 @@ onUnmounted(() => {
 /* Push Bottom Transition */
 .push-bottom-enter-active,
 .push-bottom-leave-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .push-bottom-enter-from {
   transform: translateY(-100%);
@@ -478,7 +498,8 @@ onUnmounted(() => {
 
 /* Move In Left */
 .move-in-left-enter-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 2;
 }
 .move-in-left-leave-active {
@@ -494,7 +515,8 @@ onUnmounted(() => {
 
 /* Move In Right */
 .move-in-right-enter-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 2;
 }
 .move-in-right-leave-active {
@@ -510,7 +532,8 @@ onUnmounted(() => {
 
 /* Move In Top */
 .move-in-top-enter-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 2;
 }
 .move-in-top-leave-active {
@@ -526,7 +549,8 @@ onUnmounted(() => {
 
 /* Move In Bottom */
 .move-in-bottom-enter-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 2;
 }
 .move-in-bottom-leave-active {
@@ -546,7 +570,8 @@ onUnmounted(() => {
   z-index: 1;
 }
 .move-out-left-leave-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 2;
 }
 .move-out-left-enter-from {
@@ -562,7 +587,8 @@ onUnmounted(() => {
   z-index: 1;
 }
 .move-out-right-leave-active {
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: transform var(--transition-duration, 300ms)
+    var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
   z-index: 2;
 }
 .move-out-right-enter-from {
@@ -576,7 +602,8 @@ onUnmounted(() => {
 .slide-left-enter-active,
 .slide-left-leave-active {
   transition:
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     opacity var(--transition-duration, 300ms) var(--transition-easing, ease);
 }
 .slide-left-enter-from {
@@ -592,7 +619,8 @@ onUnmounted(() => {
 .slide-right-enter-active,
 .slide-right-leave-active {
   transition:
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     opacity var(--transition-duration, 300ms) var(--transition-easing, ease);
 }
 .slide-right-enter-from {
@@ -608,7 +636,8 @@ onUnmounted(() => {
 .slide-in-left-enter-active,
 .slide-in-left-leave-active {
   transition:
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     opacity var(--transition-duration, 300ms) var(--transition-easing, ease);
 }
 .slide-in-left-enter-from {
@@ -624,7 +653,8 @@ onUnmounted(() => {
 .slide-in-right-enter-active,
 .slide-in-right-leave-active {
   transition:
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     opacity var(--transition-duration, 300ms) var(--transition-easing, ease);
 }
 .slide-in-right-enter-from {
@@ -640,7 +670,8 @@ onUnmounted(() => {
 .slide-out-left-enter-active,
 .slide-out-left-leave-active {
   transition:
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     opacity var(--transition-duration, 300ms) var(--transition-easing, ease);
 }
 .slide-out-left-enter-from {
@@ -656,7 +687,8 @@ onUnmounted(() => {
 .slide-out-right-enter-active,
 .slide-out-right-leave-active {
   transition:
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
     opacity var(--transition-duration, 300ms) var(--transition-easing, ease);
 }
 .slide-out-right-enter-from {
@@ -673,7 +705,8 @@ onUnmounted(() => {
 .smart-animate-leave-active {
   transition:
     opacity var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1)),
-    transform var(--transition-duration, 300ms) var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
+    transform var(--transition-duration, 300ms)
+      var(--transition-easing, cubic-bezier(0.4, 0, 0.2, 1));
 }
 .smart-animate-enter-from,
 .smart-animate-leave-to {

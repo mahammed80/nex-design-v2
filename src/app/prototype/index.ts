@@ -5,7 +5,5 @@ export * from './zoom-controller'
 export * from './viewport-manager'
 export * from './transition-engine'
 export * from './navigation-controller'
-export * from './interaction-engine'
 export * from './presentation-manager'
 export * from './prototype-engine'
-

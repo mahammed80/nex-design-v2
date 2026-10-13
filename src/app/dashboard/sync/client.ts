@@ -43,6 +43,7 @@ export async function flushProjectSyncOutbox(): Promise<void> {
       method: 'POST',
       credentials: 'include',
       headers: {
+        Authorization: `Bearer ${session.accessToken}`,
         'X-NexDesign-Device': session.deviceId
       },
       body: form,

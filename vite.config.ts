@@ -39,6 +39,7 @@ export default defineConfig(async ({ command, mode }) => {
       vue(),
       nexDesignPwaPlugin()
     ],
+    server: createDevServerOptions(host),
     clearScreen: false,
     build: {
       // WebView2 (Windows) is Chromium-based and supports ESNext natively.

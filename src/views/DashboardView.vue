@@ -6,6 +6,7 @@ import { readFigFile, exportFigFile } from '@nex-design/core/io/formats/fig'
 import { createEditorStore } from '@/app/editor/session'
 import { createDemoShapes } from '@/app/demo/document'
 import UserMenu from '@/components/Auth/UserMenu.vue'
+import { useAuthStore } from '@/app/auth/store'
 import {
   openDb,
   getAllProjectsFromDb,
@@ -15,8 +16,19 @@ import {
   type ProjectRecord
 } from '@/app/dashboard/db'
 import { getActiveProfile, getGuestTrialStatus } from '@/app/dashboard/accounts/session'
+import { useAppTheme } from '@/app/shell/theme'
+
+interface DashboardFolder {
+  id: string
+  name: string
+  fileCount: number
+  size: string
+  tabBg: string
+}
 
 const router = useRouter()
+const { isLight, toggleTheme } = useAppTheme()
+const { currentUser, openProfileModal } = useAuthStore()
 
 // UI state
 const activeView = ref<
@@ -35,6 +47,8 @@ const isSettingsOpen = ref(false)
 const isSearchOpen = ref(false)
 const isNewFolderModalOpen = ref(false)
 const newFolderName = ref('')
+const customFolderNames = useLocalStorage<string[]>('nex-design:dashboard-folders', [])
+const selectedDashboardFolderId = ref<string | null>(null)
 const searchFilter = ref('')
 const selectedSearchIndex = ref(0)
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -59,50 +73,50 @@ function saveProfileName() {
   isSettingsOpen.value = false
 }
 
+function createFolder(): void {
+  const name = newFolderName.value.trim()
+  if (!name) return
+  if (!customFolderNames.value.some((folder) => folder.toLowerCase() === name.toLowerCase())) {
+    customFolderNames.value = [...customFolderNames.value, name]
+  }
+  newFolderName.value = ''
+  isNewFolderModalOpen.value = false
+}
+
 // Project records
 const projects = ref<ProjectRecord[]>([])
 const loading = ref(true)
 
-// Realistic Folders with Dark Red / Crimson & Accent Themes
-const mockFolders = ref([
-  {
-    id: 'folder-1',
-    name: 'Dashboard Designs',
-    fileCount: 62,
-    size: '2.6 GB',
-    tabColor: '#be123c',
-    tabBg: 'linear-gradient(135deg, #e11d48, #9f1239)',
-    members: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80'
-    ],
-    moreCount: 0
-  },
-  {
-    id: 'folder-2',
-    name: 'Figma Files',
-    fileCount: 202,
-    size: '2.6 GB',
-    tabColor: '#9f1239',
-    tabBg: 'linear-gradient(135deg, #be123c, #881337)',
-    members: [
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=80',
-      'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=80'
-    ],
-    moreCount: 12
-  },
-  {
-    id: 'folder-3',
-    name: 'Product Components',
-    fileCount: 12,
-    size: '840 MB',
-    tabColor: '#881337',
-    tabBg: 'linear-gradient(135deg, #9f1239, #4c0519)',
-    members: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80'],
-    moreCount: 4
-  }
-])
+const dashboardFolders = computed<DashboardFolder[]>(() => {
+  const localProjects = projects.value.filter((project) => !project.remoteId)
+  const sharedProjects = projects.value.filter((project) => Boolean(project.remoteId))
+  const starred = projects.value.filter((project) => project.starred)
+  const folderFromProjects = (
+    id: string,
+    name: string,
+    records: ProjectRecord[],
+    tabBg: string
+  ): DashboardFolder => ({
+    id,
+    name,
+    fileCount: records.length,
+    size: formatBytes(records.reduce((total, project) => total + project.document.byteLength, 0)),
+    tabBg
+  })
+
+  return [
+    folderFromProjects('local', 'Local Projects', localProjects, 'linear-gradient(135deg, #991b1b, #450a0a)'),
+    folderFromProjects('shared', 'Shared Projects', sharedProjects, 'linear-gradient(135deg, #7f1d1d, #450a0a)'),
+    folderFromProjects('starred', 'Starred Projects', starred, 'linear-gradient(135deg, #671010, #260606)'),
+    ...customFolderNames.value.map((name) => ({
+      id: `custom-${name}`,
+      name,
+      fileCount: 0,
+      size: '0 B',
+      tabBg: 'linear-gradient(135deg, #7f1d1d, #450a0a)'
+    }))
+  ]
+})
 
 // Load projects from database
 async function loadProjects() {
@@ -200,6 +214,20 @@ const filteredProjects = computed(() => {
     list = list.filter((p) => p.starred)
   }
 
+  if (activeFilterTab.value === 'shared-docs') {
+    list = list.filter((p) => Boolean(p.remoteId))
+  } else if (activeFilterTab.value === 'shared-folders') {
+    if (selectedDashboardFolderId.value === 'local') {
+      list = list.filter((p) => !p.remoteId)
+    } else if (selectedDashboardFolderId.value === 'shared') {
+      list = list.filter((p) => Boolean(p.remoteId))
+    } else if (selectedDashboardFolderId.value === 'starred') {
+      list = list.filter((p) => p.starred)
+    } else {
+      list = []
+    }
+  }
+
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     list = list.filter((p) => p.name.toLowerCase().includes(query))
@@ -216,6 +244,17 @@ const filteredProjects = computed(() => {
 })
 
 const starredProjects = computed(() => projects.value.filter((p) => p.starred))
+const totalStorageBytes = computed(() =>
+  projects.value.reduce((total, project) => total + project.document.byteLength, 0)
+)
+const storageUsagePercent = computed(() => Math.min((totalStorageBytes.value / 1073741824) * 100, 100))
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1073741824) return `${(bytes / 1048576).toFixed(1)} MB`
+  return `${(bytes / 1073741824).toFixed(1)} GB`
+}
 
 const searchDialogMatches = computed(() => {
   const query = searchFilter.value.trim().toLowerCase()
@@ -251,32 +290,32 @@ const stitchTemplates = [
     id: 'stitch-dashboard',
     title: 'AI Command Center',
     category: 'Dashboard UI',
-    gradient: 'from-cyan-500/20 via-purple-500/20 to-blue-500/20',
-    border: 'border-cyan-500/30',
+    gradient: 'from-red-950/55 via-red-900/35 to-rose-950/45',
+    border: 'border-red-900/50',
     tag: 'Stitch AI'
   },
   {
     id: 'stitch-landing',
     title: 'Glass SaaS Landing',
     category: 'Marketing Hero',
-    gradient: 'from-violet-500/20 via-fuchsia-500/20 to-rose-500/20',
-    border: 'border-purple-500/30',
+    gradient: 'from-red-900/45 via-rose-950/50 to-red-950/60',
+    border: 'border-red-800/50',
     tag: 'Frosted Glass'
   },
   {
     id: 'stitch-wallet',
     title: 'Mobile Glass Crypto',
     category: 'Mobile App',
-    gradient: 'from-emerald-500/20 via-teal-500/20 to-cyan-500/20',
-    border: 'border-emerald-500/30',
+    gradient: 'from-stone-950/40 via-red-950/45 to-red-900/35',
+    border: 'border-red-950/55',
     tag: 'Fintech'
   },
   {
     id: 'stitch-linear',
     title: 'Obsidian Dev Hub',
     category: 'Developer Platform',
-    gradient: 'from-blue-500/20 via-indigo-500/20 to-purple-500/20',
-    border: 'border-blue-500/30',
+    gradient: 'from-zinc-950/45 via-red-950/50 to-rose-950/45',
+    border: 'border-red-900/50',
     tag: 'Dev Tools'
   }
 ]
@@ -411,12 +450,12 @@ function formatTimeAgo(timestamp: number): string {
 
 function getFileIcon(name: string) {
   const lower = name.toLowerCase()
-  if (lower.endsWith('.fig')) return { bg: '#e11d48', label: 'FIG', color: '#ffe4e6' }
+  if (lower.endsWith('.fig')) return { bg: '#7f1d1d', label: 'FIG', color: '#fee2e2' }
   if (lower.endsWith('.docx') || lower.endsWith('.doc'))
-    return { bg: '#9f1239', label: 'W', color: '#fecdd3' }
+    return { bg: '#671010', label: 'W', color: '#fecaca' }
   if (lower.endsWith('.xls') || lower.endsWith('.xlsx'))
-    return { bg: '#881337', label: 'X', color: '#fda4af' }
-  return { bg: '#be123c', label: 'UI', color: '#fff1f2' }
+    return { bg: '#450a0a', label: 'X', color: '#fca5a5' }
+  return { bg: '#7f1d1d', label: 'UI', color: '#fef2f2' }
 }
 
 onMounted(() => {
@@ -429,8 +468,7 @@ onMounted(() => {
        NexDesign Cloud Dock — Dark Red / Crimson & Folder Geometry
   ══════════════════════════════════════════════════════════════════════ -->
   <div
-    class="flex h-screen w-screen overflow-hidden font-sans text-[#f4e8eb] relative"
-    style="background: radial-gradient(ellipse at 0% 0%, #1f080e 0%, #0d0407 45%, #050103 100%)"
+    class="dashboard-shell flex h-screen w-screen overflow-hidden font-sans relative"
   >
     <!-- Ambient Dark Red Glow Orbs -->
     <div class="bg-ambient" />
@@ -446,20 +484,7 @@ onMounted(() => {
           class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-red-700 flex items-center justify-center shadow-lg shadow-rose-600/40 cursor-pointer hover:scale-105 transition-transform"
           @click="activeView = 'home'"
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
+          <icon-lucide-layers class="size-5 text-white" />
         </div>
 
         <!-- Vertical Dock Action Icons -->
@@ -476,18 +501,7 @@ onMounted(() => {
                 : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
             "
           >
-            <svg
-              class="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="3" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="14" width="7" height="7" rx="1.5" />
-              <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            </svg>
+            <icon-lucide-layout-grid class="size-5" />
           </button>
 
           <!-- Shared / Link -->
@@ -502,16 +516,7 @@ onMounted(() => {
                 : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
             "
           >
-            <svg
-              class="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-            </svg>
+            <icon-lucide-link-2 class="size-5" />
           </button>
 
           <!-- Cloud Import -->
@@ -521,17 +526,7 @@ onMounted(() => {
             title="Import .fig File"
             class="w-11 h-11 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-all duration-200"
           >
-            <svg
-              class="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            <icon-lucide-download class="size-5" />
           </button>
 
           <!-- Starred -->
@@ -546,17 +541,7 @@ onMounted(() => {
                 : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
             "
           >
-            <svg
-              class="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polygon
-                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-              />
-            </svg>
+            <icon-lucide-star class="size-5" />
           </button>
 
           <!-- Plus Create New -->
@@ -566,16 +551,7 @@ onMounted(() => {
             title="Create New Canvas"
             class="w-10 h-10 rounded-2xl border border-white/10 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 hover:border-rose-500/40 transition-all duration-200"
           >
-            <svg
-              class="size-4.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <icon-lucide-plus class="size-4.5" />
           </button>
         </nav>
       </div>
@@ -583,47 +559,22 @@ onMounted(() => {
       <!-- Dock Bottom Tools -->
       <div class="flex flex-col items-center gap-3 w-full px-2">
         <button
+          v-if="currentUser?.role === 'admin' || currentUser?.email?.toLowerCase().includes('admin')"
           @click="router.push('/admin')"
           type="button"
           title="Admin Dashboard"
           class="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-rose-300 hover:bg-rose-600/15 transition-colors"
         >
-          <svg
-            class="size-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M12 2v4" />
-            <path d="m4.93 4.93 2.83 2.83" />
-            <path d="M2 12h4" />
-            <path d="m4.93 19.07 2.83-2.83" />
-            <path d="M12 22v-4" />
-            <path d="m19.07 19.07-2.83-2.83" />
-            <path d="M22 12h-4" />
-            <path d="m19.07 4.93-2.83 2.83" />
-          </svg>
+          <icon-lucide-shield-check class="size-5" />
         </button>
 
         <button
-          @click="isSettingsOpen = true"
+          @click="openProfileModal"
           type="button"
-          title="Settings"
-          class="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+          title="User & Profile Settings"
+          class="w-10 h-10 rounded-xl flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
         >
-          <svg
-            class="size-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
-            />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
+          <icon-lucide-settings class="size-5" />
         </button>
       </div>
     </aside>
@@ -639,25 +590,15 @@ onMounted(() => {
             class="flex items-center gap-2 text-white font-bold text-sm tracking-tight cursor-pointer hover:text-rose-300 transition-colors"
             @click="activeView = 'home'"
           >
-            <span class="text-xs text-zinc-500 font-mono">«</span>
+            <icon-lucide-panel-left-close class="size-3.5 text-zinc-500" />
             <span>Dashboard</span>
           </div>
           <button
-            @click="isSettingsOpen = true"
-            class="size-7 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 flex items-center justify-center transition-colors"
+            @click="openProfileModal"
+            title="User & Profile Settings"
+            class="size-7 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
           >
-            <svg
-              class="size-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path
-                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
-              />
-            </svg>
+            <icon-lucide-settings class="size-3.5" />
           </button>
         </div>
 
@@ -668,16 +609,7 @@ onMounted(() => {
             class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-zinc-900/80 border border-white/5 text-xs text-zinc-400 hover:text-white hover:border-rose-500/30 transition-all duration-200"
           >
             <div class="flex items-center gap-2.5">
-              <svg
-                class="size-3.5 text-zinc-500"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              <icon-lucide-search class="size-3.5 text-zinc-500" />
               <span>Search</span>
             </div>
             <span
@@ -701,19 +633,10 @@ onMounted(() => {
               "
             >
               <div class="flex items-center gap-2.5">
-                <span class="text-sm">📁</span>
+                <icon-lucide-folder class="size-4 text-red-300" />
                 <span>Overview</span>
               </div>
-              <svg
-                class="size-3.5 transition-transform"
-                :class="{ 'rotate-180': !isOverviewExpanded }"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-              >
-                <polyline points="18 15 12 9 6 15" />
-              </svg>
+              <icon-lucide-chevron-up class="size-3.5 transition-transform" :class="{ 'rotate-180': !isOverviewExpanded }" />
             </button>
 
             <!-- Overview Tree Branches -->
@@ -728,15 +651,7 @@ onMounted(() => {
                 "
               >
                 <span>My Overview</span>
-                <svg
-                  class="size-3 text-zinc-600"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
+                <icon-lucide-chevron-right class="size-3 text-zinc-600" />
               </div>
 
               <div
@@ -750,7 +665,7 @@ onMounted(() => {
               >
                 <span>Recent Activity</span>
                 <span class="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded"
-                  >242</span
+                  >{{ projects.length }}</span
                 >
               </div>
             </div>
@@ -767,7 +682,7 @@ onMounted(() => {
             "
           >
             <div class="flex items-center gap-2.5">
-              <span class="text-amber-400">⭐</span>
+              <icon-lucide-star class="size-4 text-red-400" />
               <span>Starred Files</span>
             </div>
             <span v-if="starredProjects.length > 0" class="text-[10px] font-mono text-zinc-500">{{
@@ -782,19 +697,10 @@ onMounted(() => {
               class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-zinc-300 hover:bg-white/5 transition-colors"
             >
               <div class="flex items-center gap-2.5">
-                <span>📁</span>
+                <icon-lucide-folder class="size-4 text-red-300" />
                 <span>UI & UX Design</span>
               </div>
-              <svg
-                class="size-3.5 text-zinc-500 transition-transform"
-                :class="{ 'rotate-180': !isUiUxExpanded }"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <polyline points="18 15 12 9 6 15" />
-              </svg>
+              <icon-lucide-chevron-up class="size-3.5 text-zinc-500 transition-transform" :class="{ 'rotate-180': !isUiUxExpanded }" />
             </button>
 
             <!-- Nested Products Designs -->
@@ -805,19 +711,10 @@ onMounted(() => {
                   class="w-full tree-branch-item flex items-center justify-between py-1.5 px-2.5 rounded-lg text-zinc-300 hover:text-white transition-colors"
                 >
                   <div class="flex items-center gap-2">
-                    <span class="text-xs">📁</span>
+                    <icon-lucide-folder class="size-3.5 text-red-300" />
                     <span>Products Designs</span>
                   </div>
-                  <svg
-                    class="size-3 text-zinc-500 transition-transform"
-                    :class="{ 'rotate-180': !isProductDesignsExpanded }"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <polyline points="18 15 12 9 6 15" />
-                  </svg>
+                  <icon-lucide-chevron-up class="size-3 text-zinc-500 transition-transform" :class="{ 'rotate-180': !isProductDesignsExpanded }" />
                 </button>
 
                 <!-- Sub-items under Products Designs -->
@@ -841,16 +738,8 @@ onMounted(() => {
                     @click="activeView = 'projects'"
                     class="tree-branch-item flex items-center justify-between py-1.5 px-2 text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer"
                   >
-                    <span>📁 Drapora Projects</span>
-                    <svg
-                      class="size-3 text-zinc-600"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
+                    <span class="flex items-center gap-1.5"><icon-lucide-folder class="size-3 text-red-300" />Drapora Projects</span>
+                    <icon-lucide-chevron-right class="size-3 text-zinc-600" />
                   </div>
                 </div>
               </div>
@@ -863,18 +752,10 @@ onMounted(() => {
             class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
           >
             <div class="flex items-center gap-2.5">
-              <span>📁</span>
+              <icon-lucide-folder class="size-4 text-red-300" />
               <span>Design Systems</span>
             </div>
-            <svg
-              class="size-3 text-zinc-600"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <icon-lucide-chevron-right class="size-3 text-zinc-600" />
           </div>
 
           <!-- 5. WEB APPS -->
@@ -883,18 +764,10 @@ onMounted(() => {
             class="flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
           >
             <div class="flex items-center gap-2.5">
-              <span>📁</span>
+              <icon-lucide-folder class="size-4 text-red-300" />
               <span>Web Apps</span>
             </div>
-            <svg
-              class="size-3 text-zinc-600"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <icon-lucide-chevron-right class="size-3 text-zinc-600" />
           </div>
 
           <!-- + New Folder Button -->
@@ -918,21 +791,7 @@ onMounted(() => {
           class="my-6 p-4 rounded-2xl relative overflow-hidden bg-gradient-to-br from-rose-950/70 via-red-950/50 to-rose-950/70 border border-rose-500/20 shadow-xl"
         >
           <div class="flex items-start justify-between">
-            <!-- 3D Rocket Icon -->
-            <div class="text-3xl filter drop-shadow-[0_4px_12px_rgba(225,29,72,0.5)]">🚀</div>
-            <button class="text-zinc-500 hover:text-zinc-300">
-              <svg
-                class="size-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="19" cy="12" r="1" />
-                <circle cx="5" cy="12" r="1" />
-              </svg>
-            </button>
+            <icon-lucide-rocket class="size-7 text-red-400 drop-shadow-[0_4px_12px_rgba(225,29,72,0.5)]" />
           </div>
 
           <div class="mt-2.5 space-y-1">
@@ -944,18 +803,18 @@ onMounted(() => {
           </div>
 
           <button
-            @click="router.push('/admin')"
+            @click="openProfileModal"
             class="w-full mt-3.5 py-2 px-3 rounded-xl text-[11px] font-bold text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center gap-1.5"
           >
-            <span>✨</span>
-            <span>Upgrade to Pro</span>
+            <icon-lucide-user-check class="size-3.5" />
+            <span>Link & Manage Account</span>
           </button>
         </div>
       </div>
 
-      <!-- User Profile at bottom -->
+      <!-- User Profile at bottom (Dropup upwards to prevent bottom clipping) -->
       <div class="px-3 pb-4 pt-2 border-t border-white/5">
-        <UserMenu />
+        <UserMenu direction="up" />
       </div>
     </aside>
 
@@ -973,29 +832,32 @@ onMounted(() => {
           <div
             class="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-zinc-900/80 border border-white/5 text-xs"
           >
-            <span class="text-base text-rose-400">☁️</span>
+            <icon-lucide-cloud class="size-4 text-red-400" />
             <div>
               <div
                 class="flex items-center justify-between gap-3 text-[10px] font-medium text-zinc-300"
               >
                 <span>Basic Storage</span>
-                <span class="text-zinc-500">50GB / 100GB</span>
+                <span class="text-zinc-500">{{ formatBytes(totalStorageBytes) }} / 1 GB</span>
               </div>
               <div class="w-28 h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-1">
-                <div class="w-1/2 h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" />
+                <div
+                  class="h-full bg-gradient-to-r from-red-700 to-red-950 rounded-full"
+                  :style="{ width: `${storageUsagePercent}%` }"
+                />
               </div>
             </div>
           </div>
 
           <!-- Breadcrumbs -->
           <div class="hidden lg:flex items-center gap-2 text-xs text-zinc-400">
-            <span class="hover:text-white cursor-pointer">Dashboard</span>
+            <button class="hover:text-white" type="button" @click="activeView = 'home'">Dashboard</button>
             <span>/</span>
             <span class="text-zinc-200 font-medium">Overview</span>
             <span>/</span>
             <span class="text-zinc-400">Recent Activity</span>
             <span class="text-[10px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.2 rounded"
-              >242</span
+              >{{ projects.length }}</span
             >
           </div>
         </div>
@@ -1003,39 +865,31 @@ onMounted(() => {
         <!-- Header Action Buttons (Dark Red Theme) -->
         <div class="flex items-center gap-3">
           <button
+            @click="toggleTheme"
+            type="button"
+            class="theme-toggle size-9 rounded-xl glass-panel transition-all flex items-center justify-center"
+            :aria-label="isLight ? 'Switch to dark mode' : 'Switch to light mode'"
+            :title="isLight ? 'Switch to dark mode' : 'Switch to light mode'"
+          >
+            <icon-lucide-moon v-if="isLight" class="size-4" />
+            <icon-lucide-sun v-else class="size-4" />
+          </button>
+
+          <button
             @click="handleImportClick"
             type="button"
             class="h-9 px-4 rounded-xl text-xs font-semibold text-zinc-300 glass-panel hover:text-white hover:border-rose-500/40 transition-all flex items-center gap-2"
           >
-            <svg
-              class="size-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            <icon-lucide-download class="size-3.5" />
             <span>Import .fig</span>
           </button>
 
           <button
             @click="createNewDesign"
             type="button"
-            class="h-9 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2"
+            class="dashboard-primary h-9 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 shadow-lg shadow-rose-600/30 transition-all flex items-center gap-2"
           >
-            <svg
-              class="size-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
+            <icon-lucide-plus class="size-3.5" />
             <span>New Design</span>
           </button>
         </div>
@@ -1060,7 +914,7 @@ onMounted(() => {
               v-for="item in projects.slice(0, 4)"
               :key="item.id"
               @click="selectedProject = item"
-              class="glass-card rounded-2xl p-4 cursor-pointer relative group transition-all duration-300"
+              class="dashboard-project-card glass-card rounded-2xl p-4 cursor-pointer relative group transition-all duration-300"
               :class="
                 selectedProject?.id === item.id ? 'ring-2 ring-rose-500/50 bg-rose-950/20' : ''
               "
@@ -1089,17 +943,7 @@ onMounted(() => {
                 </div>
 
                 <button @click.stop="openProject(item.id)" class="text-zinc-500 hover:text-white">
-                  <svg
-                    class="size-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="1" />
-                    <circle cx="19" cy="12" r="1" />
-                    <circle cx="5" cy="12" r="1" />
-                  </svg>
+                  <icon-lucide-more-horizontal class="size-4" />
                 </button>
               </div>
 
@@ -1107,7 +951,7 @@ onMounted(() => {
               <div class="mt-4 flex items-center justify-end">
                 <button
                   @click.stop="openProject(item.id)"
-                  class="px-3 py-1 rounded-full text-[10px] font-bold text-white bg-zinc-900 border border-white/10 hover:bg-rose-600 hover:border-rose-500 transition-all"
+                  class="dashboard-secondary-action px-3 py-1 rounded-full text-[10px] font-bold text-white bg-zinc-900 border border-white/10 hover:bg-rose-600 hover:border-rose-500 transition-all"
                 >
                   See details
                 </button>
@@ -1120,7 +964,7 @@ onMounted(() => {
         <div class="space-y-4 pt-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-mono font-semibold text-cyan-400">
+              <span class="px-2 py-0.5 rounded-full bg-red-950/60 border border-red-800/50 text-[10px] font-mono font-semibold text-red-300">
                 Stitch Glass
               </span>
               <h2 class="text-sm font-bold text-white tracking-tight">AI Glass Templates</h2>
@@ -1132,12 +976,12 @@ onMounted(() => {
             <div
               v-for="tpl in stitchTemplates"
               :key="tpl.id"
-              class="relative rounded-2xl border border-white/10 bg-gradient-to-br p-4 overflow-hidden group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-white/25 hover:shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_32px_rgba(0,245,212,0.12)]"
+              class="dashboard-template-card relative rounded-2xl border border-white/10 bg-gradient-to-br p-4 overflow-hidden group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:border-red-700/60 hover:shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_32px_rgba(127,29,29,0.24)]"
               :class="[tpl.gradient, tpl.border]"
               @click="createDesignFromTemplate(tpl.title)"
             >
               <!-- Ambient Inner Aurora Glow -->
-              <div class="absolute -top-12 -right-12 size-32 rounded-full bg-cyan-500/20 blur-2xl group-hover:bg-cyan-400/30 transition-all duration-500 pointer-events-none" />
+              <div class="absolute -top-12 -right-12 size-32 rounded-full bg-red-900/30 blur-2xl group-hover:bg-red-800/40 transition-all duration-500 pointer-events-none" />
 
               <div class="relative z-10 flex flex-col justify-between h-36">
                 <!-- Tag & Icon -->
@@ -1145,16 +989,14 @@ onMounted(() => {
                   <span class="px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-medium text-white/80">
                     {{ tpl.tag }}
                   </span>
-                  <div class="size-7 rounded-full bg-white/10 flex items-center justify-center text-white/80 group-hover:text-white group-hover:bg-white/20 transition-colors">
-                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                    </svg>
+                  <div class="size-7 rounded-full bg-red-950/50 flex items-center justify-center text-red-300 group-hover:text-white group-hover:bg-red-800/60 transition-colors">
+                    <icon-lucide-sparkles class="size-3.5" />
                   </div>
                 </div>
 
                 <!-- Title & Category -->
                 <div>
-                  <h3 class="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  <h3 class="text-sm font-bold text-white group-hover:text-red-300 transition-colors">
                     {{ tpl.title }}
                   </h3>
                   <p class="text-[11px] text-zinc-400 mt-0.5">{{ tpl.category }}</p>
@@ -1163,12 +1005,12 @@ onMounted(() => {
                 <!-- Hover "Use template" Frosted Pill Action -->
                 <div class="flex items-center justify-end">
                   <button
+                    type="button"
+                    @click.stop="createDesignFromTemplate(tpl.title)"
                     class="px-3 py-1 rounded-full text-[10px] font-bold text-black bg-white/90 hover:bg-white backdrop-blur-md shadow-md transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 group-hover:scale-105"
                   >
                     <span>Use template</span>
-                    <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
+                    <icon-lucide-chevron-right class="size-3" />
                   </button>
                 </div>
               </div>
@@ -1182,17 +1024,21 @@ onMounted(() => {
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-3">
             <div
-              v-for="folder in mockFolders"
+              v-for="folder in dashboardFolders"
               :key="folder.id"
               class="relative pt-6 group cursor-pointer"
+              role="button"
+              tabindex="0"
+              @click="activeFilterTab = 'shared-folders'; selectedDashboardFolderId = folder.id"
+              @keydown.enter="activeFilterTab = 'shared-folders'; selectedDashboardFolderId = folder.id"
             >
               <!-- 1. Authentically Raised Folder Tab on Top-Left -->
               <div
-                class="absolute top-0 left-0 h-7 px-4 rounded-t-xl flex items-center gap-2 border-t border-x border-white/10 z-10"
+                class="dashboard-folder-tab absolute top-0 left-0 h-7 px-4 rounded-t-xl flex items-center gap-2 border-t border-x border-white/10 z-10"
                 :style="{ background: folder.tabBg }"
               >
                 <!-- Folder Mini Icon -->
-                <span class="text-xs">📁</span>
+                <icon-lucide-folder class="size-3 text-red-100" />
                 <span class="text-[11px] font-bold text-white truncate max-w-[100px]">{{
                   folder.name
                 }}</span>
@@ -1225,27 +1071,13 @@ onMounted(() => {
                     </span>
                   </div>
 
-                  <!-- Members Avatar Stack -->
-                  <div class="flex items-center justify-between pt-3 border-t border-white/5">
-                    <div class="flex items-center -space-x-2">
-                      <img
-                        v-for="(avatar, i) in folder.members"
-                        :key="i"
-                        :src="avatar"
-                        class="w-6 h-6 rounded-full border-2 border-zinc-950 object-cover"
-                        alt="Member"
-                      />
-                      <span
-                        v-if="folder.moreCount > 0"
-                        class="w-6 h-6 rounded-full bg-zinc-800 border-2 border-zinc-950 text-[9px] font-bold text-zinc-300 flex items-center justify-center"
-                      >
-                        +{{ folder.moreCount }}
-                      </span>
+                    <div class="flex items-center justify-between pt-3 border-t border-white/5">
+                    <div class="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                      <icon-lucide-files class="size-3.5 text-red-400" />
+                      <span>{{ folder.fileCount }} project{{ folder.fileCount === 1 ? '' : 's' }}</span>
                     </div>
 
-                    <span class="text-xs text-zinc-500 group-hover:text-rose-400 transition-colors"
-                      >→</span
-                    >
+                    <icon-lucide-arrow-right class="size-3.5 text-zinc-500 group-hover:text-red-400 transition-colors" />
                   </div>
                 </div>
               </div>
@@ -1267,7 +1099,7 @@ onMounted(() => {
                     : 'text-zinc-400 hover:text-white'
                 "
               >
-                <span v-if="activeFilterTab === 'recents'" class="text-rose-400">✓</span>
+                <icon-lucide-check v-if="activeFilterTab === 'recents'" class="size-3 text-red-400" />
                 <span>Recently Opened</span>
               </button>
 
@@ -1298,16 +1130,7 @@ onMounted(() => {
 
             <!-- Search filter in list -->
             <div class="relative w-64">
-              <svg
-                class="size-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              <icon-lucide-search class="size-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 v-model="searchQuery"
                 type="text"
@@ -1323,7 +1146,7 @@ onMounted(() => {
               <table class="w-full text-left border-collapse">
                 <thead>
                   <tr
-                    class="border-b border-white/5 bg-zinc-950/60 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider"
+                    class="dashboard-table-header border-b border-white/5 bg-zinc-950/60 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider"
                   >
                     <th class="py-3 px-4 w-8">
                       <input
@@ -1377,8 +1200,8 @@ onMounted(() => {
                           <div
                             class="text-[10px] text-zinc-500 font-normal flex items-center gap-1.5"
                           >
-                            <span>Shared 👥</span>
-                            <span v-if="project.starred" class="text-amber-400">• Starred ⭐</span>
+                            <span class="flex items-center gap-1"><icon-lucide-users class="size-3" />{{ project.remoteId ? 'Shared' : 'Local' }}</span>
+                            <span v-if="project.starred" class="text-red-400 flex items-center gap-1">• <icon-lucide-star class="size-3 fill-current" /> Starred</span>
                           </div>
                         </div>
                       </div>
@@ -1386,19 +1209,11 @@ onMounted(() => {
 
                     <!-- Owner Avatars -->
                     <td class="py-3.5 px-4">
-                      <div class="flex items-center -space-x-1.5">
-                        <img
-                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80"
-                          class="w-6 h-6 rounded-full border border-zinc-950 object-cover"
-                        />
-                        <img
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80"
-                          class="w-6 h-6 rounded-full border border-zinc-950 object-cover"
-                        />
-                        <span
-                          class="w-6 h-6 rounded-full bg-zinc-800 text-[9px] font-bold text-zinc-300 flex items-center justify-center border border-zinc-950"
-                          >+2</span
-                        >
+                      <div class="flex items-center gap-2 text-zinc-400">
+                        <span class="size-6 rounded-full bg-red-950/60 border border-red-800/50 flex items-center justify-center">
+                          <icon-lucide-user class="size-3" />
+                        </span>
+                        <span class="text-[11px]">{{ profileName }}</span>
                       </div>
                     </td>
 
@@ -1412,20 +1227,10 @@ onMounted(() => {
                       <div class="flex items-center justify-end gap-1">
                         <button
                           @click="toggleStar(project)"
-                          class="p-1 rounded hover:bg-white/5 text-zinc-400 hover:text-amber-400"
+                          class="p-1 rounded hover:bg-white/5 text-zinc-400 hover:text-red-400"
+                          :aria-label="project.starred ? 'Remove from starred' : 'Add to starred'"
                         >
-                          <svg
-                            class="size-3.5"
-                            :class="{ 'fill-amber-400 text-amber-400': project.starred }"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          >
-                            <polygon
-                              points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                            />
-                          </svg>
+                          <icon-lucide-star class="size-3.5" :class="{ 'fill-red-500 text-red-500': project.starred }" />
                         </button>
                         <button
                           @click="openProject(project.id)"
@@ -1433,6 +1238,17 @@ onMounted(() => {
                         >
                           Open
                         </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-if="filteredProjects.length === 0">
+                    <td colspan="5" class="px-4 py-10 text-center text-zinc-500">
+                      <div class="flex flex-col items-center gap-2">
+                        <icon-lucide-folder-open class="size-5 text-red-400" />
+                        <span v-if="activeFilterTab === 'shared-folders' && selectedDashboardFolderId?.startsWith('custom-')">This folder is ready for projects.</span>
+                        <span v-else-if="activeFilterTab === 'shared-folders'">No projects in this folder.</span>
+                        <span v-else-if="activeFilterTab === 'shared-docs'">No shared documents yet.</span>
+                        <span v-else>No projects match this view.</span>
                       </div>
                     </td>
                   </tr>
@@ -1446,13 +1262,13 @@ onMounted(() => {
       <!-- ════ 4. FLOATING BOTTOM SELECTION STATUS BAR ════ -->
       <footer
         v-if="selectedProject"
-        class="h-12 border-t border-white/5 bg-zinc-950/90 backdrop-blur-md px-8 flex items-center justify-between shrink-0 z-30"
+        class="dashboard-footer h-12 border-t border-white/5 bg-zinc-950/90 backdrop-blur-md px-8 flex items-center justify-between shrink-0 z-30"
       >
         <div class="flex items-center gap-3 text-xs">
-          <span class="text-sm">🎨</span>
+          <icon-lucide-palette class="size-4 text-red-400" />
           <span class="font-bold text-white">{{ selectedProject.name }}</span>
           <span class="text-zinc-500">•</span>
-          <span class="text-zinc-400 text-[11px]">1.5 GB</span>
+          <span class="text-zinc-400 text-[11px]">{{ formatBytes(selectedProject.document.byteLength) }}</span>
           <span class="text-zinc-500">•</span>
           <span class="text-zinc-400 text-[11px]">{{
             new Date(selectedProject.updatedAt).toLocaleDateString()
@@ -1463,15 +1279,15 @@ onMounted(() => {
           <span
             class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold flex items-center gap-1"
           >
-            <span>🔒</span> Restricted Access
+            <icon-lucide-lock class="size-3" /> {{ selectedProject.remoteId ? 'Shared Project' : 'Local Project' }}
           </span>
 
           <button
             @click="openProject(selectedProject.id)"
-            class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/20 transition-all flex items-center gap-1.5"
+            class="dashboard-primary px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/20 transition-all flex items-center gap-1.5"
           >
             <span>Open Canvas</span>
-            <span>→</span>
+            <icon-lucide-arrow-right class="size-3.5" />
           </button>
         </div>
       </footer>
@@ -1491,16 +1307,7 @@ onMounted(() => {
         @keydown="handleSearchKeyDown"
       >
         <div class="relative border-b border-white/[0.06]">
-          <svg
-            class="size-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <icon-lucide-search class="size-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             v-model="searchFilter"
             type="text"
@@ -1574,7 +1381,8 @@ onMounted(() => {
             Cancel
           </button>
           <button
-            @click="isNewFolderModalOpen = false; newFolderName = ''"
+            @click="createFolder"
+            :disabled="!newFolderName.trim()"
             class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500"
           >
             Create

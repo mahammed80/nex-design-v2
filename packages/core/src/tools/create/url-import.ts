@@ -41,9 +41,8 @@ async function fetchHtml(url: string): Promise<UrlFetchResult> {
 
 export const importUrl = defineTool({
   name: 'import_url',
-  mutates: true,
   description:
-    'Import a web page URL as fully editable design layers. Fetches the page HTML, converts DOM elements to Auto Layout frames, text nodes, and image fills, then renders them on the canvas. Use selector to scope to a specific section (e.g. "header", ".hero", "#main").',
+    'Fetch a web page for a URL-to-design client. Headless MCP and CLI callers receive an HTML preview and source metadata; the editor AI uses its app-side import_url tool to render editable layers.',
   params: {
     url: {
       type: 'string',

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test'
 
+import { parseDesignMd } from '@nex-design/core/design-system'
 import { SceneGraph } from '@nex-design/core/scene-graph'
 import { auditDesign } from '@nex-design/core/tools'
 
@@ -9,21 +10,23 @@ import {
   authorizeReferencesFromRequest,
   isReferenceAuthorized
 } from '@/app/ai/reference/authorization'
-import { parseDesignMarkdown, serializeDesignMarkdown } from '@/app/design-system/design-markdown'
+import { serializeDesignMarkdown } from '@/app/design-system/design-markdown'
 
 afterEach(() => clearReferenceAuthorizations())
 
 describe('DESIGN.md codec', () => {
-  test('parses portable color, typography, spacing, and principles', () => {
-    const parsed = parseDesignMarkdown(
+  test('reads the legacy portable format into v2 token groups', () => {
+    const { doc, format } = parseDesignMd(
       `# Acme\n\n## Direction\n- Editorial and dense\n\n## Colors\n- \`color-brand\`: \`#123456\`\n\n## Typography\n- \`font-family-body\`: \`Inter\`\n- \`font-size-body\`: \`16\`\n\n## Spacing\n- \`spacing-md\`: \`16\`\n\n## Principles\n- Prefer sharp hierarchy`
     )
 
-    expect(parsed.name).toBe('Acme')
-    expect(parsed.colors['color-brand']).toBe('#123456')
-    expect(parsed.typography['font-size-body']).toBe(16)
-    expect(parsed.spacing['spacing-md']).toBe(16)
-    expect(parsed.principles).toEqual(['Prefer sharp hierarchy'])
+    expect(format).toBe('legacy')
+    expect(doc.name).toBe('Acme')
+    expect(doc.description).toBe('Editorial and dense')
+    expect(doc.colors.brand).toBe('#123456')
+    expect(doc.typography.body).toEqual({ fontFamily: 'Inter', fontSize: 16 })
+    expect(doc.spacing.md).toBe(16)
+    expect(doc.body).toContain('Prefer sharp hierarchy')
   })
 
   test('exports graph variables', () => {
@@ -45,8 +48,8 @@ describe('DESIGN.md codec', () => {
       hiddenFromPublishing: false
     })
     const markdown = serializeDesignMarkdown({ graph, state: { documentName: 'Product' } } as never)
-    expect(markdown).toContain('# Product')
-    expect(markdown).toContain('`color-brand`: `#FF0000`')
+    expect(markdown).toContain('name: Product')
+    expect(markdown).toContain('brand: "#FF0000"')
   })
 })
 

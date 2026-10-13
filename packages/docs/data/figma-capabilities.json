@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedFrom": "packages/docs/guide/figma-comparison.md",
-  "sourceHash": "e1a98c4a79fdcaaf29f5d0ef8f3142015f14a45ec2df79b4b9c2c8223c6a00b9",
+  "sourceHash": "6cdd0edfedfbb1f42faf9803c30651feb25a0dfb8ef5c0f56374f704f6d37c35",
   "capabilities": [
     {
       "id": "INTERFACE-NAVIGATION.TOOLBAR-WITH-DESIGN-TOOLS",
@@ -1205,7 +1205,7 @@
       "category": "Prototyping",
       "name": "Prototype connections",
       "status": "supported",
-      "notes": "Canvas handles, reconnect/delete, Bézier controls, and edge snapping",
+      "notes": "Canvas handles, reconnect/delete, Bézier controls, edge snapping, and .fig round-trip",
       "acceptance": "Complete the documented “Prototype connections” workflow end-to-end with undo, persistence, and platform coverage.",
       "evidence": []
     },
@@ -1214,7 +1214,7 @@
       "category": "Prototyping",
       "name": "Triggers (click, hover, drag, etc.)",
       "status": "verified",
-      "notes": "Click, hover, press, enter/leave, drag, and delay triggers",
+      "notes": "Click, hover, press, enter/leave, mouse down/up, drag, and delay triggers",
       "acceptance": "Handle interaction triggers (click, hover, mouse down, drag, delay) on interactive frames.",
       "evidence": [
         "tests/engine/app/prototype-interaction.test.ts"
@@ -1225,7 +1225,7 @@
       "category": "Prototyping",
       "name": "Actions (navigate, overlay, scroll, etc.)",
       "status": "verified",
-      "notes": "Navigate, back, close, overlay, scroll, change-to, and set-variable",
+      "notes": "Navigate, back, close, overlay, scroll, change-to, and preview-local set-variable",
       "acceptance": "Execute prototype actions (navigate, open overlay, close overlay, scroll to, change to).",
       "evidence": [
         "tests/engine/app/prototype-interaction.test.ts"
@@ -1235,17 +1235,20 @@
       "id": "PROTOTYPING.ANIMATIONS-TRANSITIONS",
       "category": "Prototyping",
       "name": "Animations & transitions",
-      "status": "supported",
-      "notes": "Instant, dissolve, slide, push, duration, and easing controls",
-      "acceptance": "Complete the documented “Animations & transitions” workflow end-to-end with undo, persistence, and platform coverage.",
-      "evidence": []
+      "status": "verified",
+      "notes": "Instant, dissolve, duration, and easing; directional push/slide/move need a direction picker",
+      "acceptance": "Persist transition type, direction, duration, and easing through `.fig` round-trip and undoable edits.",
+      "evidence": [
+        "tests/engine/fig/roundtrip/prototype.test.ts",
+        "tests/engine/editor/prototype-undo.test.ts"
+      ]
     },
     {
       "id": "PROTOTYPING.SMART-ANIMATE",
       "category": "Prototyping",
       "name": "Smart animate",
       "status": "partial",
-      "notes": "Smart transition exists; full matching and interruption parity remains",
+      "notes": "Fade-and-scale approximation; layer matching and interruption remain",
       "acceptance": "Complete the documented “Smart animate” workflow end-to-end with undo, persistence, and platform coverage.",
       "evidence": []
     },
@@ -1253,8 +1256,8 @@
       "id": "PROTOTYPING.OVERLAYS",
       "category": "Prototyping",
       "name": "Overlays",
-      "status": "verified",
-      "notes": "Position, backdrop, outside-click, open, swap, and close behavior",
+      "status": "partial",
+      "notes": "Open, swap, and close; position settings and overlay stacking remain",
       "acceptance": "Render positioned modal overlays with backdrop blur and outside-click dismissal.",
       "evidence": [
         "tests/engine/app/prototype-interaction.test.ts"
@@ -1536,9 +1539,9 @@
     "total": 153,
     "addressed": 146,
     "missing": 7,
-    "partial": 18,
-    "supported": 59,
+    "partial": 19,
+    "supported": 58,
     "verified": 69
   },
-  "confidenceScore": 79.9
+  "confidenceScore": 79.7
 }

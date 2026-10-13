@@ -450,6 +450,7 @@ export type TriggerType =
   | 'MOUSE_UP'
   | 'AFTER_DELAY'
   | 'ON_DRAG'
+  | 'ON_KEY_DOWN'
 
 export type ActionType =
   | 'BACK'
@@ -474,15 +475,22 @@ export type TransitionType =
 
 export type EasingType = 'LINEAR' | 'EASE_IN' | 'EASE_OUT' | 'EASE_IN_AND_OUT' | 'BOUNCE' | 'SPRING'
 
+/** Direction for PUSH / SLIDE_IN / SLIDE_OUT / MOVE_IN / MOVE_OUT transitions. */
+export type TransitionDirection = 'LEFT' | 'RIGHT' | 'TOP' | 'BOTTOM'
+
 export interface Transition {
   type: TransitionType
   duration: number // in ms
   easing: EasingType
-  direction?: string
+  direction?: TransitionDirection
 }
 
+export type OverlayPosition = 'CENTER' | 'TOP_CENTER' | 'BOTTOM_CENTER' | 'MANUAL'
+
 export interface OverlaySettings {
-  position?: 'CENTER' | 'TOP_CENTER' | 'BOTTOM_CENTER' | 'MANUAL'
+  position?: OverlayPosition
+  /** Overlay top-left relative to the source frame, used when `position` is MANUAL. */
+  offset?: Vector
   backdrop?: boolean
   backdropOpacity?: number
   closeOnOutsideClick?: boolean
@@ -499,20 +507,25 @@ export interface Action {
   overlay?: OverlaySettings
 }
 
+export type DragDirection = 'left' | 'right' | 'up' | 'down'
+
 export interface Trigger {
   type: TriggerType
   delay?: number // delay in ms for AFTER_DELAY
-  direction?: 'left' | 'right' | 'up' | 'down'
-}
-
-export interface Reaction {
-  trigger: Trigger
-  actions: Action[]
+  direction?: DragDirection
+  /** `KeyboardEvent.code` values for ON_KEY_DOWN, e.g. `['ArrowRight']`; any listed key fires. */
+  keys?: string[]
 }
 
 export interface PrototypeFlow {
   name: string
   startNodeId: string
+  description?: string
+}
+
+export interface Reaction {
+  trigger: Trigger
+  actions: Action[]
 }
 
 export type ComponentPropertyType = 'VARIANT' | 'TEXT' | 'BOOLEAN' | 'INSTANCE_SWAP'

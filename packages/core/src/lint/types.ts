@@ -81,11 +81,21 @@ export interface LintNode {
   parent?: LintNode
 }
 
+/** The document's design tokens by raw value, for rules that suggest binding instead of hardcoding. */
+export interface DesignTokenIndex {
+  /** Uppercase `#RRGGBB` → token name. */
+  colors: Map<string, string>
+  spacing: Map<number, string>
+  rounded: Map<number, string>
+}
+
 export interface RuleContext {
   report(issue: { node: LintNode; message: string; suggest?: string }): void
   getConfig(): unknown
   getParent(node: LintNode): LintNode | null
   getChildren(node: LintNode): LintNode[]
+  /** Null when the document defines no design tokens. */
+  getDesignTokens(): DesignTokenIndex | null
 }
 
 export interface Rule {

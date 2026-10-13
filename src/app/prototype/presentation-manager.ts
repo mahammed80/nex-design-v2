@@ -5,8 +5,8 @@ import type { OverlaySettings, SceneNode } from '@nex-design/core/scene-graph'
 import type { EditorStore } from '@/app/editor/active-store'
 
 import { HistoryManager } from './history-manager'
-import { PrototypeEngine } from './prototype-engine'
 import { NavigationController } from './navigation-controller'
+import { PrototypeEngine } from './prototype-engine'
 import { TransitionEngine } from './transition-engine'
 import type { PresentationState } from './types'
 import { ViewportManager } from './viewport-manager'
@@ -165,23 +165,27 @@ export class PresentationManager {
   handleInteraction(nodeId: string, triggerType: string) {
     this.state.scrollTargetId = undefined
 
-    // Map triggerType string to TriggerManager events
-    let event = 'click'
+    // Map triggerType string to TriggerManager events. Unknown triggers are ignored rather
+    // than treated as clicks — one physical click emits several triggers.
+    let event: string | null = null
     if (triggerType === 'ON_CLICK') event = 'click'
     else if (triggerType === 'ON_HOVER') event = 'hover-start'
     else if (triggerType === 'ON_PRESS') event = 'press-start'
     else if (triggerType === 'MOUSE_ENTER') event = 'mouse-enter'
     else if (triggerType === 'MOUSE_LEAVE') event = 'mouse-leave'
+    else if (triggerType === 'MOUSE_DOWN') event = 'mouse-down'
+    else if (triggerType === 'MOUSE_UP') event = 'mouse-up'
     else if (triggerType === 'AFTER_DELAY') event = 'after-delay'
     else if (triggerType.startsWith('ON_DRAG_')) {
-      event = 'drag-' + triggerType.split('_')[2].toLowerCase()
-    } else if (triggerType.startsWith('drag-')) {
+      event = 'drag-' + triggerType.slice('ON_DRAG_'.length).toLowerCase()
+    } else if (
+      triggerType.startsWith('drag-') ||
+      triggerType === 'hover-end' ||
+      triggerType === 'press-end'
+    ) {
       event = triggerType
-    } else if (triggerType === 'hover-end') {
-      event = 'hover-end'
-    } else if (triggerType === 'press-end') {
-      event = 'press-end'
     }
+    if (!event) return undefined
 
     this.prototypeEngine.triggerManager.handleEvent(nodeId, event)
 
@@ -227,4 +231,3 @@ export class PresentationManager {
     walk(frame)
   }
 }
-

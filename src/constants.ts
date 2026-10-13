@@ -61,6 +61,11 @@ export {
 
 import type { Color } from '@nex-design/core/types'
 
+/** Production account/admin API. Overridden by `VITE_NEXDESIGN_ACCOUNT_API`. */
+export const ACCOUNT_API_DEFAULT_BASE = 'https://nex-design.online/api'
+/** Abort live admin API requests that take longer than this. */
+export const ADMIN_API_TIMEOUT_MS = 15_000
+
 export const TRYSTERO_APP_ID = 'nexdesign'
 export const ROOM_ID_LENGTH = 8
 export const ROOM_ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -84,7 +89,11 @@ export const YJS_JSON_FIELDS = new Set([
   'effects',
   'vectorNetwork',
   'boundVariables',
-  'styleRuns'
+  'styleRuns',
+  'reactions',
+  'prototypeConnections',
+  'prototypeFlows',
+  'pluginData'
 ])
 
 export {

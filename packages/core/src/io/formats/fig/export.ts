@@ -3,10 +3,14 @@ import { deflateSync } from 'fflate'
 
 import type { SkiaRenderer } from '#core/canvas'
 import { CANVAS_BG_COLOR, IS_BROWSER, IS_TAURI } from '#core/constants'
+import { DESIGN_COLLECTION_PLUGIN_KEY } from '#core/design-system/storage'
 import { renderThumbnail } from '#core/io/formats/raster'
 import { initCodec, getCompiledSchema, getSchemaBytes } from '#core/kiwi/binary/codec'
 import type { NodeChange } from '#core/kiwi/binary/codec'
 import { stringToGuid } from '#core/kiwi/node-change/convert'
+import { guidToString } from '#core/kiwi/node-change/guid'
+import { mergePluginData } from '#core/kiwi/node-change/plugin-data'
+import { writePrototypeNodeChanges } from '#core/kiwi/node-change/prototype'
 import {
   sceneNodeToKiwi,
   fractionalPosition,
@@ -190,6 +194,7 @@ export async function exportFigFile(
   const varIdToGuid = new Map<string, GUID>()
   const modeIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
+  const pageGuids = new Map<string, GUID>()
   let internalCanvasGuid: GUID | null = null
 
   assignVariableGuids(graph, localIdCounter, varIdToGuid, modeIdToGuid)
@@ -198,6 +203,7 @@ export async function exportFigFile(
     const page = pages[p]
     const canvasLocalID = localIdCounter.value++
     const canvasGuid = { sessionID: 0, localID: canvasLocalID }
+    pageGuids.set(page.id, canvasGuid)
 
     if (page.internalOnly) internalCanvasGuid = canvasGuid
 
@@ -214,6 +220,14 @@ export async function exportFigFile(
       }))
     }
     if (page.internalOnly) canvasNc.internalOnly = true
+    // Page-level pluginData carries the Style Guide marker and stored DESIGN.md, among others.
+    if (page.pluginData.length > 0) {
+      canvasNc.pluginData = mergePluginData(page.pluginData).map((entry) => {
+        const guid =
+          entry.key === DESIGN_COLLECTION_PLUGIN_KEY ? varIdToGuid.get(entry.value) : undefined
+        return guid ? { ...entry, value: guidToString(guid) } : entry
+      })
+    }
     nodeChanges.push(canvasNc)
 
     const children = graph.getChildren(page.id)
@@ -251,6 +265,8 @@ export async function exportFigFile(
 
     appendVariableNodeChanges(graph, nodeChanges, internalCanvasGuid, varIdToGuid, modeIdToGuid)
   }
+
+  writePrototypeNodeChanges(graph, nodeChanges, pageGuids, nodeIdToGuid, varIdToGuid)
 
   const msg: Record<string, unknown> = {
     type: 'NODE_CHANGES',
