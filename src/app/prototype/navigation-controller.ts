@@ -1,8 +1,12 @@
+import type { Transition } from '@nex-design/core/scene-graph'
+
 import type { EditorStore } from '@/app/editor/active-store'
 
 import type { HistoryManager } from './history-manager'
-import type { TransitionEngine } from './transition-engine'
-import type { PresentationState, TransitionType, TransitionDirection } from './types'
+import { inverseTransition, type TransitionEngine } from './transition-engine'
+import type { PresentationState } from './types'
+
+const INSTANT: Transition = { type: 'INSTANT', duration: 0, easing: 'LINEAR' }
 
 export class NavigationController {
   constructor(
@@ -12,43 +16,33 @@ export class NavigationController {
     private state: PresentationState
   ) {}
 
-  navigate(
-    destinationId: string,
-    transitionType: TransitionType = 'INSTANT',
-    transitionDirection?: TransitionDirection,
-    duration: number = 300
-  ) {
-    if (!destinationId || !this.editor.graph.getNode(destinationId)) return
-
-    // Push current active screen to back-stack before moving forward
-    this.history.push(this.state.activeFrameId)
-
-    // Set active transition animations
+  private show(frameId: string, transition: Transition) {
+    this.state.previousFrameId = this.state.activeFrameId
+    this.state.transition = transition
     this.state.transitionName = this.transitionEngine.resolveTransitionName(
-      transitionType,
-      transitionDirection
+      transition.type,
+      transition.direction
     )
-    this.state.transitionDuration = duration
-
-    // Update active screen ID
-    this.state.activeFrameId = destinationId
+    this.state.transitionDuration = transition.duration
+    this.state.transitionEasing = transition.easing
+    this.state.activeFrameId = frameId
   }
 
+  navigate(destinationId: string, transition: Transition = INSTANT) {
+    if (!destinationId || !this.editor.graph.getNode(destinationId)) return
+    if (destinationId === this.state.activeFrameId) return
+    this.history.push(this.state.activeFrameId, transition)
+    this.show(destinationId, transition)
+  }
+
+  /** Back replays the arriving transition in reverse (push-left returns with push-right). */
   goBack() {
-    if (!this.history.canGoBack()) return
     const prev = this.history.pop(this.state.activeFrameId)
-    if (prev) {
-      this.state.transitionName = 'instant'
-      this.state.activeFrameId = prev
-    }
+    if (prev) this.show(prev.frameId, inverseTransition(prev.transition ?? INSTANT))
   }
 
   goForward() {
-    if (!this.history.canGoForward()) return
     const next = this.history.goForward(this.state.activeFrameId)
-    if (next) {
-      this.state.transitionName = 'instant'
-      this.state.activeFrameId = next
-    }
+    if (next) this.show(next.frameId, next.transition ?? INSTANT)
   }
 }

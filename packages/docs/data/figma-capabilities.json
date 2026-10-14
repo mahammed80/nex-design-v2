@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedFrom": "packages/docs/guide/figma-comparison.md",
-  "sourceHash": "6cdd0edfedfbb1f42faf9803c30651feb25a0dfb8ef5c0f56374f704f6d37c35",
+  "sourceHash": "f3b6a5f1ed9b577c1570323e206a944beac1aa4c563a384422102e8020947fe0",
   "capabilities": [
     {
       "id": "INTERFACE-NAVIGATION.TOOLBAR-WITH-DESIGN-TOOLS",
@@ -1214,7 +1214,7 @@
       "category": "Prototyping",
       "name": "Triggers (click, hover, drag, etc.)",
       "status": "verified",
-      "notes": "Click, hover, press, enter/leave, mouse down/up, drag, and delay triggers",
+      "notes": "Click, hover, press, enter/leave, mouse down/up, drag, keyboard, and delay triggers",
       "acceptance": "Handle interaction triggers (click, hover, mouse down, drag, delay) on interactive frames.",
       "evidence": [
         "tests/engine/app/prototype-interaction.test.ts"
@@ -1225,7 +1225,7 @@
       "category": "Prototyping",
       "name": "Actions (navigate, overlay, scroll, etc.)",
       "status": "verified",
-      "notes": "Navigate, back, close, overlay, scroll, change-to, and preview-local set-variable",
+      "notes": "Navigate, back, close, overlay, scroll, change-to, open link, preview-local set-variable, and multi-action sequences",
       "acceptance": "Execute prototype actions (navigate, open overlay, close overlay, scroll to, change to).",
       "evidence": [
         "tests/engine/app/prototype-interaction.test.ts"
@@ -1236,7 +1236,7 @@
       "category": "Prototyping",
       "name": "Animations & transitions",
       "status": "verified",
-      "notes": "Instant, dissolve, duration, and easing; directional push/slide/move need a direction picker",
+      "notes": "Instant, dissolve, smart, push/slide/move with direction, duration, and easing",
       "acceptance": "Persist transition type, direction, duration, and easing through `.fig` round-trip and undoable edits.",
       "evidence": [
         "tests/engine/fig/roundtrip/prototype.test.ts",
@@ -1247,20 +1247,23 @@
       "id": "PROTOTYPING.SMART-ANIMATE",
       "category": "Prototyping",
       "name": "Smart animate",
-      "status": "partial",
-      "notes": "Fade-and-scale approximation; layer matching and interruption remain",
-      "acceptance": "Complete the documented “Smart animate” workflow end-to-end with undo, persistence, and platform coverage.",
-      "evidence": []
+      "status": "verified",
+      "notes": "Name-path layer matching with position, size, rotation, opacity, radius, and fill tweening; interruption remains",
+      "acceptance": "Match layers by name path between screens and tween position, size, rotation, opacity, radius, and fills; fade unmatched layers in and out.",
+      "evidence": [
+        "tests/engine/app/prototype-player.test.ts"
+      ]
     },
     {
       "id": "PROTOTYPING.OVERLAYS",
       "category": "Prototyping",
       "name": "Overlays",
-      "status": "partial",
-      "notes": "Open, swap, and close; position settings and overlay stacking remain",
-      "acceptance": "Render positioned modal overlays with backdrop blur and outside-click dismissal.",
+      "status": "verified",
+      "notes": "Stacked overlays with center/top/bottom/manual position, backdrop, outside-click, swap, and close",
+      "acceptance": "Stack overlays with center, top, bottom, or manual placement; swap replaces the top overlay, close and outside-click dismiss one at a time.",
       "evidence": [
-        "tests/engine/app/prototype-interaction.test.ts"
+        "tests/engine/app/prototype-interaction.test.ts",
+        "tests/engine/app/prototype-player.test.ts"
       ]
     },
     {
@@ -1276,10 +1279,14 @@
       "id": "PROTOTYPING.PROTOTYPE-FLOWS",
       "category": "Prototyping",
       "name": "Prototype flows",
-      "status": "partial",
-      "notes": "Starting points work; named multi-flow management remains",
-      "acceptance": "Complete the documented “Prototype flows” workflow end-to-end with undo, persistence, and platform coverage.",
-      "evidence": []
+      "status": "verified",
+      "notes": "Named flows with descriptions, default start frame, and .fig round-trip",
+      "acceptance": "Add, rename, describe, and remove named flows with undo, set the default start frame, and keep flows through a `.fig` round-trip.",
+      "evidence": [
+        "tests/engine/editor/prototype-undo.test.ts",
+        "tests/engine/fig/roundtrip/prototype.test.ts",
+        "tests/engine/tools/prototype.test.ts"
+      ]
     },
     {
       "id": "PROTOTYPING.VARIABLES-IN-PROTOTYPES",
@@ -1304,10 +1311,11 @@
       "category": "Prototyping",
       "name": "Present & play prototypes",
       "status": "verified",
-      "notes": "Graph-driven presentation player with start-frame selection",
-      "acceptance": "Present interactive prototype flow player with start frame selection and step history.",
+      "notes": "CanvasKit-rendered player with flow picker, start frame, and reversible Back/Forward",
+      "acceptance": "Present the prototype from a flow or default start, render screens with CanvasKit, and replay transitions in reverse on Back.",
       "evidence": [
-        "tests/engine/app/prototype-interaction.test.ts"
+        "tests/engine/app/prototype-interaction.test.ts",
+        "tests/engine/app/prototype-player.test.ts"
       ]
     },
     {
@@ -1539,9 +1547,9 @@
     "total": 153,
     "addressed": 146,
     "missing": 7,
-    "partial": 19,
+    "partial": 16,
     "supported": 58,
-    "verified": 69
+    "verified": 72
   },
-  "confidenceScore": 79.7
+  "confidenceScore": 80.7
 }

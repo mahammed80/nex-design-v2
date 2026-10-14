@@ -36,8 +36,21 @@ export function usePrototypeTargets() {
       .map((node) => ({ value: node.id, label: node.name || node.type }))
   })
 
-  function frameOptions(excludeId?: string): TargetOption[] {
-    return topLevelFrames.value.filter((option) => option.value !== excludeId)
+  /** The top-level frame (screen) that contains `nodeId`, or the node itself if it is one. */
+  function screenOf(nodeId: string): string | undefined {
+    let current = editor.graph.getNode(nodeId)
+    while (current?.parentId && current.parentId !== editor.state.currentPageId) {
+      current = editor.graph.getNode(current.parentId)
+    }
+    return current?.id
+  }
+
+  /** Frames a layer can navigate to: every screen except the one it sits on. */
+  function frameOptions(sourceId?: string): TargetOption[] {
+    const ownScreen = sourceId ? screenOf(sourceId) : undefined
+    return topLevelFrames.value.filter(
+      (option) => option.value !== sourceId && option.value !== ownScreen
+    )
   }
 
   const layerOptions = computed<TargetOption[]>(() => {

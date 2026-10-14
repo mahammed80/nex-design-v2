@@ -1,3 +1,5 @@
+import type { Transition } from '@nex-design/core/scene-graph'
+
 export type { TransitionDirection, TransitionType } from '@nex-design/core/scene-graph'
 
 export type ZoomMode = 'FIT' | 'FILL' | '100%'
@@ -26,5 +28,9 @@ export interface PresentationState {
   transitionName: string // CSS transition name (e.g. 'dissolve', 'push-left')
   transitionDuration: number // in ms
   transitionEasing?: string
+  /** The full transition behind the current screen change (smart animate reads it). */
+  transition?: Transition
+  /** Screen shown before `activeFrameId`; the smart-animate source. */
+  previousFrameId?: string
   scrollTargetId?: string
 }

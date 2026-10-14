@@ -3,10 +3,13 @@ import { computed, nextTick, ref, watch, onUnmounted } from 'vue'
 import { DialogRoot, DialogContent, DialogOverlay, DialogPortal, DialogTitle } from 'reka-ui'
 import { useElementSize, useEventListener } from '@vueuse/core'
 
+import type { OverlayPosition } from '@nex-design/core/scene-graph'
+
 import { useEditorStore } from '@/app/editor/active-store'
 import { PresentationManager } from '@/app/prototype/presentation-manager'
 import { DEVICE_PRESETS } from '@/app/prototype/device-frame-renderer'
 import PrototypeNode from './PrototypeNode.vue'
+import PrototypeScreen from './PrototypeScreen.vue'
 
 const { open } = defineProps<{
   open: boolean
@@ -51,15 +54,82 @@ const activeFrame = computed(() => {
   return presentationManager.prototypeEngine.stateManager.getNode(activeFrameId.value) ?? null
 })
 
-const overlayFrame = computed(() => {
-  const id = presentationManager.activeOverlay.nodeId
-  return id ? (presentationManager.prototypeEngine.stateManager.getNode(id) ?? null) : null
-})
+const stateManager = presentationManager.prototypeEngine.stateManager
+
+/** Open overlays with their frames and where to place them on the screen (design px). */
+const overlays = computed(() =>
+  presentationManager.overlays.flatMap((entry, index) => {
+    const node = stateManager.getNode(entry.nodeId)
+    if (!node) return []
+    return [{ ...entry, node, index, isTop: index === presentationManager.overlays.length - 1 }]
+  })
+)
+
+function overlayPlacement(
+  node: { width: number; height: number },
+  entry: (typeof overlays.value)[number]
+) {
+  const screen = layout.value
+  if (!screen) return {}
+  const position = entry.settings?.position ?? 'CENTER'
+  const centeredLeft = (screen.frameWidth - node.width) / 2
+  const tops: Record<OverlayPosition, number> = {
+    CENTER: (screen.frameHeight - node.height) / 2,
+    TOP_CENTER: 0,
+    BOTTOM_CENTER: screen.frameHeight - node.height,
+    MANUAL: entry.settings?.offset?.y ?? 0
+  }
+  const left = position === 'MANUAL' ? (entry.settings?.offset?.x ?? 0) : centeredLeft
+  return {
+    left: `${left}px`,
+    top: `${tops[position]}px`,
+    width: `${node.width}px`,
+    height: `${node.height}px`
+  }
+}
+
+function onOverlayBackdrop(entry: (typeof overlays.value)[number]) {
+  if (entry.isTop && entry.settings?.closeOnOutsideClick !== false) {
+    presentationManager.closeOverlay()
+  }
+}
 
 // Map of all page nodes for rapid access
-const nodesMap = computed(() => {
-  return presentationManager.prototypeEngine.stateManager.nodesMap
+const nodesMap = computed(() => stateManager.nodesMap)
+
+/** True once CanvasKit drew the screen; the DOM node tree then only serves as hit targets. */
+const screenRendered = ref(false)
+const renderedOverlays = ref(new Set<string>())
+function onOverlayRendered(nodeId: string, ok: boolean) {
+  const next = new Set(renderedOverlays.value)
+  if (ok) next.add(nodeId)
+  else next.delete(nodeId)
+  renderedOverlays.value = next
+}
+
+/** Smart animate is drawn frame by frame on the canvas instead of with CSS classes. */
+const isSmart = computed(() => presentationManager.state.transitionName === 'smart-animate')
+const screenTransitionName = computed(() =>
+  isSmart.value && screenRendered.value ? 'smart-canvas' : presentationManager.state.transitionName
+)
+const smartFrom = computed(() =>
+  isSmart.value ? presentationManager.state.previousFrameId : undefined
+)
+
+const MAX_RENDER_SCALE = 3
+/** Device pixels per design pixel for the screen canvas (crisp at the current zoom). */
+const renderScale = computed(() => {
+  const screen = layout.value
+  if (!screen) return 1
+  const css = screen.scale * (screen.deviceWidth / screen.frameWidth)
+  return Math.min(MAX_RENDER_SCALE, Math.max(0.25, css * (window.devicePixelRatio || 1)))
 })
+
+const selectedFlow = ref('')
+function startFlow(startNodeId: string) {
+  selectedFlow.value = startNodeId
+  presentationManager.restartPrototype(startNodeId || undefined)
+}
 
 // Fullscreen API Handling
 const fullscreenRef = ref<HTMLDivElement | null>(null)
@@ -126,6 +196,12 @@ const layout = computed(() => {
 // Keyboard triggers: the open overlay gets first pick, then the active screen.
 useEventListener(window, 'keydown', (event: KeyboardEvent) => {
   if (!open || event.repeat) return
+  if (event.code === 'Escape' && presentationManager.activeOverlay.isOpen) {
+    presentationManager.closeOverlay()
+    event.preventDefault()
+    event.stopPropagation()
+    return
+  }
   const triggers = presentationManager.prototypeEngine.triggerManager
   const overlayId = presentationManager.activeOverlay.isOpen
     ? presentationManager.activeOverlay.nodeId
@@ -194,12 +270,36 @@ onUnmounted(() => {
             <!-- Restart Button -->
             <button
               class="flex items-center gap-1.5 rounded-lg bg-[#232329] border border-border px-3 py-1.5 text-xs text-muted hover:text-white hover:bg-[#2b2b33] transition-all"
-              @click="presentationManager.restartPrototype()"
+              data-test-id="prototype-player-restart"
+              @click="presentationManager.restartPrototype(selectedFlow || undefined)"
               title="Restart flow (R)"
             >
               <icon-lucide-rotate-ccw class="size-3.5" />
               <span class="font-medium">Restart</span>
             </button>
+
+            <!-- Flow picker -->
+            <div
+              v-if="presentationManager.flows.length > 0"
+              class="flex items-center bg-[#232329] border border-border rounded-lg px-2 py-0.5"
+            >
+              <span class="text-[10px] text-muted font-medium mr-2">Flow:</span>
+              <select
+                :value="selectedFlow"
+                data-test-id="prototype-player-flow"
+                class="bg-transparent text-white text-xs border-none focus:outline-none pr-4 py-1 font-semibold cursor-pointer"
+                @change="startFlow(($event.target as HTMLSelectElement).value)"
+              >
+                <option value="">Default start</option>
+                <option
+                  v-for="flow in presentationManager.flows"
+                  :key="flow.startNodeId"
+                  :value="flow.startNodeId"
+                >
+                  {{ flow.name }}
+                </option>
+              </select>
+            </div>
 
             <!-- Device Selector -->
             <div class="flex items-center bg-[#232329] border border-border rounded-lg px-2 py-0.5">
@@ -362,7 +462,7 @@ onUnmounted(() => {
 
                 <!-- Transition Arena for only the Active Screen -->
                 <Transition
-                  :name="presentationManager.state.transitionName"
+                  :name="screenTransitionName"
                   :style="{
                     '--transition-duration': `${presentationManager.state.transitionDuration}ms`,
                     '--transition-easing':
@@ -381,48 +481,73 @@ onUnmounted(() => {
                         transformOrigin: 'top left'
                       }"
                     >
-                      <PrototypeNode
+                      <!-- CanvasKit-drawn screen; the node tree above stays as invisible hit targets -->
+                      <PrototypeScreen
                         v-if="activeFrame"
-                        :node="activeFrame"
-                        :nodesMap="nodesMap"
-                        :is-root="true"
-                        @interaction="handlePrototypeInteraction"
+                        :frame-id="activeFrameId"
+                        :state-manager="stateManager"
+                        :render-scale="renderScale"
+                        :smart-from="smartFrom"
+                        :transition="presentationManager.state.transition"
+                        @rendered="screenRendered = $event"
                       />
+                      <div :class="{ 'opacity-0': screenRendered }">
+                        <PrototypeNode
+                          v-if="activeFrame"
+                          :node="activeFrame"
+                          :nodesMap="nodesMap"
+                          :is-root="true"
+                          @interaction="handlePrototypeInteraction"
+                        />
+                      </div>
                     </div>
                   </div>
                 </Transition>
 
-                <!-- Active Overlay Layer -->
+                <!-- Overlay stack, in the screen's design coordinates -->
                 <div
-                  v-if="presentationManager.activeOverlay.isOpen && overlayFrame"
-                  class="absolute inset-0 z-50 flex items-center justify-center transition-all duration-300"
-                  :class="{
-                    'bg-black/50': presentationManager.activeOverlay.settings?.backdrop !== false
-                  }"
+                  v-if="overlays.length > 0"
+                  class="absolute top-0 left-0 z-50"
+                  data-test-id="prototype-player-overlays"
                   :style="{
-                    backgroundColor:
-                      presentationManager.activeOverlay.settings?.backdrop === false
-                        ? undefined
-                        : `rgb(0 0 0 / ${presentationManager.activeOverlay.settings?.backdropOpacity ?? 0.5})`
+                    width: `${layout.frameWidth}px`,
+                    height: `${layout.frameHeight}px`,
+                    transform: `scale(${layout.deviceWidth / layout.frameWidth}, ${layout.deviceHeight / layout.frameHeight})`,
+                    transformOrigin: 'top left'
                   }"
-                  @click.self="
-                    presentationManager.activeOverlay.settings?.closeOnOutsideClick !== false &&
-                    (presentationManager.activeOverlay.isOpen = false)
-                  "
                 >
                   <div
-                    class="relative shadow-2xl rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 bg-background"
+                    v-for="entry in overlays"
+                    :key="`${entry.index}:${entry.nodeId}`"
+                    class="absolute inset-0"
                     :style="{
-                      width: `${overlayFrame.width}px`,
-                      height: `${overlayFrame.height}px`
+                      backgroundColor:
+                        entry.settings?.backdrop === false
+                          ? undefined
+                          : `rgb(0 0 0 / ${entry.settings?.backdropOpacity ?? 0.5})`
                     }"
+                    :data-test-id="`prototype-player-overlay-${entry.index}`"
+                    @click.self="onOverlayBackdrop(entry)"
                   >
-                    <PrototypeNode
-                      :node="overlayFrame"
-                      :nodesMap="nodesMap"
-                      :is-root="true"
-                      @interaction="handlePrototypeInteraction"
-                    />
+                    <div
+                      class="absolute overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                      :style="overlayPlacement(entry.node, entry)"
+                    >
+                      <PrototypeScreen
+                        :frame-id="entry.nodeId"
+                        :state-manager="stateManager"
+                        :render-scale="renderScale"
+                        @rendered="onOverlayRendered(entry.nodeId, $event)"
+                      />
+                      <div :class="{ 'opacity-0': renderedOverlays.has(entry.nodeId) }">
+                        <PrototypeNode
+                          :node="entry.node"
+                          :nodesMap="nodesMap"
+                          :is-root="true"
+                          @interaction="handlePrototypeInteraction"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -77,6 +77,63 @@ function renderToSurface(
   }
 }
 
+export interface NodePixels {
+  width: number
+  height: number
+  /** Unpremultiplied sRGB RGBA, row-major — ready for `new ImageData(...)`. */
+  pixels: Uint8Array
+}
+
+/**
+ * Rasterize one node's frame rectangle (its own width × height, content outside is clipped)
+ * to raw pixels. Used by the prototype player, which renders a session copy of the graph:
+ * the renderer's per-node picture cache is swapped out for the call so session state never
+ * draws the editor's cached pictures (and the editor's cache is left untouched).
+ */
+export function renderNodeToPixels(
+  ck: CanvasKit,
+  renderer: SkiaRenderer,
+  graph: SceneGraph,
+  nodeId: string,
+  scale: number
+): NodePixels | null {
+  const node = graph.getNode(nodeId)
+  if (!node || node.width <= 0 || node.height <= 0) return null
+  const width = Math.max(1, Math.ceil(node.width * scale))
+  const height = Math.max(1, Math.ceil(node.height * scale))
+  const surface = ck.MakeSurface(width, height)
+  if (!surface) return null
+
+  const editorCache = renderer.nodePictureCache
+  const prevViewport = renderer.worldViewport
+  renderer.nodePictureCache = new Map()
+  renderer.worldViewport = { x: -1e9, y: -1e9, w: 2e9, h: 2e9 }
+  try {
+    const canvas = surface.getCanvas()
+    canvas.clear(ck.TRANSPARENT)
+    canvas.scale(scale, scale)
+    const parent = node.parentId ? graph.getAbsolutePosition(node.parentId) : { x: 0, y: 0 }
+    canvas.translate(-(parent.x + node.x), -(parent.y + node.y))
+    renderer.renderNode(canvas, graph, nodeId, {})
+    surface.flush()
+    const image = surface.makeImageSnapshot()
+    const pixels = image.readPixels(0, 0, {
+      width,
+      height,
+      colorType: ck.ColorType.RGBA_8888,
+      alphaType: ck.AlphaType.Unpremul,
+      colorSpace: ck.ColorSpace.SRGB
+    })
+    image.delete()
+    return pixels ? { width, height, pixels: new Uint8Array(pixels) } : null
+  } finally {
+    for (const picture of renderer.nodePictureCache.values()) picture?.delete()
+    renderer.nodePictureCache = editorCache
+    renderer.worldViewport = prevViewport
+    surface.delete()
+  }
+}
+
 export function renderNodesToImage(
   ck: CanvasKit,
   renderer: SkiaRenderer,

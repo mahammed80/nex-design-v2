@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { reactive, ref, toRaw } from 'vue'
 
 import { canConnect } from '@nex-design/core/prototype'
 import type { SceneNode, Action, Reaction, VariableValue } from '@nex-design/core/scene-graph'
@@ -8,17 +8,15 @@ import { openExternalLink } from '@/app/shell/ui'
 
 import type { NavigationController } from './navigation-controller'
 import type { PresentationManager } from './presentation-manager'
+import { easingCss } from './transition-engine'
 
 export class StateManager {
-  // Deeply reactive so in-session variant swaps re-render, but typed as a plain Map: Vue's
-  // `UnwrapRef` view of SceneNode (Uint8Array fields etc.) isn't assignable back to SceneNode.
-  public nodesMap: Map<string, SceneNode> = reactive(new Map<string, SceneNode>()) as Map<
-    string,
-    SceneNode
-  >
+  public nodesMap = reactive<Map<string, SceneNode>>(new Map())
 
   /** Preview-session variable values; the document's variables are never mutated. */
   public variableValues = reactive<Map<string, VariableValue>>(new Map())
+  /** Bumped on every session mutation so canvas-rendered screens know to redraw. */
+  public version = ref(0)
   private originalVariants = new Map<string, string>()
 
   constructor(private engine: PrototypeEngine) {}
@@ -30,9 +28,16 @@ export class StateManager {
     for (const [id, node] of this.engine.editor.graph.nodes) {
       this.nodesMap.set(id, structuredClone(node))
     }
+    this.version.value++
+  }
+
+  /** The session nodes without the reactive proxy, for handing to the CanvasKit renderer. */
+  rawNodes(): Map<string, SceneNode> {
+    return toRaw(this.nodesMap) as Map<string, SceneNode>
   }
 
   overrideInstanceVariant(instanceId: string, targetComponentId: string) {
+    this.version.value++
     const instance = this.nodesMap.get(instanceId)
     if (!instance || instance.type !== 'INSTANCE') return
 
@@ -97,6 +102,7 @@ export class StateManager {
 
   setVariableValue(variableId: string, value: VariableValue) {
     this.variableValues.set(variableId, structuredClone(value))
+    this.version.value++
   }
 
   /** Session value if the prototype changed it, else the document's value for the active mode. */
@@ -277,27 +283,22 @@ export class ActionManager {
 
   private executeNavigate(action: Action) {
     if (!action.destinationId) return
-    this.engine.navigationManager.navigate(
-      action.destinationId,
-      action.transition?.type ?? 'INSTANT',
-      action.transition?.direction,
-      action.transition?.duration ?? 300
-    )
-    this.engine.presentation.state.transitionEasing = action.transition?.easing ?? 'EASE_IN_AND_OUT'
+    // Navigating replaces the screen; overlays belong to the screen they opened on.
+    this.engine.presentation.overlays.splice(0)
+    this.engine.navigationManager.navigate(action.destinationId, action.transition)
   }
 
   private executeClose() {
-    const overlay = this.engine.presentation.activeOverlay
-    if (overlay.isOpen) overlay.isOpen = false
-    else this.engine.presentation.stopPresentation()
+    if (!this.engine.presentation.closeOverlay()) this.engine.presentation.stopPresentation()
   }
 
   private executeOverlay(action: Action) {
     if (!action.destinationId) return
-    const overlay = this.engine.presentation.activeOverlay
-    overlay.isOpen = true
-    overlay.nodeId = action.destinationId
-    overlay.settings = action.overlay
+    this.engine.presentation.openOverlay(
+      action.destinationId,
+      action.overlay,
+      action.type === 'SWAP_OVERLAY'
+    )
   }
 
   private executeChangeTo(sourceNodeId: string, action: Action, changedInstances: Set<string>) {
@@ -369,20 +370,7 @@ export class AnimationManager {
   // No constructor needed — AnimationManager is stateless and engine-independent.
 
   getEasingCSS(easing: string): string {
-    switch (easing) {
-      case 'LINEAR':
-        return 'linear'
-      case 'EASE_IN':
-        return 'cubic-bezier(0.4, 0, 1, 1)'
-      case 'EASE_OUT':
-        return 'cubic-bezier(0, 0, 0.2, 1)'
-      case 'EASE_IN_AND_OUT':
-        return 'cubic-bezier(0.4, 0, 0.2, 1)'
-      case 'SPRING':
-        return 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-      default:
-        return 'ease'
-    }
+    return easingCss(easing)
   }
 }
 

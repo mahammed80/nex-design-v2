@@ -1,6 +1,6 @@
 import { reactive, watch } from 'vue'
 
-import type { OverlaySettings, SceneNode } from '@nex-design/core/scene-graph'
+import type { OverlaySettings, PrototypeFlow, SceneNode } from '@nex-design/core/scene-graph'
 
 import type { EditorStore } from '@/app/editor/active-store'
 
@@ -11,6 +11,15 @@ import { TransitionEngine } from './transition-engine'
 import type { PresentationState } from './types'
 import { ViewportManager } from './viewport-manager'
 import { ZoomController } from './zoom-controller'
+
+const SCREEN_TYPES = new Set(['FRAME', 'COMPONENT', 'INSTANCE', 'SECTION'])
+
+export interface OverlayEntry {
+  nodeId: string
+  settings?: OverlaySettings
+  /** Screen (or overlay) that opened it; MANUAL offsets are relative to this. */
+  sourceFrameId: string
+}
 
 export class PresentationManager {
   public state = reactive<PresentationState>({
@@ -67,9 +76,28 @@ export class PresentationManager {
     )
   }
 
-  startPresentation() {
+  /** Screens of the current page's flows, for the player's flow picker. */
+  get flows(): PrototypeFlow[] {
+    const page = this.editor.graph.getNode(this.editor.state.currentPageId)
+    return (page?.prototypeFlows ?? []).filter((flow) =>
+      this.editor.graph.nodes.has(flow.startNodeId)
+    )
+  }
+
+  /** Flow start if given, else the page's default start, else its first frame. */
+  private resolveStartFrame(flowStartId?: string): string {
+    const graph = this.editor.graph
+    if (flowStartId && graph.nodes.has(flowStartId)) return flowStartId
+    const pageId = this.editor.state.currentPageId
+    const start = graph.getNode(pageId)?.prototypeStartNodeId
+    if (start && graph.nodes.has(start)) return start
+    return graph.getChildren(pageId).find((n: SceneNode) => SCREEN_TYPES.has(n.type))?.id ?? ''
+  }
+
+  startPresentation(flowStartId?: string) {
     this.history.clear()
     this.clearDelayTriggers()
+    this.overlays.splice(0)
     this.zoomController.reset()
     this.state.zoomMode = 'FIT'
     this.state.customZoom = 1.0
@@ -77,29 +105,9 @@ export class PresentationManager {
 
     // Initialize state sandbox
     this.prototypeEngine.stateManager.initialize()
-
-    const pageId = this.editor.state.currentPageId
-    const page = this.editor.graph.getNode(pageId)
-
-    if (page?.prototypeStartNodeId && this.editor.graph.nodes.has(page.prototypeStartNodeId)) {
-      this.state.activeFrameId = page.prototypeStartNodeId
-    } else {
-      // Fall back to first frame on current page
-      const frames = this.editor.graph
-        .getChildren(pageId)
-        .filter(
-          (n: SceneNode) =>
-            n.type === 'FRAME' ||
-            n.type === 'COMPONENT' ||
-            n.type === 'INSTANCE' ||
-            n.type === 'SECTION'
-        )
-      if (frames.length > 0) {
-        this.state.activeFrameId = frames[0].id
-      } else {
-        this.state.activeFrameId = ''
-      }
-    }
+    this.state.previousFrameId = undefined
+    this.state.transitionName = 'instant'
+    this.state.activeFrameId = this.resolveStartFrame(flowStartId)
 
     // Try to auto-detect device type based on initial frame aspect ratio
     const current = this.editor.graph.getNode(this.state.activeFrameId)
@@ -125,42 +133,41 @@ export class PresentationManager {
     this.history.clear()
   }
 
-  restartPrototype() {
+  /** Restart the current flow (the screen the session started on) from a clean state. */
+  restartPrototype(flowStartId?: string) {
     this.history.clear()
     this.clearDelayTriggers()
-
-    // Re-initialize state sandbox
+    this.overlays.splice(0)
     this.prototypeEngine.stateManager.initialize()
-
-    const pageId = this.editor.state.currentPageId
-    const page = this.editor.graph.getNode(pageId)
-
-    if (page?.prototypeStartNodeId && this.editor.graph.nodes.has(page.prototypeStartNodeId)) {
-      this.state.activeFrameId = page.prototypeStartNodeId
-    } else {
-      const frames = this.editor.graph
-        .getChildren(pageId)
-        .filter(
-          (n: SceneNode) =>
-            n.type === 'FRAME' ||
-            n.type === 'COMPONENT' ||
-            n.type === 'INSTANCE' ||
-            n.type === 'SECTION'
-        )
-      if (frames.length > 0) {
-        this.state.activeFrameId = frames[0].id
-      }
-    }
+    this.state.previousFrameId = undefined
+    this.state.transitionName = 'instant'
+    this.state.activeFrameId = this.resolveStartFrame(flowStartId)
   }
 
-  public activeOverlay = reactive<{
-    isOpen: boolean
-    nodeId: string
-    settings?: OverlaySettings
-  }>({
-    isOpen: false,
-    nodeId: ''
-  })
+  /** Open overlays, bottom to top. Only the top one receives outside clicks and keys first. */
+  public overlays = reactive<OverlayEntry[]>([])
+
+  /** The top overlay (kept for callers that predate stacking). */
+  get activeOverlay(): { isOpen: boolean; nodeId: string; settings?: OverlaySettings } {
+    const top = this.overlays.at(-1)
+    return { isOpen: !!top, nodeId: top?.nodeId ?? '', settings: top?.settings }
+  }
+
+  /** OPEN stacks a new overlay; SWAP replaces the top one (or opens if none is open). */
+  openOverlay(nodeId: string, settings: OverlaySettings | undefined, swap: boolean) {
+    const entry: OverlayEntry = {
+      nodeId,
+      settings,
+      sourceFrameId: this.overlays.at(-1)?.nodeId ?? this.state.activeFrameId
+    }
+    if (swap && this.overlays.length > 0) this.overlays.splice(this.overlays.length - 1, 1, entry)
+    else this.overlays.push(entry)
+  }
+
+  /** Close the top overlay; returns false when none was open. */
+  closeOverlay(): boolean {
+    return this.overlays.pop() !== undefined
+  }
 
   handleInteraction(nodeId: string, triggerType: string) {
     this.state.scrollTargetId = undefined

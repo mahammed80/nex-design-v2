@@ -1,6 +1,8 @@
 export {
   computeContentBounds,
+  renderNodeToPixels,
   renderNodesToImage,
+  type NodePixels,
   renderThumbnail,
   type RasterExportFormat,
   type ExportFormat
