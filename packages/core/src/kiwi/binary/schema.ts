@@ -1587,6 +1587,7 @@ enum ComponentPropType {
   TEXT = 1;
   COLOR = 2;
   INSTANCE_SWAP = 3;
+  VARIANT = 4;
 }
 
 message ComponentPropPreferredValues {

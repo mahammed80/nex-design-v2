@@ -151,7 +151,7 @@ All commands support `--json` for machine-readable output.
 
 ### Built-in chat
 
-Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It uses Poolside Laguna and has 100+ tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Poolside credentials are held by the server proxy and are never included in the browser or desktop bundle.
+Press <kbd>⌘</kbd><kbd>J</kbd> to open the AI assistant. It uses Poolside Laguna and has 100+ tools that can create shapes, set fills and strokes, manage auto-layout, work with components and variables, run boolean operations, analyze design tokens, and export assets. Build mode edits the canvas; Plan mode uses read-only tools to propose screens, states, components, interactions, and validation before implementation. Attach reference images or source files, queue follow-up prompts while generation runs, and restore either side of a generated result from the chat checkpoint controls. New generated screens are placed beside existing top-level frames instead of overwriting the current design. Poolside credentials are held by the server proxy and are never included in the browser or desktop bundle.
 
 ### Coding agents (desktop)
 

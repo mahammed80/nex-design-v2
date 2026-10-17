@@ -52,6 +52,9 @@ export interface KiwiPrototypeAction {
   overlayRelativePosition?: Vector
   navigationType?: string
   targetVariableID?: GUID
+  transitionPreserveScroll?: boolean
+  easingFunction?: number[]
+  extraScrollOffset?: Vector
 }
 
 export interface KiwiPrototypeInteraction {
@@ -93,15 +96,17 @@ const EASING_TO_KIWI: Record<EasingType, string> = {
   EASE_OUT: 'OUT_CUBIC',
   EASE_IN_AND_OUT: 'INOUT_CUBIC',
   BOUNCE: 'OUT_BACK_CUBIC',
-  SPRING: 'SPRING'
+  SPRING: 'SPRING',
+  CUSTOM_CUBIC: 'CUSTOM_CUBIC',
+  CUSTOM_SPRING: 'CUSTOM_SPRING'
 }
 const EASING_FROM_KIWI: Record<string, EasingType> = {
   ...invert(EASING_TO_KIWI),
   IN_BACK_CUBIC: 'EASE_IN',
   INOUT_BACK_CUBIC: 'EASE_IN_AND_OUT',
-  CUSTOM_CUBIC: 'EASE_IN_AND_OUT',
+  CUSTOM_CUBIC: 'CUSTOM_CUBIC',
   GENTLE_SPRING: 'SPRING',
-  CUSTOM_SPRING: 'SPRING',
+  CUSTOM_SPRING: 'CUSTOM_SPRING',
   SPRING_PRESET_ONE: 'SPRING',
   SPRING_PRESET_TWO: 'SPRING',
   SPRING_PRESET_THREE: 'SPRING'
@@ -192,13 +197,26 @@ function actionToKiwi(
     const variable = resolveVariable(action.variableId)
     if (variable) result.targetVariableID = variable
   }
+  if (action.preserveScrollPosition) result.transitionPreserveScroll = true
+  if (action.scrollOffset) result.extraScrollOffset = { ...action.scrollOffset }
   if (action.transition) {
     result.transitionType = transitionTypeToKiwi(action.transition)
     result.transitionDuration = action.transition.duration / MS_PER_SECOND
     result.easingType = EASING_TO_KIWI[action.transition.easing]
+    if (action.transition.easingFunction?.length) {
+      result.easingFunction = [...action.transition.easingFunction]
+    }
     if (action.transition.type === 'SMART') result.transitionShouldSmartAnimate = true
   }
   return result
+}
+
+function applyKiwiActionFields(action: Action, kiwi: KiwiPrototypeAction): void {
+  if (kiwi.transitionNodeID) action.destinationId = guidToString(kiwi.transitionNodeID)
+  if (kiwi.connectionURL) action.url = kiwi.connectionURL
+  if (kiwi.targetVariableID) action.variableId = guidToString(kiwi.targetVariableID)
+  if (kiwi.transitionPreserveScroll) action.preserveScrollPosition = true
+  if (kiwi.extraScrollOffset) action.scrollOffset = { ...kiwi.extraScrollOffset }
 }
 
 function actionFromKiwi(kiwi: KiwiPrototypeAction): Action | null {
@@ -209,9 +227,7 @@ function actionFromKiwi(kiwi: KiwiPrototypeAction): Action | null {
   if (!type) return null
 
   const action: Action = { type }
-  if (kiwi.transitionNodeID) action.destinationId = guidToString(kiwi.transitionNodeID)
-  if (kiwi.connectionURL) action.url = kiwi.connectionURL
-  if (kiwi.targetVariableID) action.variableId = guidToString(kiwi.targetVariableID)
+  applyKiwiActionFields(action, kiwi)
   if (kiwi.overlayRelativePosition && (type === 'OPEN_OVERLAY' || type === 'SWAP_OVERLAY')) {
     action.overlay = { position: 'MANUAL', offset: { ...kiwi.overlayRelativePosition } }
   }
@@ -226,7 +242,8 @@ function actionFromKiwi(kiwi: KiwiPrototypeAction): Action | null {
           ? Math.round(kiwi.transitionDuration * MS_PER_SECOND)
           : DEFAULT_DURATION_MS,
       easing: EASING_FROM_KIWI[kiwi.easingType ?? ''] ?? 'EASE_OUT',
-      ...(direction ? { direction } : {})
+      ...(direction ? { direction } : {}),
+      ...(kiwi.easingFunction?.length ? { easingFunction: [...kiwi.easingFunction] } : {})
     }
   }
   return action

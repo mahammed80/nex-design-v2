@@ -108,7 +108,7 @@ Each fixture stores source metadata, expected scene semantics, Figma reference r
 
 ### Phase 0 implementation status
 
-- [x] App and Vue SDK type checks return zero errors.
+- [ ] Restore app and Vue SDK type checks to zero errors and enforce both in CI.
 - [x] Machine-readable capability registry generated from the Figma comparison matrix.
 - [x] Generated coverage totals and stale-registry check wired into `bun run check`.
 - [x] Registry parser regression coverage.
@@ -271,6 +271,166 @@ Each fixture stores source metadata, expected scene semantics, Figma reference r
 - Prototype accessibility: focus order, keyboard activation, reduced motion, and screen-reader labels.
 
 **Exit:** interaction traces and presentation screenshots match the reference catalog for ≥99% of supported scenarios.
+
+### Phase 6–7 focused delivery plan
+
+This sequence converts the existing prototype, component, and variant foundations into a Figma Desktop-compatible workflow. It is ordered by data risk and dependency, not by UI visibility.
+
+#### Current baseline
+
+| Area                    | Status  | Existing foundation                                                                                                               | Required parity closure                                                                                                                                  |
+| ----------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prototype schema        | Partial | Multiple reactions, common pointer/keyboard triggers, navigation, overlays, `CHANGE_TO`, `SET_VARIABLE`, and standard transitions | Conditionals, expressions, mode actions, scroll/device fields, custom easing, reset/preserve options, media actions, and lossless unknown-field handling |
+| Prototype runtime       | Partial | Presentation shell, navigation history, basic variables, overlays, and interaction dispatch                                       | Scene-backed hit testing, real scrolling, nested scroll areas, fixed/sticky layers, interruption rules, focus management, and deterministic traces       |
+| Smart Animate           | Partial | Basic layer matching and interpolation of common geometry/visual fields                                                           | Figma-compatible matching identity, transform decomposition, paint/effect/text/clip interpolation, custom curves/springs, and interruption behavior      |
+| Components and variants | Partial | Component sets, variant properties, instance switching, detach, override lineage, and reset                                       | Complete property bindings, instance-swap authoring, preferred values, nested exposure, slots, conflict diagnostics, and bulk editing                    |
+| Variables and modes     | Partial | Variable collections, aliases, bindings, and prototype-local value changes                                                        | Typed expressions, scoped mode switching, persistence across navigation, validation, and inspector/debug visibility                                      |
+| `.fig` round-trip       | Blocker | Known prototype fields import and export                                                                                          | Symmetric import/export for every supported field plus preservation of unsupported prototype and component metadata                                      |
+
+#### Milestone P0.1 — lock the compatibility contract
+
+**Outcome:** editing or previewing a document cannot silently destroy supported prototype, component-property, variant, or variable data.
+
+- Create minimal `.fig` fixtures for every supported trigger, action, transition, overlay option, scroll option, component-property type, property binding, variable mode, and override form.
+- Extend named scene-graph types for conditional branches, expression operands, mode changes, prototype device/flow metadata, overflow direction, scroll behavior, preserve-scroll, reset-state, overlay behavior, custom cubic curves, and spring parameters.
+- Add schema defaults and migrations so existing NexDesign documents continue to open with unchanged behavior.
+- Make Kiwi conversion symmetric: every imported supported field must export, reimport, and compare equal.
+- Preserve unsupported prototype/component payloads opaquely when safe; surface a diagnostic when preservation is impossible instead of dropping data silently.
+- Cover clone, subgraph, clipboard, undo snapshots, Yjs collaboration, Figma API proxies, and ToolDef serialization for each new property.
+
+**Acceptance:** the focused fixture corpus survives five import → edit → export → reimport cycles with no semantic drift; unknown-data preservation tests prove that an unrelated edit does not erase unrecognized metadata.
+
+**Implementation progress:**
+
+- [x] Add named scene-graph contracts and symmetric Kiwi mappings for prototype devices, scroll direction, fixed-child scroll behavior, preserved navigation scroll offsets, and native custom easing parameters.
+- [x] Add focused `.fig` round-trip coverage for those fields.
+- [x] Preserve native component-set identity, variant ordering, all four component-property definition types, and text/Boolean/instance-swap assignments through `.fig` export and reimport.
+- [ ] Complete the remaining trigger, action, overlay, expression, mode, property-binding, and unknown-field fixtures before closing P0.1.
+
+#### Milestone P0.2 — build a deterministic interaction harness
+
+**Outcome:** runtime parity can be tested as state, not only by screenshots.
+
+- Define a serializable prototype trace containing trigger, matched node, ordered actions, variable/mode deltas, navigation/overlay stack changes, scroll offsets, animation lifecycle, focus target, and final frame.
+- Add a clock abstraction for delays, transitions, springs, and interruption tests.
+- Run the same traces through core unit tests and Playwright presentation tests.
+- Add reference screenshots only at stable trace checkpoints; keep semantic assertions as the primary oracle.
+- Register each scenario in the capability registry and fail CI when a supported capability lacks a fixture and trace.
+
+**Acceptance:** traces are deterministic across browser and Tauri runs, and failures identify the first divergent action rather than only the final screenshot.
+
+#### Milestone P0.3 — implement real scrolling and presentation geometry
+
+**Outcome:** desktop and mobile prototypes behave correctly for long and nested content.
+
+- Replace hidden-DOM `scrollIntoView` behavior with scene-graph viewport scrolling and CanvasKit-aware hit testing.
+- Support vertical, horizontal, both-axis, and no-scroll overflow; nested scroll containers; wheel, trackpad, pointer, and touch input; and scroll chaining rules.
+- Implement fixed and sticky layers, clipping, `SCROLL_TO`, initial scroll positions, preserve-scroll on navigation, and reset-scroll behavior.
+- Persist prototype device, orientation, custom viewport, scale mode, background, and starting flow instead of inferring the device from frame aspect ratio.
+- Keep interactive bounds synchronized with transforms, clipping, component state, and animated geometry.
+
+**Acceptance:** scroll fixtures pass at 100%, including nested containers, fixed/sticky content, preserved positions, zoomed presentation, and touch targets at device scale factors 1 and 2.
+
+#### Milestone P0.4 — complete state, expressions, variables, and modes
+
+**Outcome:** prototypes can model application state without unsafe evaluation.
+
+- Add a typed expression AST for numeric, string, and Boolean literals, variables, comparison, arithmetic, Boolean logic, and supported coercions.
+- Evaluate expressions in a deterministic interpreter; never use `eval` or `Function`.
+- Add conditional and else-if branches, ordered multi-action execution, cancellation rules, and explicit error states.
+- Implement set/add/subtract/toggle variable operations and collection mode changes at document, page, frame, and preview scopes.
+- Define state lifetime for restart, back navigation, flow changes, overlay close, and interactive-component reset.
+- Provide a presentation debug panel for current variables, active modes, action trace, and recoverable evaluation errors.
+
+**Acceptance:** expression and state-transition tables match reference fixtures, invalid expressions cannot mutate state, and restart/navigation semantics are covered by undo-independent runtime tests.
+
+#### Milestone P0.5 — finish component-property and variant semantics
+
+**Outcome:** authors can build and consume flexible components with the same property model throughout the app and file format.
+
+- Implement binding for text, Boolean visibility, instance swap, and variant properties instead of storing definitions without complete layer behavior.
+- Add first-class instance-swap authoring, preferred instance values, exposed nested instance properties, stable property identities, and reset scopes.
+- Add slot-like nested content with explicit insertion/replacement rules and lossless detach behavior.
+- Validate variant property names/values, duplicate combinations, missing defaults, incompatible swaps, and orphaned overrides before mutation.
+- Add bulk variant editing and property editing across compatible selections.
+- Replace prompt/confirm-based authoring with typed Reka UI controls using the shared `ui` slot pattern.
+
+**Acceptance:** a component-library fixture can create, bind, expose, override, swap, reset, detach, update its main component, export, and reimport without losing property identity or override lineage.
+
+**Implementation progress:**
+
+- [x] Add native text, Boolean visibility, and instance-swap layer references, live instance application with undo/redo, typed instance controls, and `.fig` round-trip coverage.
+- [ ] Complete nested property exposure, preferred instance values, slots, conflict validation, reset scopes, bulk editing, and non-prompt authoring before closing P0.5.
+
+#### Milestone P1.1 — raise Smart Animate to reference fidelity
+
+**Outcome:** interactive components and frame transitions animate predictably.
+
+- Match layers by stable component/instance lineage first, then by compatible name path and node type according to documented fallback rules.
+- Interpolate decomposed transforms, opacity, corner radii, fills, strokes, effects, clips, and supported text properties.
+- Add custom cubic Bézier curves, spring parameters, direction-aware transitions, reduced-motion substitution, and deterministic interruption/retargeting.
+- Define fallback behavior for incompatible node types, missing fonts/assets, unmatched layers, and non-interpolable paints.
+- Render animations from live scene state rather than a static preview bitmap.
+
+**Acceptance:** semantic animation traces pass completely and captured checkpoints meet the agreed perceptual threshold for matched, unmatched, interrupted, nested, and interactive-component scenarios.
+
+#### Milestone P1.2 — complete overlays and interaction dispatch
+
+**Outcome:** menus, dialogs, sheets, tooltips, and nested overlays behave like desktop prototypes.
+
+- Support centered, edge-aligned, relative, and manual overlay placement with resize and device-orientation updates.
+- Add overlay stacking, swap/close targeting, outside-click close, backdrop configuration, background interaction, and scroll locking.
+- Route pointer, keyboard, gamepad, drag, delay, enter/leave, press/release, and supported visibility triggers through one ordered dispatcher.
+- Define propagation, hit slop, pointer capture, cancellation, re-entry, and conflict behavior for overlapping hotspots.
+- Implement focus trapping, focus restoration, Escape behavior, and accessible overlay labels.
+
+**Acceptance:** nested overlay and conflicting-trigger traces are deterministic; keyboard-only and touch-only Playwright suites can complete every critical flow.
+
+#### Milestone P1.3 — presentation and flow parity
+
+**Outcome:** the player is useful for realistic review, not only local frame playback.
+
+- Add named flows, multiple starting points, flow restart, back/forward behavior, shareable deep links, notes, fullscreen, hotspot hints, and device-frame controls.
+- Add fit, fill, actual-size, and responsive presentation modes with consistent zoom and input coordinate mapping.
+- Persist preview choices per document without changing design data unless the author edits prototype settings.
+- Add missing-asset/font diagnostics that do not block unrelated interactions.
+
+**Acceptance:** every named flow opens at the declared start node and can be shared/reopened with the same device, viewport, mode, and state policy.
+
+#### Milestone P2 — authoring polish, accessibility, and certification
+
+**Outcome:** prototype and variant creation are fast, understandable, and releasable.
+
+- Add canvas connection handles, destination picker/search, drag reordering for actions, duplicate action, inline validation, and multi-selection editing.
+- Provide discoverable controls for scroll, fixed/sticky, overlay, device, flow, variable, conditional, and transition settings.
+- Meet WCAG 2.2 AA for the prototype inspector and player, including focus order, keyboard activation, labels, contrast, zoom, and reduced motion.
+- Document unsupported Figma behaviors explicitly and prevent the UI from advertising them as complete.
+- Promote capabilities from `partial` to `verified` only after core, Kiwi, browser, Tauri, accessibility, and interaction-trace evidence exists.
+
+**Acceptance:** no P0/P1 prototype or component capability remains `missing` or `partial`; the certified fixture catalog reaches the Phase 7 ≥99% trace and presentation threshold.
+
+#### Primary implementation surfaces
+
+| Surface                                                       | Expected work                                                                                                 |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `packages/core/src/scene-graph/`                              | Canonical prototype, component-property, variant, variable-mode, scroll, device, and animation types          |
+| `packages/core/src/kiwi/node-change/`                         | Symmetric conversion, defaults, migrations, diagnostics, and lossless preservation                            |
+| `packages/core/src/editor/components/`                        | Property bindings, variant validation, instance lineage, reset, slot, and bulk-edit actions                   |
+| `packages/core/src/figma-api/` and `packages/core/src/tools/` | Scriptable access using the same core mutations and validation                                                |
+| `src/app/prototype/` and prototype presentation components    | Runtime state machine, scrolling, interaction dispatch, animation, overlays, devices, flows, and debug traces |
+| `src/components/properties/`                                  | Typed authoring UI for interactions, component properties, variants, modes, scroll, and devices               |
+| `packages/vue/src/`                                           | Renderless primitives and composables for prototype and component authoring/runtime state                     |
+| `tests/engine/` and Playwright suites                         | Codec, state, expression, scroll, component, animation, overlay, accessibility, and presentation evidence     |
+
+#### Required quality gates for each milestone
+
+1. Add or update capability-registry rows and fixture identifiers before marking a capability supported.
+2. Pass targeted core tests, TypeScript checks, Vue type checks, duplication checks, and formatting.
+3. Pass `.fig` semantic round-trip tests for every changed persisted field.
+4. Pass undo/redo and collaboration convergence tests for every authoring mutation.
+5. Pass browser and Tauri interaction traces; add visual checkpoints only where pixels are part of the contract.
+6. Record accessibility and performance evidence for player or inspector changes.
+7. Update `CHANGELOG.md` and user documentation when the milestone becomes user-visible.
 
 ## Phase 8: Dev Mode and production handoff
 

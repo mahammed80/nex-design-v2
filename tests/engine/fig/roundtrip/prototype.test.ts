@@ -185,4 +185,74 @@ describe('prototype roundtrip', () => {
     expect(navigate?.type).toBe('NAVIGATE')
     expect(navigate?.destinationId).toBeUndefined()
   })
+
+  test('native device, scrolling, preserved position, and custom easing survive', async () => {
+    const graph = buildPrototype()
+    const home = byName(graph, 'Home')
+    const button = byName(graph, 'Button')
+    const details = byName(graph, 'Details')
+
+    graph.updateNode(home.id, {
+      scrollDirection: 'VERTICAL',
+      prototypeDevice: {
+        type: 'PRESET',
+        size: { x: 390, y: 844 },
+        presetIdentifier: 'APPLE_IPHONE_14',
+        rotation: 'NONE'
+      }
+    })
+    graph.updateNode(button.id, {
+      scrollBehavior: 'FIXED_WHEN_CHILD_OF_SCROLLING_FRAME',
+      reactions: [
+        {
+          trigger: { type: 'ON_CLICK' },
+          actions: [
+            {
+              type: 'NAVIGATE',
+              destinationId: details.id,
+              preserveScrollPosition: true,
+              scrollOffset: { x: 0, y: 48 },
+              transition: {
+                type: 'SMART',
+                duration: 420,
+                easing: 'CUSTOM_CUBIC',
+                easingFunction: [0.2, 0.8, 0.4, 1]
+              }
+            }
+          ]
+        }
+      ]
+    })
+
+    const back = await roundtrip(graph)
+    const importedHome = byName(back, 'Home')
+    const importedButton = byName(back, 'Button')
+    const action = importedButton.reactions?.[0]?.actions[0]
+
+    expect(importedHome.scrollDirection).toBe('VERTICAL')
+    expect(importedHome.prototypeDevice).toEqual({
+      type: 'PRESET',
+      size: { x: 390, y: 844 },
+      presetIdentifier: 'APPLE_IPHONE_14',
+      rotation: 'NONE'
+    })
+    expect(importedButton.scrollBehavior).toBe('FIXED_WHEN_CHILD_OF_SCROLLING_FRAME')
+    expect(action).toMatchObject({
+      type: 'NAVIGATE',
+      destinationId: byName(back, 'Details').id,
+      preserveScrollPosition: true,
+      scrollOffset: { x: 0, y: 48 },
+      transition: {
+        type: 'SMART',
+        duration: 420,
+        easing: 'CUSTOM_CUBIC'
+      }
+    })
+    const easingFunction = action?.transition?.easingFunction ?? []
+    expect(easingFunction).toHaveLength(4)
+    expect(easingFunction[0]).toBeCloseTo(0.2)
+    expect(easingFunction[1]).toBeCloseTo(0.8)
+    expect(easingFunction[2]).toBeCloseTo(0.4)
+    expect(easingFunction[3]).toBeCloseTo(1)
+  })
 })

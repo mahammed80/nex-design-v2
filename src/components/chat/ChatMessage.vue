@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { isTextUIPart, isToolUIPart, getToolName } from 'ai'
+import { getToolName, isFileUIPart, isTextUIPart, isToolUIPart } from 'ai'
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
 import { Markdown } from 'vue-stream-markdown'
 import 'vue-stream-markdown/index.css'
@@ -114,14 +114,33 @@ function partKey(part: UIMessagePart<UIDataTypes, UITools>, index: number): stri
       <div
         v-else-if="message.role === 'user'"
         data-test-id="chat-text-bubble"
-        class="rounded-xl rounded-br-md bg-accent px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap text-white"
+        class="space-y-2 rounded-xl rounded-br-md bg-accent px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap text-white"
       >
-        {{
-          message.parts
-            .filter(isTextUIPart)
-            .map((p) => p.text)
-            .join('')
-        }}
+        <div v-if="message.parts.some(isFileUIPart)" class="flex flex-wrap gap-1.5">
+          <template v-for="(part, index) in message.parts" :key="partKey(part, index)">
+            <img
+              v-if="isFileUIPart(part) && part.mediaType.startsWith('image/')"
+              :src="part.url"
+              :alt="part.filename ?? 'Attached reference'"
+              class="max-h-28 max-w-full rounded-md border border-white/20 object-contain"
+            />
+            <span
+              v-else-if="isFileUIPart(part)"
+              class="flex items-center gap-1 rounded bg-black/15 px-1.5 py-1 text-[10px]"
+            >
+              <icon-lucide-file class="size-3" />
+              {{ part.filename ?? 'Attachment' }}
+            </span>
+          </template>
+        </div>
+        <div>
+          {{
+            message.parts
+              .filter(isTextUIPart)
+              .map((p) => p.text)
+              .join('')
+          }}
+        </div>
       </div>
     </div>
   </div>

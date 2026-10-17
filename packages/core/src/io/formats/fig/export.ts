@@ -193,6 +193,7 @@ export async function exportFigFile(
   const nodeIdToGuid = new Map<string, GUID>()
   const varIdToGuid = new Map<string, GUID>()
   const modeIdToGuid = new Map<string, GUID>()
+  const propertyIdToGuid = new Map<string, GUID>()
   const fontDigestMap = await buildFontDigestMap(graph)
   const pageGuids = new Map<string, GUID>()
   let internalCanvasGuid: GUID | null = null
@@ -242,7 +243,8 @@ export async function exportFigFile(
           blobs,
           nodeIdToGuid,
           fontDigestMap,
-          varIdToGuid
+          varIdToGuid,
+          propertyIdToGuid
         )
       )
     }

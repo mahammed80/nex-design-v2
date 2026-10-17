@@ -21,7 +21,7 @@ export interface ComponentPropRef {
 
 export type ComponentPropValue = {
   boolValue?: boolean
-  textValue?: string
+  textValue?: string | { characters?: string }
   guidValue?: GUID
 }
 

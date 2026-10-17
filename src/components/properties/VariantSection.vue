@@ -4,12 +4,14 @@ import { computed } from 'vue'
 import { useEditorStore } from '@/app/editor/active-store'
 import AppSelect from '@/components/ui/AppSelect.vue'
 import Tip from '@/components/ui/Tip.vue'
+import { useInputUI } from '@/components/ui/input'
 import { useSectionUI } from '@/components/ui/section'
 import { useI18n, useSelectionState } from '@nex-design/vue'
 
 const editor = useEditorStore()
 const { selectedNode: node } = useSelectionState()
 const sectionCls = useSectionUI()
+const inputCls = useInputUI({ size: 'sm' })
 const { panels } = useI18n()
 
 const isInstance = computed(() => node.value?.type === 'INSTANCE')
@@ -33,12 +35,32 @@ const variantOptions = computed(() => {
 })
 
 const currentValues = computed(() => {
-  return instanceComponent.value?.componentPropertyValues ?? {}
+  return {
+    ...instanceComponent.value?.componentPropertyValues,
+    ...node.value?.componentPropertyValues
+  }
 })
+
+const propertyDefinitions = computed(() => {
+  const component = instanceComponent.value
+  if (!component) return []
+  const parent = component.parentId ? editor.graph.getNode(component.parentId) : null
+  const owner = parent?.type === 'COMPONENT_SET' ? parent : component
+  return owner.componentPropertyDefinitions.filter((definition) => definition.type !== 'VARIANT')
+})
+
+const componentOptions = computed(() =>
+  [...editor.graph.getAllNodes()]
+    .filter((candidate) => candidate.type === 'COMPONENT')
+    .map((candidate) => ({ value: candidate.id, label: candidate.name }))
+)
 
 const overrideCount = computed(() => {
   if (!node.value || node.value.type !== 'INSTANCE' || !node.value.overrides) return 0
-  return Object.keys(node.value.overrides).length
+  return (
+    Object.keys(node.value.overrides).length +
+    Object.keys(node.value.componentPropertyValues).length
+  )
 })
 
 const hasOverrides = computed(() => overrideCount.value > 0)
@@ -46,6 +68,30 @@ const hasOverrides = computed(() => overrideCount.value > 0)
 function switchVariant(propertyName: string, newValue: string) {
   if (!node.value) return
   editor.switchInstanceVariant(node.value.id, propertyName, newValue)
+}
+
+function currentVariantValue(propertyName: string): string {
+  const value = currentValues.value[propertyName]
+  return typeof value === 'string' ? value : ''
+}
+
+function setTextProperty(propertyName: string, event: Event) {
+  if (!node.value || node.value.type !== 'INSTANCE') return
+  const target = event.target
+  if (!(target instanceof HTMLInputElement)) return
+  editor.setComponentPropertyValue(node.value.id, propertyName, target.value)
+}
+
+function setBooleanProperty(propertyName: string, event: Event) {
+  if (!node.value || node.value.type !== 'INSTANCE') return
+  const target = event.target
+  if (!(target instanceof HTMLInputElement)) return
+  editor.setComponentPropertyValue(node.value.id, propertyName, target.checked)
+}
+
+function setInstanceSwapProperty(propertyName: string, componentId: string) {
+  if (!node.value || node.value.type !== 'INSTANCE') return
+  editor.setComponentPropertyValue(node.value.id, propertyName, componentId)
 }
 
 function onGoToMainComponent() {
@@ -131,9 +177,46 @@ function onResetOverrides() {
       >
         <label class="text-[10px] text-muted">{{ propName }}</label>
         <AppSelect
-          :model-value="currentValues[propName] ?? ''"
+          :model-value="currentVariantValue(propName)"
           :options="[...options].map((v) => ({ value: v, label: v }))"
           @update:model-value="switchVariant(propName, $event)"
+        />
+      </div>
+    </div>
+
+    <div v-if="propertyDefinitions.length > 0" class="mt-2.5 flex flex-col gap-1.5">
+      <span class="text-[9px] font-semibold uppercase tracking-wider text-muted">Properties</span>
+      <div
+        v-for="definition in propertyDefinitions"
+        :key="definition.id"
+        class="flex flex-col gap-0.5"
+      >
+        <label class="text-[10px] text-muted">{{ definition.name }}</label>
+        <input
+          v-if="definition.type === 'TEXT'"
+          :value="String(currentValues[definition.name] ?? definition.defaultValue)"
+          :class="inputCls.base"
+          @change="setTextProperty(definition.name, $event)"
+        />
+        <label
+          v-else-if="definition.type === 'BOOLEAN'"
+          class="flex items-center justify-between rounded border border-border bg-input px-2 py-1 text-[11px] text-surface"
+        >
+          <span>{{
+            (currentValues[definition.name] ?? definition.defaultValue) ? 'Visible' : 'Hidden'
+          }}</span>
+          <input
+            type="checkbox"
+            class="size-3.5 accent-component"
+            :checked="Boolean(currentValues[definition.name] ?? definition.defaultValue)"
+            @change="setBooleanProperty(definition.name, $event)"
+          />
+        </label>
+        <AppSelect
+          v-else-if="definition.type === 'INSTANCE_SWAP'"
+          :model-value="String(currentValues[definition.name] ?? definition.defaultValue)"
+          :options="componentOptions"
+          @update:model-value="setInstanceSwapProperty(definition.name, $event)"
         />
       </div>
     </div>

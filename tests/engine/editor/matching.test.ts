@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'bun:test'
+
 import { createEditor } from '@nex-design/core/editor'
 
 describe('Identify Matching Objects / Select Similar Layers', () => {
@@ -59,7 +60,7 @@ describe('Identify Matching Objects / Select Similar Layers', () => {
     editor.select([rect1.id])
     const matches = editor.selectAllMatchingFill()
 
-    expect(matches.length).toBe:2)
+    expect(matches.length).toBe(2)
     expect(matches).toContain(rect1.id)
     expect(matches).toContain(rect2.id)
     expect(matches).not.toContain(rect3.id)
@@ -71,7 +72,7 @@ describe('Identify Matching Objects / Select Similar Layers', () => {
     editor.select([rect1.id])
     const matches = editor.selectSimilar('NAME')
 
-    expect(matches.length).toBe:2)
+    expect(matches.length).toBe(2)
     expect(matches).toContain(rect1.id)
     expect(matches).toContain(rect2.id)
   })

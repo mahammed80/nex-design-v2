@@ -1,1 +1,3 @@
-Establish a deliberate visual direction before drawing. Choose typography, color roles, density, radius language, and section rhythm that fit the brief. Reuse document style variables when they exist. Use meaningful layer names and auto layout. A new interface must have one clear focal point and a hierarchy that remains legible without decoration.
+Treat the document as a design system. When style variables or a Style Guide exist, reuse their colors, type, radius, and spacing and bind tokens instead of hardcoding values. When modifying, match the existing direction of the surrounding design — do not restyle what the user did not ask to change.
+
+Every interface has one clear focal point and a hierarchy that stays legible in grayscale and without decoration. Structure with auto layout, give every meaningful layer a descriptive name (`PricingCard/Pro`, `Nav/Item/Active`), and build repeated elements from the same JSX pattern so they stay identical.

@@ -3,6 +3,7 @@ import { randomHex } from '#core/random'
 import type {
   ComponentPropertyDefinition,
   ComponentPropertyType,
+  ComponentPropertyValue,
   SceneNode,
   SceneGraph
 } from '#core/scene-graph'
@@ -60,7 +61,7 @@ export function createVariantActions(ctx: EditorContext) {
     componentSetId: string,
     name: string,
     type: ComponentPropertyType = 'VARIANT',
-    defaultValue = ''
+    defaultValue: ComponentPropertyValue = ''
   ): string | undefined {
     const node = ctx.graph.getNode(componentSetId)
     if (node?.type !== 'COMPONENT_SET') return undefined
@@ -70,7 +71,7 @@ export function createVariantActions(ctx: EditorContext) {
       name,
       type,
       defaultValue,
-      variantOptions: type === 'VARIANT' ? [defaultValue] : undefined
+      variantOptions: type === 'VARIANT' ? [String(defaultValue)] : undefined
     }
     const prevDefs = [...node.componentPropertyDefinitions]
     ctx.graph.updateNode(componentSetId, {
@@ -202,7 +203,7 @@ export function createVariantActions(ctx: EditorContext) {
     return values
   }
 
-  function buildVariantName(values: Record<string, string>): string {
+  function buildVariantName(values: Record<string, ComponentPropertyValue>): string {
     return Object.entries(values)
       .map(([k, v]) => `${k}=${v}`)
       .join(', ')
@@ -216,6 +217,7 @@ export function createVariantActions(ctx: EditorContext) {
       const child = ctx.graph.getNode(childId)
       if (child?.type !== 'COMPONENT') continue
       for (const [key, value] of Object.entries(child.componentPropertyValues)) {
+        if (typeof value !== 'string') continue
         const set = options.get(key) ?? new Set()
         set.add(value)
         options.set(key, set)
@@ -226,7 +228,7 @@ export function createVariantActions(ctx: EditorContext) {
 
   function findVariantByValues(
     componentSetId: string,
-    values: Record<string, string>
+    values: Record<string, ComponentPropertyValue>
   ): SceneNode | undefined {
     const node = ctx.graph.getNode(componentSetId)
     if (node?.type !== 'COMPONENT_SET') return undefined
@@ -304,8 +306,8 @@ export function createVariantActions(ctx: EditorContext) {
   function generateVariantProps(
     defs: ComponentPropertyDefinition[],
     count: number
-  ): Record<string, string> {
-    const values: Record<string, string> = {}
+  ): Record<string, ComponentPropertyValue> {
+    const values: Record<string, ComponentPropertyValue> = {}
     for (const def of defs) {
       if (def.type === 'VARIANT') {
         const nextVal = `Variant ${count}`
@@ -605,7 +607,7 @@ export function createVariantActions(ctx: EditorContext) {
     if (compSet?.type !== 'COMPONENT_SET') return
 
     const def = compSet.componentPropertyDefinitions.find((d) => d.name === propertyName)
-    const defaultValue = def?.defaultValue ?? 'Default'
+    const defaultValue = typeof def?.defaultValue === 'string' ? def.defaultValue : 'Default'
 
     ctx.undo.push({
       label: 'Delete variant value',

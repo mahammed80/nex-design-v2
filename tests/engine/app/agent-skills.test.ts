@@ -13,11 +13,12 @@ describe('agent skill resolver', () => {
 
     expect(result.ids).toEqual([
       'design-foundation',
+      'art-direction',
       'scoped-orchestration',
       'structural-variety',
       'design-validation'
     ])
-    expect(result.tokenBudget).toBe(2200)
+    expect(result.tokenBudget).toBe(3000)
   })
 
   test('loads reference guidance for URL studies', () => {

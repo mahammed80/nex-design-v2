@@ -132,7 +132,8 @@ async function resolveLeasePublicKey(): Promise<string | null> {
   if (cachedLeasePublicKeyPem) return cachedLeasePublicKeyPem
 
   try {
-    const baseUrl = import.meta.env.VITE_NEXDESIGN_ACCOUNT_API?.trim() || 'https://nex-design.online/api'
+    const baseUrl =
+      import.meta.env.VITE_NEXDESIGN_ACCOUNT_API?.trim() || 'https://nex-design.online/api'
     const response = await fetch(`${baseUrl}/desktop/public_key.php`, {
       signal: AbortSignal.timeout(5_000)
     })
@@ -148,9 +149,8 @@ async function resolveLeasePublicKey(): Promise<string | null> {
       }
       return publicKeyPem
     }
-    // oxlint-ignore-next-line nex-design/no-silent-catch
-  } catch {
-    // Fall back to embedded default key
+  } catch (error) {
+    console.warn('Failed to load the offline lease public key; using the embedded fallback', error)
   }
 
   return DEFAULT_LEASE_PUBLIC_KEY_PEM

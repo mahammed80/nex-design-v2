@@ -3,6 +3,7 @@ import type { ComponentPropertyDefinition, SceneNode } from '#core/scene-graph'
 
 import { createComponentFocusActions } from './components/focus'
 import { createComponentInstanceActions } from './components/instances'
+import { createComponentPropertyActions } from './components/properties'
 import { createVariantActions } from './components/variants'
 import type { EditorContext } from './types'
 
@@ -100,12 +101,14 @@ export function createComponentActions(ctx: EditorContext) {
 
   const focusActions = createComponentFocusActions(ctx)
   const instanceActions = createComponentInstanceActions(ctx)
+  const propertyActions = createComponentPropertyActions(ctx)
   const variantActions = createVariantActions(ctx)
 
   return {
     createComponentFromSelection,
     createComponentSetFromComponents,
     ...instanceActions,
+    ...propertyActions,
     ...focusActions,
     ...variantActions
   }

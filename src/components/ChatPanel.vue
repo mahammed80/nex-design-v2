@@ -20,10 +20,29 @@ import type { Chat } from '@ai-sdk/vue'
 import type { UIMessage } from 'ai'
 import { getActiveEditorStore } from '@/app/editor/active-store'
 import { getAgentRunProgress } from '@/app/ai/orchestration/progress'
+import {
+  getAgentRunCheckpoints,
+  recordAgentRunCheckpoint,
+  restoreAgentRunCheckpoint
+} from '@/app/ai/chat/checkpoints'
+import { setAgentRunMode } from '@/app/ai/chat/run-mode'
+import type { AgentCheckpointVersion } from '@/app/ai/chat/checkpoints'
+import type { ChatSubmission } from '@/app/ai/chat/types'
 
 const IS_DEV = import.meta.env.DEV
 
-const { isConfigured, ensureChat, resetChat } = useAIChat()
+const {
+  isConfigured,
+  ensureChat,
+  resetChat,
+  chatRunStatus,
+  queuedChatSubmissions,
+  queuedPromptCount,
+  queueChatSubmission,
+  dequeueChatSubmission,
+  clearQueuedChatSubmissions,
+  sendMessage
+} = useAIChat()
 const { dialogs } = useI18n()
 
 const chat = ref<Chat<UIMessage> | null>(null)
@@ -37,6 +56,8 @@ const acpLogCopied = refAutoReset(false, 1500)
 
 const messages = computed(() => chat.value?.messages ?? [])
 const agentProgress = computed(() => getAgentRunProgress(getActiveEditorStore()))
+const checkpoints = computed(() => getAgentRunCheckpoints(getActiveEditorStore()))
+const latestCheckpoint = computed(() => checkpoints.value[0] ?? null)
 const status = computed(() => chat.value?.status ?? 'ready')
 const isThinking = computed(() => {
   const s = status.value
@@ -68,6 +89,13 @@ function scrollToBottom() {
 
 watch(messages, scrollToBottom, { deep: true })
 watch(
+  status,
+  (nextStatus) => {
+    chatRunStatus.value = nextStatus
+  },
+  { immediate: true }
+)
+watch(
   () => chat.value?.error,
   (error) => {
     if (error) toast.error(error.message)
@@ -81,21 +109,40 @@ watch(
   }
 )
 
-async function handleSubmit(text: string) {
-  if (status.value === 'streaming' || status.value === 'submitted') return
+let dispatching = false
+
+async function dispatchNextSubmission() {
+  if (dispatching || status.value === 'streaming' || status.value === 'submitted') return
+  const submission = dequeueChatSubmission()
+  if (!submission) return
+  dispatching = true
+
   try {
     const c = await ensureChat()
     if (c) chat.value = markRaw(c)
+    if (!c) return
+
+    const store = getActiveEditorStore()
+    setAgentRunMode(store, submission.mode)
+    const before = submission.mode === 'build' ? store.snapshotPage() : null
+    await c.sendMessage({ text: submission.text, files: submission.files })
+    if (before) {
+      recordAgentRunCheckpoint(store, submission.text, before, store.snapshotPage())
+    }
   } catch (e) {
     console.error('Failed to initialize chat:', e)
     toast.error(e instanceof Error ? e.message : String(e))
-    return
+  } finally {
+    dispatching = false
+    void nextTick(dispatchNextSubmission)
   }
-  chat.value?.sendMessage({ text }).catch((e: unknown) => {
-    console.error('Chat error:', e)
-    toast.error(e instanceof Error ? e.message : String(e))
-  })
 }
+
+function handleSubmit(submission: ChatSubmission) {
+  queueChatSubmission(submission)
+}
+
+watch(queuedChatSubmissions, () => void dispatchNextSubmission(), { immediate: true })
 
 function handleStop() {
   chat.value?.stop()
@@ -116,8 +163,18 @@ async function handleCopyAcpLog() {
 function handleClearChat() {
   chat.value = null
   resetChat()
+  clearQueuedChatSubmissions()
   clearToolLogEntries()
   clearAcpDebugLog()
+}
+
+function restoreCheckpoint(version: AgentCheckpointVersion) {
+  const checkpoint = latestCheckpoint.value
+  if (!checkpoint) return
+  restoreAgentRunCheckpoint(getActiveEditorStore(), checkpoint, version)
+  toast.info(
+    version === 'before' ? 'Restored the design from before the run.' : 'Restored the AI result.'
+  )
 }
 </script>
 
@@ -136,6 +193,19 @@ function handleClearChat() {
         <span v-if="agentProgress.activeTool" class="ml-auto truncate font-mono">{{
           agentProgress.activeTool
         }}</span>
+      </div>
+      <div
+        v-if="queuedPromptCount > 0"
+        class="flex shrink-0 items-center gap-2 border-b border-border px-3 py-1.5 text-[10px] text-muted"
+        data-test-id="chat-queue-status"
+      >
+        <icon-lucide-list-ordered class="size-3" />
+        <span
+          >{{ queuedPromptCount }} queued {{ queuedPromptCount === 1 ? 'prompt' : 'prompts' }}</span
+        >
+        <button class="ml-auto hover:text-surface" @click="clearQueuedChatSubmissions">
+          Clear
+        </button>
       </div>
       <ScrollAreaRoot class="min-h-0 flex-1">
         <ScrollAreaViewport class="h-full px-3 py-3 [&>div]:h-full">
@@ -181,7 +251,7 @@ function handleClearChat() {
             <div v-if="showContinue" class="flex justify-center py-2">
               <button
                 class="flex items-center gap-1.5 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
-                @click="handleSubmit('Continue where you left off')"
+                @click="sendMessage('Continue where you left off')"
               >
                 <icon-lucide-play class="size-3" />
                 Continue
@@ -220,6 +290,26 @@ function handleClearChat() {
           {{ acpLogCopied ? 'Copied' : 'ACP log' }}
         </button>
         <button
+          v-if="latestCheckpoint"
+          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          title="Restore the canvas from before the latest AI run"
+          data-test-id="chat-restore-before"
+          @click="restoreCheckpoint('before')"
+        >
+          <icon-lucide-rotate-ccw class="size-3" />
+          Before
+        </button>
+        <button
+          v-if="latestCheckpoint"
+          class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
+          title="Restore the completed result from the latest AI run"
+          data-test-id="chat-restore-result"
+          @click="restoreCheckpoint('result')"
+        >
+          <icon-lucide-sparkles class="size-3" />
+          Result
+        </button>
+        <button
           class="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted hover:bg-hover hover:text-surface"
           @click="handleClearChat"
         >
@@ -228,7 +318,12 @@ function handleClearChat() {
         </button>
       </div>
 
-      <ChatInput :status="status" @submit="handleSubmit" @stop="handleStop" />
+      <ChatInput
+        :status="status"
+        :queue-count="queuedPromptCount"
+        @submit="handleSubmit"
+        @stop="handleStop"
+      />
 
       <AcpPermissionDialog />
     </template>

@@ -1,5 +1,10 @@
 import type { NodeChange, Paint } from '#core/kiwi/binary/codec'
-import type { SceneGraph, SceneNode } from '#core/scene-graph'
+import type {
+  ComponentPropertyDefinition,
+  ComponentPropertyValue,
+  SceneGraph,
+  SceneNode
+} from '#core/scene-graph'
 import type { Color, GUID, Matrix } from '#core/types'
 
 import { mergePluginData, serializePluginRelaunchData } from './plugin-data'
@@ -12,6 +17,7 @@ interface SceneNodeToKiwiContext {
   nodeIdToGuid?: Map<string, GUID>
   fontDigestMap?: Map<string, Uint8Array>
   varIdToGuid?: Map<string, GUID>
+  propertyIdToGuid?: Map<string, GUID>
   fractionalPosition: (index: number) => string
   mapToFigmaType: (type: SceneNode['type']) => string
   fillToKiwiPaint: (fill: SceneNode['fills'][number]) => Paint
@@ -42,6 +48,134 @@ interface SceneNodeToKiwiContext {
 }
 
 const DEFAULT_STROKE_WEIGHT = 1
+
+function getOrCreateNodeGuid(
+  context: SceneNodeToKiwiContext,
+  nodeId: string,
+  localIdCounter: { value: number }
+): GUID {
+  const existing = context.nodeIdToGuid?.get(nodeId)
+  if (existing) return existing
+  const guid = { sessionID: 1, localID: localIdCounter.value++ }
+  context.nodeIdToGuid?.set(nodeId, guid)
+  return guid
+}
+
+function getOrCreatePropertyGuid(
+  context: SceneNodeToKiwiContext,
+  propertyId: string,
+  localIdCounter: { value: number }
+): GUID {
+  const existing = context.propertyIdToGuid?.get(propertyId)
+  if (existing) return existing
+  const match = propertyId.match(/^(\d+):(\d+)$/)
+  const guid = match
+    ? { sessionID: Number(match[1]), localID: Number(match[2]) }
+    : { sessionID: 1, localID: localIdCounter.value++ }
+  context.propertyIdToGuid?.set(propertyId, guid)
+  return guid
+}
+
+function componentPropertyValueToKiwi(
+  definition: ComponentPropertyDefinition,
+  value: ComponentPropertyValue,
+  context: SceneNodeToKiwiContext,
+  localIdCounter: { value: number }
+): Record<string, unknown> {
+  if (definition.type === 'BOOLEAN') return { boolValue: value === true || value === 'true' }
+  if (definition.type === 'INSTANCE_SWAP' && typeof value === 'string') {
+    const target = context.graph.getNode(value)
+    if (target) return { guidValue: getOrCreateNodeGuid(context, target.id, localIdCounter) }
+    const match = value.match(/^(\d+):(\d+)$/)
+    if (match) return { guidValue: { sessionID: Number(match[1]), localID: Number(match[2]) } }
+  }
+  return { textValue: { characters: String(value) } }
+}
+
+function propertyDefinitionsForNode(
+  context: SceneNodeToKiwiContext,
+  node: SceneNode
+): ComponentPropertyDefinition[] {
+  if (node.componentPropertyDefinitions.length > 0) return node.componentPropertyDefinitions
+  if (!node.componentId) return []
+  const component = context.graph.getNode(node.componentId)
+  if (!component) return []
+  const parent = component.parentId ? context.graph.getNode(component.parentId) : undefined
+  return parent?.type === 'COMPONENT_SET'
+    ? parent.componentPropertyDefinitions
+    : component.componentPropertyDefinitions
+}
+
+function applyComponentMetadata(
+  context: SceneNodeToKiwiContext,
+  node: SceneNode,
+  nc: KiwiNodeChange,
+  localIdCounter: { value: number }
+): void {
+  if (node.type === 'COMPONENT_SET') {
+    nc.isStateGroup = true
+    const orders = node.componentPropertyDefinitions
+      .filter((definition) => definition.type === 'VARIANT' && definition.variantOptions?.length)
+      .map((definition) => ({
+        property: definition.name,
+        values: [...(definition.variantOptions ?? [])]
+      }))
+    if (orders.length > 0) nc.stateGroupPropertyValueOrders = orders
+  }
+
+  if (node.type === 'INSTANCE' && node.componentId) {
+    nc.symbolData = {
+      symbolID: getOrCreateNodeGuid(context, node.componentId, localIdCounter)
+    }
+  }
+
+  if (node.componentPropertyDefinitions.length > 0) {
+    nc.componentPropDefs = node.componentPropertyDefinitions.map((definition, index) => ({
+      id: getOrCreatePropertyGuid(context, definition.id, localIdCounter),
+      name: definition.name,
+      type: definition.type === 'BOOLEAN' ? 'BOOL' : definition.type,
+      initialValue: componentPropertyValueToKiwi(
+        definition,
+        definition.defaultValue,
+        context,
+        localIdCounter
+      ),
+      sortPosition: context.fractionalPosition(index),
+      preferredValues:
+        definition.type === 'VARIANT' && definition.variantOptions?.length
+          ? { stringValues: [...definition.variantOptions] }
+          : undefined
+    }))
+  }
+
+  if (node.componentPropertyReferences.length > 0) {
+    const nodeFields = {
+      TEXT: 'TEXT_DATA',
+      BOOLEAN: 'VISIBLE',
+      INSTANCE_SWAP: 'OVERRIDDEN_SYMBOL_ID'
+    } as const
+    nc.componentPropRefs = node.componentPropertyReferences.map((reference) => ({
+      defID: getOrCreatePropertyGuid(context, reference.propertyId, localIdCounter),
+      componentPropNodeField: nodeFields[reference.field]
+    }))
+  }
+
+  if (node.type !== 'INSTANCE') return
+  const definitions = propertyDefinitionsForNode(context, node)
+  const assignments = Object.entries(node.componentPropertyValues).flatMap(([key, value]) => {
+    const definition = definitions.find(
+      (candidate) => candidate.id === key || candidate.name === key
+    )
+    if (!definition) return []
+    return [
+      {
+        defID: getOrCreatePropertyGuid(context, definition.id, localIdCounter),
+        value: componentPropertyValueToKiwi(definition, value, context, localIdCounter)
+      }
+    ]
+  })
+  if (assignments.length > 0) nc.componentPropAssignments = assignments
+}
 
 function createStrokePaints(context: SceneNodeToKiwiContext, node: SceneNode): Paint[] {
   return node.strokes.map((stroke) => ({
@@ -109,9 +243,7 @@ export function sceneNodeToKiwiWithContext(
   localIdCounter: { value: number },
   context: SceneNodeToKiwiContext
 ): KiwiNodeChange[] {
-  const localID = localIdCounter.value++
-  const guid = { sessionID: 1, localID }
-  context.nodeIdToGuid?.set(node.id, guid)
+  const guid = getOrCreateNodeGuid(context, node.id, localIdCounter)
 
   const strokePaints = createStrokePaints(context, node)
 
@@ -131,6 +263,10 @@ export function sceneNodeToKiwiWithContext(
 
   applyNodeVisualProps(context, node, nc)
   if (strokePaints.length > 0) nc.strokePaints = strokePaints
+  if (node.scrollDirection !== 'NONE') nc.scrollDirection = node.scrollDirection
+  if (node.scrollBehavior !== 'SCROLLS') nc.scrollBehavior = node.scrollBehavior
+  if (node.prototypeDevice) nc.prototypeDevice = structuredClone(node.prototypeDevice)
+  applyComponentMetadata(context, node, nc, localIdCounter)
 
   context.serializeLayoutProps(node, nc)
   context.serializeGeometry(node, nc, context.blobs)

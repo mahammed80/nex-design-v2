@@ -1,6 +1,15 @@
 import type { PrototypeConnection } from '#core/prototype/types'
 import type { Color, Matrix, Vector } from '#core/types'
 
+import type {
+  PrototypeDevice,
+  PrototypeFlow,
+  PrototypeScrollBehavior,
+  PrototypeScrollDirection,
+  Reaction
+} from './prototype-types'
+export * from './prototype-types'
+
 export interface SceneGraphEvents {
   'node:created': (node: SceneNode) => void
   'node:updated': (id: string, changes: Partial<SceneNode>) => void
@@ -418,7 +427,8 @@ export interface SceneNode {
   componentLineageId: string | null
   overrides: Record<string, unknown>
   componentPropertyDefinitions: ComponentPropertyDefinition[]
-  componentPropertyValues: Record<string, string>
+  componentPropertyValues: Record<string, ComponentPropertyValue>
+  componentPropertyReferences: ComponentPropertyReference[]
 
   boundVariables: Record<string, string>
 
@@ -438,103 +448,25 @@ export interface SceneNode {
   prototypeStartNodeId?: string | null
   prototypeFlows?: PrototypeFlow[]
   prototypeConnections?: PrototypeConnection[]
-}
-
-export type TriggerType =
-  | 'ON_CLICK'
-  | 'ON_HOVER'
-  | 'ON_PRESS'
-  | 'MOUSE_ENTER'
-  | 'MOUSE_LEAVE'
-  | 'MOUSE_DOWN'
-  | 'MOUSE_UP'
-  | 'AFTER_DELAY'
-  | 'ON_DRAG'
-  | 'ON_KEY_DOWN'
-
-export type ActionType =
-  | 'BACK'
-  | 'CLOSE'
-  | 'NAVIGATE'
-  | 'URL'
-  | 'OPEN_OVERLAY'
-  | 'SWAP_OVERLAY'
-  | 'CHANGE_TO'
-  | 'SET_VARIABLE'
-  | 'SCROLL_TO'
-
-export type TransitionType =
-  | 'INSTANT'
-  | 'DISSOLVE'
-  | 'SMART'
-  | 'MOVE_IN'
-  | 'MOVE_OUT'
-  | 'PUSH'
-  | 'SLIDE_IN'
-  | 'SLIDE_OUT'
-
-export type EasingType = 'LINEAR' | 'EASE_IN' | 'EASE_OUT' | 'EASE_IN_AND_OUT' | 'BOUNCE' | 'SPRING'
-
-/** Direction for PUSH / SLIDE_IN / SLIDE_OUT / MOVE_IN / MOVE_OUT transitions. */
-export type TransitionDirection = 'LEFT' | 'RIGHT' | 'TOP' | 'BOTTOM'
-
-export interface Transition {
-  type: TransitionType
-  duration: number // in ms
-  easing: EasingType
-  direction?: TransitionDirection
-}
-
-export type OverlayPosition = 'CENTER' | 'TOP_CENTER' | 'BOTTOM_CENTER' | 'MANUAL'
-
-export interface OverlaySettings {
-  position?: OverlayPosition
-  /** Overlay top-left relative to the source frame, used when `position` is MANUAL. */
-  offset?: Vector
-  backdrop?: boolean
-  backdropOpacity?: number
-  closeOnOutsideClick?: boolean
-}
-
-export interface Action {
-  type: ActionType
-  destinationId?: string // node ID for NAVIGATE, OPEN_OVERLAY, SWAP_OVERLAY, SCROLL_TO
-  url?: string // URL for URL action
-  transition?: Transition
-  variantProperties?: Record<string, string> // for CHANGE_TO (Component state transition)
-  variableId?: string // for SET_VARIABLE
-  variableValue?: unknown // for SET_VARIABLE
-  overlay?: OverlaySettings
-}
-
-export type DragDirection = 'left' | 'right' | 'up' | 'down'
-
-export interface Trigger {
-  type: TriggerType
-  delay?: number // delay in ms for AFTER_DELAY
-  direction?: DragDirection
-  /** `KeyboardEvent.code` values for ON_KEY_DOWN, e.g. `['ArrowRight']`; any listed key fires. */
-  keys?: string[]
-}
-
-export interface PrototypeFlow {
-  name: string
-  startNodeId: string
-  description?: string
-}
-
-export interface Reaction {
-  trigger: Trigger
-  actions: Action[]
+  prototypeDevice?: PrototypeDevice | null
+  scrollDirection: PrototypeScrollDirection
+  scrollBehavior: PrototypeScrollBehavior
 }
 
 export type ComponentPropertyType = 'VARIANT' | 'TEXT' | 'BOOLEAN' | 'INSTANCE_SWAP'
+export type ComponentPropertyValue = string | boolean
+export type ComponentPropertyReferenceField = 'TEXT' | 'BOOLEAN' | 'INSTANCE_SWAP'
+
+export interface ComponentPropertyReference {
+  propertyId: string
+  field: ComponentPropertyReferenceField
+}
 
 export interface ComponentPropertyDefinition {
   id: string
   name: string
   type: ComponentPropertyType
-  defaultValue: string
+  defaultValue: ComponentPropertyValue
   variantOptions?: string[]
 }
 

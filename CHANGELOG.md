@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Upgrade conversational screen generation with Poolside-backed Build and read-only Plan modes, real image and context-file attachments, queued follow-up prompts, working canvas prompt submission, visible run progress, restorable before/result checkpoints, and Figma-style auto-layout buttons with real text-label children.
 - Make URL-to-design available to the built-in AI as a real editable-layer import, including scoped and multi-viewport imports, and add a license-aware finder for free community UI kits, icons, illustrations, and photos.
 - Make Website URL to Design production-safe and consistent with development: proxy images and external CSS, rewrite relative CSS assets, block private-network redirects, sandbox imported markup without scripts, preserve absolute positioning, and derive block spacing from the captured page.
 
@@ -53,6 +54,7 @@
 
 ### Changed
 
+- Replace the design agent's conflicting skeleton-first workflow with one Direction → Build → Validate → Polish workflow that renders real content directly, and replace generic taste skills with concrete art directions (type pairings, palette recipes, layout patterns per screen type) and canvas-specific accessibility checks.
 - Extract dashboard account state and project persistence into shared composables with an IndexedDB repository boundary, and split sidebar, recent-file, project-card, and template-library presentation into focused components.
 - Fix the built-in design agent to Poolside Laguna S 2.1, remove user-facing provider/model/endpoint selection, and route inference through a server-only, rate-limited credential proxy.
 - Refactor the editor architecture across core, app, Vue SDK, CLI, MCP, docs, and desktop into smaller domain modules with structural lint rules to keep package boundaries explicit.
@@ -69,6 +71,9 @@
 
 ### Fixes
 
+- Bind text, Boolean visibility, and nested instance-swap component properties to real layers, expose typed instance controls in the inspector, and preserve those bindings through native `.fig` component property references.
+- Preserve Figma component sets as native state-group frames, including variant, text, Boolean, and instance-swap property definitions plus instance property assignments during `.fig` export and reimport.
+- Preserve native Figma prototype device settings, frame scroll direction, fixed-child scroll behavior, preserved navigation scroll offsets, and custom easing parameters during `.fig` export and reimport.
 - Save prototype interactions, flow starting points, start screens, and connection geometry to `.fig` files and restore them on open; previously all prototyping was lost on save. Native Figma prototype fields are used where they exist, so interactions also round-trip with Figma.
 - Sync prototype interactions, connections, flows, and plugin data correctly between collaborators instead of delivering them as raw JSON strings.
 - Save page-level plugin data in `.fig` files (previously dropped on save).

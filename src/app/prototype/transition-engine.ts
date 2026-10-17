@@ -13,7 +13,9 @@ const EASING_CURVES: Record<EasingType, Curve> = {
   EASE_OUT: [0, 0, 0.2, 1],
   EASE_IN_AND_OUT: [0.4, 0, 0.2, 1],
   BOUNCE: [0.34, 1.56, 0.64, 1],
-  SPRING: [0.175, 0.885, 0.32, 1.275]
+  SPRING: [0.175, 0.885, 0.32, 1.275],
+  CUSTOM_CUBIC: [0.4, 0, 0.2, 1],
+  CUSTOM_SPRING: [0.175, 0.885, 0.32, 1.275]
 }
 
 function isEasing(value: string): value is EasingType {

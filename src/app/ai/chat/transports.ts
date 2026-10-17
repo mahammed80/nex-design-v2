@@ -8,10 +8,17 @@ import type { ACPAgentID, AIProviderID } from '@nex-design/core/constants'
 
 import { buildAgentInstructions, getLatestUserRequest } from '@/app/ai/chat/agent-instructions'
 import { createLanguageModel } from '@/app/ai/chat/model'
+import { getAgentRunMode } from '@/app/ai/chat/run-mode'
 import { setAgentMemoryRequest } from '@/app/ai/memory/storage'
 import { startAgentRun } from '@/app/ai/orchestration/progress'
 import { authorizeReferencesFromRequest } from '@/app/ai/reference/authorization'
-import { createAITools, recordStepUsage, resetRunSteps } from '@/app/ai/tools'
+import {
+  createAITools,
+  getBuildAIToolNames,
+  getPlanAIToolNames,
+  recordStepUsage,
+  resetRunSteps
+} from '@/app/ai/tools'
 import type { getActiveEditorStore } from '@/app/editor/active-store'
 
 type EditorStore = ReturnType<typeof getActiveEditorStore>
@@ -95,11 +102,15 @@ export function createToolLoopTransport({
       resetRunSteps(store)
       startAgentRun(store)
       const request = getLatestUserRequest(options.messages)
+      const runMode = getAgentRunMode(store)
       setAgentMemoryRequest(store, request)
       authorizeReferencesFromRequest(request)
       return {
         ...options,
-        instructions: buildAgentInstructions({ store, request }),
+        instructions: buildAgentInstructions({ store, request, mode: runMode }),
+        activeTools: (runMode === 'plan'
+          ? getPlanAIToolNames(store)
+          : getBuildAIToolNames(store, request)) as Array<keyof typeof tools> | undefined,
         maxOutputTokens,
         providerOptions: cacheProviderOptions
       }

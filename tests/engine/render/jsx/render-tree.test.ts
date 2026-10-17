@@ -136,6 +136,38 @@ describe('renderTree', () => {
     expect(n.counterAxisAlign).toBe('CENTER')
   })
 
+  it('keeps a button label as a centered auto-layout text child', async () => {
+    const g = makeSceneGraph()
+    const tree = Frame(
+      {
+        name: 'SignInButton',
+        w: 320,
+        h: 44,
+        flex: 'row',
+        justify: 'center',
+        items: 'center',
+        px: 16,
+        bg: '#7C3AED',
+        rounded: 10
+      },
+      Text({ name: 'SignInButtonLabel', size: 14, weight: 600, color: '#FFFFFF' }, 'Sign in')
+    )
+
+    const result = await renderTree(g, tree)
+    const button = getNodeOrThrow(g, result.id)
+    const label = getNodeOrThrow(g, childIdAt(button, 0))
+
+    expect(button.layoutMode).toBe('HORIZONTAL')
+    expect(button.primaryAxisAlign).toBe('CENTER')
+    expect(button.counterAxisAlign).toBe('CENTER')
+    expect(button.primaryAxisSizing).toBe('FIXED')
+    expect(button.counterAxisSizing).toBe('FIXED')
+    expect(label.type).toBe('TEXT')
+    expect(label.parentId).toBe(button.id)
+    expect(label.text).toBe('Sign in')
+    expect(label.textAutoResize).toBe('WIDTH_AND_HEIGHT')
+  })
+
   it('handles padding shorthands', async () => {
     const g = makeSceneGraph()
     const tree = Frame({ name: 'Padded', px: 16, py: 8, pt: 4 })

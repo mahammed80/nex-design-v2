@@ -1,4 +1,5 @@
-import { guidToString } from '#core/kiwi/node-change/convert'
+import { guidToString, stringToGuid } from '#core/kiwi/node-change/convert'
+import type { ComponentPropertyReference } from '#core/scene-graph'
 
 import { resolveOverrideTarget, repopulateInstance } from './resolve'
 import type {
@@ -14,6 +15,11 @@ function normalizePropName(value: string): string {
 
 function isEmptyPropValue(v: ComponentPropValue): boolean {
   return v.boolValue === undefined && v.textValue === undefined && v.guidValue === undefined
+}
+
+function componentPropText(value: ComponentPropValue): string | undefined {
+  if (typeof value.textValue === 'string') return value.textValue
+  return value.textValue?.characters
 }
 
 /**
@@ -101,6 +107,48 @@ function fallbackRefsForChild(
   return refs.length > 0 ? refs : undefined
 }
 
+function sceneRefsForChild(references: ComponentPropertyReference[]): ComponentPropRef[] {
+  const fields = {
+    TEXT: 'TEXT_DATA',
+    BOOLEAN: 'VISIBLE',
+    INSTANCE_SWAP: 'OVERRIDDEN_SYMBOL_ID'
+  } as const
+  return references.map((reference) => ({
+    defID: stringToGuid(reference.propertyId),
+    componentPropNodeField: fields[reference.field]
+  }))
+}
+
+function applyBoundProperty(
+  ctx: OverrideContext,
+  childId: string,
+  childType: string,
+  nodeField: string,
+  value: ComponentPropValue,
+  modified?: Set<string>
+): void {
+  if (nodeField === 'VISIBLE' && value.boolValue !== undefined) {
+    ctx.graph.updateNode(childId, { visible: value.boolValue })
+    modified?.add(childId)
+    return
+  }
+  if (nodeField === 'TEXT_DATA') {
+    const text = componentPropText(value)
+    if (text === undefined || childType !== 'TEXT') return
+    ctx.graph.updateNode(childId, { text })
+    modified?.add(childId)
+    return
+  }
+  if (nodeField !== 'OVERRIDDEN_SYMBOL_ID') return
+  const swapId =
+    componentPropText(value) ?? (value.guidValue ? guidToString(value.guidValue) : undefined)
+  if (!swapId) return
+  const newComponentId = ctx.guidToNodeId.get(swapId)
+  if (!newComponentId) return
+  repopulateInstance(ctx, childId, newComponentId)
+  modified?.add(childId)
+}
+
 function applyPropAssignments(
   ctx: OverrideContext,
   parentId: string,
@@ -113,32 +161,20 @@ function applyPropAssignments(
 
   for (const childId of parent.childIds) {
     const child = ctx.graph.getNode(childId)
-    if (!child?.componentId) {
-      applyPropAssignments(ctx, childId, valueByDef, propRefsMap, modified)
-      continue
-    }
+    if (!child) continue
 
     const refs =
-      findPropRefs(ctx, child.componentId, propRefsMap) ??
+      (child.componentPropertyReferences.length > 0
+        ? sceneRefsForChild(child.componentPropertyReferences)
+        : undefined) ??
+      (child.componentId ? findPropRefs(ctx, child.componentId, propRefsMap) : undefined) ??
       fallbackRefsForChild(ctx, child.name, valueByDef)
     if (refs) {
       for (const ref of refs) {
         if (!ref.defID) continue
         const val = valueByDef.get(guidToString(ref.defID))
         if (!val) continue
-
-        if (ref.componentPropNodeField === 'VISIBLE' && val.boolValue !== undefined) {
-          ctx.graph.updateNode(childId, { visible: val.boolValue })
-          modified?.add(childId)
-        } else if (ref.componentPropNodeField === 'OVERRIDDEN_SYMBOL_ID') {
-          const swapId = val.textValue ?? (val.guidValue ? guidToString(val.guidValue) : undefined)
-          if (!swapId) continue
-          const newCompId = ctx.guidToNodeId.get(swapId)
-          if (newCompId) {
-            repopulateInstance(ctx, childId, newCompId)
-            modified?.add(childId)
-          }
-        }
+        applyBoundProperty(ctx, childId, child.type, ref.componentPropNodeField, val, modified)
       }
     }
 

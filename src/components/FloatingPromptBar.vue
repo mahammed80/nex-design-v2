@@ -4,7 +4,7 @@ import { useAIChat } from '@/app/ai/chat/use'
 import { useEditorStore } from '@/app/editor/active-store'
 
 const editor = useEditorStore()
-const { sendMessage, isGenerating, activeTab } = useAIChat()
+const { sendMessage, isGenerating, queuedPromptCount } = useAIChat()
 
 const promptText = ref('')
 const isFocused = ref(false)
@@ -19,7 +19,7 @@ const selectedNode = computed(() => {
 
 function handleSend() {
   const text = promptText.value.trim()
-  if (!text || isGenerating.value) return
+  if (!text) return
 
   let enrichedPrompt = text
   if (selectedNode.value) {
@@ -28,7 +28,6 @@ function handleSend() {
 
   sendMessage(enrichedPrompt)
   promptText.value = ''
-  activeTab.value = 'ai'
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -50,17 +49,23 @@ function insertPreset(preset: string) {
       v-if="showAttachmentMenu"
       class="flex flex-col gap-1 p-2 rounded-2xl border border-white/15 bg-black/80 backdrop-blur-2xl shadow-2xl text-xs text-white/90 w-80"
     >
-      <div class="px-2 py-1 text-[10px] font-semibold text-white/50 uppercase tracking-wider">NexDesign AI Presets</div>
+      <div class="px-2 py-1 text-[10px] font-semibold text-white/50 uppercase tracking-wider">
+        NexDesign AI Presets
+      </div>
       <button
         class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-white/10 text-left transition-colors cursor-pointer"
-        @click="insertPreset('Generate a modern glassmorphic SaaS dashboard hero with aurora mesh glow')"
+        @click="
+          insertPreset('Generate a modern glassmorphic SaaS dashboard hero with aurora mesh glow')
+        "
       >
         <icon-lucide-sparkles class="size-3.5 text-cyan-400 shrink-0" />
         <span class="truncate">Glassmorphic SaaS Hero</span>
       </button>
       <button
         class="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-white/10 text-left transition-colors cursor-pointer"
-        @click="insertPreset('Create a responsive 3-column pricing card grid with frosted glass cards')"
+        @click="
+          insertPreset('Create a responsive 3-column pricing card grid with frosted glass cards')
+        "
       >
         <icon-lucide-layout-grid class="size-3.5 text-purple-400 shrink-0" />
         <span class="truncate">3-Column Glass Pricing Grid</span>
@@ -77,7 +82,8 @@ function insertPreset(preset: string) {
     <div
       class="relative flex items-center gap-2 h-12 w-[480px] max-w-[calc(100vw-3rem)] px-3 rounded-full border border-white/15 bg-black/60 backdrop-blur-2xl shadow-[0_12px_32px_rgba(0,0,0,0.5),0_0_24px_rgba(121,40,202,0.15)] transition-all duration-300"
       :class="{
-        'border-white/30 shadow-[0_12px_32px_rgba(0,0,0,0.6),0_0_32px_rgba(121,40,202,0.3)] bg-black/75': isFocused,
+        'border-white/30 shadow-[0_12px_32px_rgba(0,0,0,0.6),0_0_32px_rgba(121,40,202,0.3)] bg-black/75':
+          isFocused,
         'ring-1 ring-cyan-400/40': isFocused
       }"
     >
@@ -111,13 +117,19 @@ function insertPreset(preset: string) {
 
       <button
         class="flex size-7 items-center justify-center rounded-full bg-white text-black hover:bg-white/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shrink-0 shadow-sm"
-        :disabled="!promptText.trim() || isGenerating"
-        title="Generate with NexDesign AI"
+        :disabled="!promptText.trim()"
+        :title="isGenerating ? 'Queue prompt for NexDesign AI' : 'Generate with NexDesign AI'"
         @click="handleSend"
       >
-        <icon-lucide-loader-2 v-if="isGenerating" class="size-3.5 animate-spin" />
+        <icon-lucide-list-plus v-if="isGenerating" class="size-3.5" />
         <icon-lucide-arrow-up v-else class="size-3.5 stroke-[2.5]" />
       </button>
+      <span
+        v-if="queuedPromptCount > 0"
+        class="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold text-white"
+      >
+        {{ queuedPromptCount }}
+      </span>
     </div>
   </div>
 </template>

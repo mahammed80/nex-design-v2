@@ -12,7 +12,12 @@ import {
 import { extractPluginData } from '#core/kiwi/node-change/plugin-data'
 import { readPrototypeNodeChanges } from '#core/kiwi/node-change/prototype'
 import { SceneGraph } from '#core/scene-graph'
-import type { VariableType, VariableValue } from '#core/scene-graph'
+import type {
+  ComponentPropertyType,
+  ComponentPropertyValue,
+  VariableType,
+  VariableValue
+} from '#core/scene-graph'
 
 type AssetRef = { key: string; version?: string }
 type AliasRef = { guid?: GUID; assetRef?: AssetRef }
@@ -335,6 +340,123 @@ function remapComponentIds(graph: SceneGraph, guidToNodeId: Map<string, string>)
   }
 }
 
+function remapInstanceSwapDefaults(graph: SceneGraph, guidToNodeId: Map<string, string>): void {
+  for (const node of graph.getAllNodes()) {
+    if (node.componentPropertyDefinitions.length === 0) continue
+    const definitions = node.componentPropertyDefinitions.map((definition) => {
+      if (definition.type !== 'INSTANCE_SWAP' || typeof definition.defaultValue !== 'string') {
+        return definition
+      }
+      return {
+        ...definition,
+        defaultValue: guidToNodeId.get(definition.defaultValue) ?? definition.defaultValue
+      }
+    })
+    graph.updateNode(node.id, { componentPropertyDefinitions: definitions })
+  }
+}
+
+interface ImportedTextData {
+  characters?: string
+}
+
+interface ImportedComponentPropertyValue {
+  boolValue?: boolean
+  textValue?: string | ImportedTextData
+  guidValue?: GUID
+}
+
+interface ImportedComponentPropertyDefinition {
+  id?: GUID
+  name?: string
+  type?: string
+}
+
+interface ImportedComponentPropertyAssignment {
+  defID?: GUID
+  value?: ImportedComponentPropertyValue
+  varValue?: {
+    value?: {
+      boolValue?: boolean
+      textValue?: string
+      symbolIdValue?: { guid?: GUID }
+    }
+  }
+}
+
+function importedComponentPropertyType(type: string | undefined): ComponentPropertyType {
+  if (type === 'BOOL' || type === 'BOOLEAN') return 'BOOLEAN'
+  if (type === 'TEXT' || type === 'INSTANCE_SWAP' || type === 'VARIANT') return type
+  return 'TEXT'
+}
+
+function importedComponentPropertyValue(
+  type: ComponentPropertyType,
+  value: ImportedComponentPropertyValue | undefined,
+  guidToNodeId: Map<string, string>
+): ComponentPropertyValue {
+  if (type === 'BOOLEAN') return value?.boolValue ?? false
+  if (type === 'INSTANCE_SWAP' && value?.guidValue) {
+    const id = guidToString(value.guidValue)
+    return guidToNodeId.get(id) ?? id
+  }
+  const text = value?.textValue
+  return typeof text === 'string' ? text : (text?.characters ?? '')
+}
+
+function importedAssignmentValue(
+  assignment: ImportedComponentPropertyAssignment
+): ImportedComponentPropertyValue | undefined {
+  if (assignment.value) return assignment.value
+  const value = assignment.varValue?.value
+  if (!value) return undefined
+  return {
+    boolValue: value.boolValue,
+    textValue: value.textValue,
+    guidValue: value.symbolIdValue?.guid
+  }
+}
+
+function importComponentPropertyAssignments(
+  changeMap: Map<string, NodeChange>,
+  guidToNodeId: Map<string, string>,
+  graph: SceneGraph
+): void {
+  const definitions = new Map<string, { name: string; type: ComponentPropertyType }>()
+  for (const nc of changeMap.values()) {
+    const defs = nc.componentPropDefs as ImportedComponentPropertyDefinition[] | undefined
+    for (const definition of defs ?? []) {
+      if (!definition.id || !definition.name) continue
+      definitions.set(guidToString(definition.id), {
+        name: definition.name,
+        type: importedComponentPropertyType(definition.type)
+      })
+    }
+  }
+
+  for (const [figmaId, nc] of changeMap) {
+    const assignments = nc.componentPropAssignments as
+      | ImportedComponentPropertyAssignment[]
+      | undefined
+    if (!assignments?.length) continue
+    const nodeId = guidToNodeId.get(figmaId)
+    const node = nodeId ? graph.getNode(nodeId) : undefined
+    if (!node) continue
+    const values = { ...node.componentPropertyValues }
+    for (const assignment of assignments) {
+      if (!assignment.defID) continue
+      const definition = definitions.get(guidToString(assignment.defID))
+      if (!definition) continue
+      values[definition.name] = importedComponentPropertyValue(
+        definition.type,
+        importedAssignmentValue(assignment),
+        guidToNodeId
+      )
+    }
+    graph.updateNode(node.id, { componentPropertyValues: values })
+  }
+}
+
 function parseDocumentColorSpace(nodeChanges: NodeChange[]): 'srgb' | 'display-p3' {
   const documentNode = nodeChanges.find((nc) => nc.type === 'DOCUMENT')
   return documentNode?.documentColorProfile === 'DISPLAY_P3' ? 'display-p3' : 'srgb'
@@ -397,6 +519,8 @@ export function importNodeChanges(
   importVariableEntries(changeMap, parentMap, graph, assetRefs)
   importVariableBindings(changeMap, guidToNodeId, graph)
   remapComponentIds(graph, guidToNodeId)
+  remapInstanceSwapDefaults(graph, guidToNodeId)
+  importComponentPropertyAssignments(changeMap, guidToNodeId, graph)
   readPrototypeNodeChanges(graph, changeMap, guidToNodeId, canvasIdToPageId)
 
   const firstPageId = graph.getPages()[0]?.id

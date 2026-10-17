@@ -33,6 +33,13 @@ function sendJson(response: ServerResponse, status: number, body: Record<string,
   response.end(JSON.stringify(body))
 }
 
+function formatProxyError(error: unknown): string {
+  if (!(error instanceof Error)) return 'Poolside proxy failed.'
+  const cause = error.cause
+  if (cause instanceof Error) return `${error.message}: ${cause.message}`
+  return error.message
+}
+
 async function proxyPoolside(
   request: IncomingMessage,
   response: ServerResponse,
@@ -75,7 +82,7 @@ async function proxyPoolside(
       return
     }
     sendJson(response, 502, {
-      error: { message: error instanceof Error ? error.message : 'Poolside proxy failed.' }
+      error: { message: formatProxyError(error) }
     })
   }
 }

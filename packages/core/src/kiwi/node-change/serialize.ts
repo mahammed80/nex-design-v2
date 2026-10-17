@@ -50,7 +50,7 @@ export function mapToFigmaType(type: SceneNode['type']): string {
     case 'COMPONENT':
       return 'SYMBOL'
     case 'COMPONENT_SET':
-      return 'SYMBOL'
+      return 'FRAME'
     case 'INSTANCE':
       return 'INSTANCE'
     case 'CONNECTOR':
@@ -406,7 +406,8 @@ export function sceneNodeToKiwi(
   blobs: Uint8Array[],
   nodeIdToGuid?: Map<string, GUID>,
   fontDigestMap?: Map<string, Uint8Array>,
-  varIdToGuid?: Map<string, GUID>
+  varIdToGuid?: Map<string, GUID>,
+  propertyIdToGuid?: Map<string, GUID>
 ): KiwiNodeChange[] {
   return sceneNodeToKiwiWithContext(node, parentGuid, childIndex, localIdCounter, {
     graph,
@@ -414,6 +415,7 @@ export function sceneNodeToKiwi(
     nodeIdToGuid,
     fontDigestMap,
     varIdToGuid,
+    propertyIdToGuid,
     fractionalPosition,
     mapToFigmaType,
     fillToKiwiPaint,

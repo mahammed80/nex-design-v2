@@ -4,6 +4,7 @@ import { findStyleGuidePage, readDesignSystem } from '@nex-design/core/design-sy
 import type { SceneGraph, SceneNode } from '@nex-design/core/scene-graph'
 
 import SYSTEM_PROMPT from '@/app/ai/chat/system-prompt.md?raw'
+import type { ChatRunMode } from '@/app/ai/chat/types'
 import { buildGenerationMemoryContext } from '@/app/ai/memory/storage'
 import { resolveAgentSkills } from '@/app/ai/skills/resolve'
 import type { AgentTaskIntent } from '@/app/ai/skills/types'
@@ -51,7 +52,7 @@ export function classifyAgentIntent(request: string): AgentTaskIntent {
 }
 
 function nodeLabel(node: SceneNode): string {
-  return `${node.name} (${node.type}, ${Math.round(node.width)}x${Math.round(node.height)})`
+  return `${node.name} (${node.type}, ${Math.round(node.width)}x${Math.round(node.height)}) at (${Math.round(node.x)}, ${Math.round(node.y)})`
 }
 
 function countDescendants(graph: SceneGraph, root: SceneNode): number {
@@ -165,17 +166,19 @@ function workflowFor(intent: AgentTaskIntent): string {
     return 'Modify the existing design in place. Inspect the target first, preserve unrelated layers, use replace_id or focused property tools, then describe the result.'
   }
   return [
-    'Use a layered design pass:',
-    '1. Skeleton: create the root frame and named section placeholders with layout, hierarchy, and spatial boundaries.',
-    '2. Content: fill one section at a time using render with parent_id or replace_id so each change stays spatially scoped.',
-    '3. Refine: establish typography, color, spacing, icons, and visual hierarchy; reuse any relevant Style Guide tokens.',
-    '4. Validate: call describe on the completed root, correct concrete layout issues, and stop when the requested design is complete.'
+    'Follow the four-phase workflow from the system prompt:',
+    '0. Screen scope: a request for a new screen creates a new top-level frame without replacing unrelated work. Place it to the right of existing top-level screens with a 120px canvas gap. A multi-screen request creates one consistently named top-level frame per screen; it is not one page split into sections.',
+    '1. Direction: state concept, type pairing, palette hexes, shape and density, section layout, and focal point before any tool call. Reuse Style Guide tokens when present.',
+    '2. Build: render real content directly — one render for small screens, otherwise the root plus the first sections, then one render per remaining section with parent_id. No gray skeleton pass.',
+    '3. Validate: call describe on the completed root once and fix errors and high-impact warnings in one batch_update.',
+    '4. Polish: place stock photos in one batch, critique the result against the direction, fix the weakest point, and stop.'
   ].join('\n')
 }
 
 export function buildAgentInstructions(options: {
   store: AgentDocumentState
   request: string
+  mode?: ChatRunMode
 }): string {
   const intent = classifyAgentIntent(options.request)
   const base = SYSTEM_PROMPT
@@ -188,5 +191,15 @@ export function buildAgentInstructions(options: {
   })
   const memory = buildGenerationMemoryContext(options.store.state.documentName ?? 'Untitled')
   const skillBlock = skills.instructions ? `\n\n${skills.instructions}` : ''
-  return `${base}${skillBlock}\n\n## Runtime design context\n\n${buildAgentDocumentContext(options.store)}\n\n## Local design memory\n\n${memory}\n\nTask mode: ${intent}.\n${workflowFor(intent)}`
+  const runMode = options.mode ?? 'build'
+  const modeInstructions =
+    runMode === 'plan'
+      ? [
+          'Interaction mode: plan.',
+          'Do not create, edit, delete, or move any design nodes.',
+          'Use read-only inspection tools when useful, then return a concise implementation plan covering screens, states, reusable components, interactions, responsive behavior, accessibility, and validation.',
+          'Call out assumptions and unresolved product decisions. End by asking the user to approve or refine the plan before building.'
+        ].join('\n')
+      : `Interaction mode: build.\n${workflowFor(intent)}`
+  return `${base}${skillBlock}\n\n## Runtime design context\n\n${buildAgentDocumentContext(options.store)}\n\n## Local design memory\n\n${memory}\n\nTask mode: ${intent}.\n${modeInstructions}`
 }

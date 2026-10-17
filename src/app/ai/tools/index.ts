@@ -8,6 +8,7 @@ import { fontManager } from '@nex-design/core/text'
 import { CORE_TOOLS, toolsToAI } from '@nex-design/core/tools'
 import type { StepBudget, ToolLogEntry } from '@nex-design/core/tools'
 
+import { classifyAgentIntent } from '@/app/ai/chat/agent-instructions'
 import { getAgentMemoryRequest, recordGenerationMemory } from '@/app/ai/memory/storage'
 import { finishAgentToolProgress, recordAgentToolProgress } from '@/app/ai/orchestration/progress'
 import { runOrchestratorTool } from '@/app/ai/orchestrator/tool'
@@ -88,19 +89,49 @@ export function clearToolLogEntries(store?: EditorStore): void {
   getRunState(store).clear()
 }
 
+function createAIToolDefinitions(store: EditorStore) {
+  return [
+    ...CORE_TOOLS,
+    createUrlImportTool(store),
+    findDesignResourcesTool,
+    studyReference,
+    studyReferenceUrl,
+    runOrchestratorTool
+  ]
+}
+
+export function getPlanAIToolNames(store: EditorStore): string[] {
+  return createAIToolDefinitions(store)
+    .filter((definition) => !definition.mutates)
+    .map((definition) => definition.name)
+}
+
+const CREATE_TOOL_NAMES = new Set([
+  'render',
+  'describe',
+  'get_selection',
+  'get_node',
+  'find_nodes',
+  'get_jsx',
+  'read_design_system',
+  'stock_photo',
+  'calc',
+  'viewport_zoom_to_fit'
+])
+
+export function getBuildAIToolNames(store: EditorStore, request: string): string[] | undefined {
+  if (classifyAgentIntent(request) !== 'create') return undefined
+  return createAIToolDefinitions(store)
+    .filter((definition) => CREATE_TOOL_NAMES.has(definition.name))
+    .map((definition) => definition.name)
+}
+
 export function createAITools(store: EditorStore) {
   let beforeSnapshot: Map<string, SceneNode> | null = null
   const runState = getRunState(store)
 
   return toolsToAI(
-    [
-      ...CORE_TOOLS,
-      createUrlImportTool(store),
-      findDesignResourcesTool,
-      studyReference,
-      studyReferenceUrl,
-      runOrchestratorTool
-    ],
+    createAIToolDefinitions(store),
     {
       getFigma: () => makeFigmaFromStore(store),
       onBeforeExecute: (def) => {

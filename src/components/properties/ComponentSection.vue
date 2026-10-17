@@ -58,7 +58,8 @@ const isAddingProp = ref(false)
 function onAddProperty() {
   if (!node.value || node.value.type !== 'COMPONENT_SET') return
   const name = newPropName.value.trim() || `Property ${propDefs.value.length + 1}`
-  editor.addPropertyDefinition(node.value.id, name, newPropType.value, 'Default')
+  const defaultValue = newPropType.value === 'BOOLEAN' ? true : 'Default'
+  editor.addPropertyDefinition(node.value.id, name, newPropType.value, defaultValue)
   newPropName.value = ''
   isAddingProp.value = false
 }
@@ -87,7 +88,7 @@ function uniqueValuesForProperty(propName: string) {
       const child = editor.graph.getNode(cid)
       if (child?.componentPropertyValues) {
         const val = child.componentPropertyValues[propName]
-        if (val) values.add(val)
+        if (typeof val === 'string' && val) values.add(val)
       }
     }
     const def = compSet.componentPropertyDefinitions?.find((d) => d.name === propName)
@@ -115,7 +116,11 @@ function onRenameValueGlobally(propName: string, oldValue: string) {
 function onDeleteValueGlobally(propName: string, valueToDelete: string) {
   const compSet = isComponentSet.value ? node.value : parentComponentSet.value
   if (!compSet) return
-  if (confirm(`Are you sure you want to delete the variant value "${valueToDelete}" globally? It will reset to the default value on all variants.`)) {
+  if (
+    confirm(
+      `Are you sure you want to delete the variant value "${valueToDelete}" globally? It will reset to the default value on all variants.`
+    )
+  ) {
     editor.deleteVariantValue(compSet.id, propName, valueToDelete)
   }
 }
@@ -123,7 +128,7 @@ function onDeleteValueGlobally(propName: string, valueToDelete: string) {
 function onAddVariant() {
   if (!editor || !node.value) return
   const compSet = isComponentSet.value ? node.value : parentComponentSet.value
-  
+
   if (compSet) {
     const customValues: Record<string, string> = {}
     for (const def of compSet.componentPropertyDefinitions || []) {
@@ -133,7 +138,7 @@ function onAddVariant() {
         customValues[def.name] = val && val.trim() !== '' ? val.trim() : defaultVal
       }
     }
-    
+
     if (isComponentSet.value) {
       editor.addVariantToComponentSet(node.value.id, customValues)
     } else {
@@ -153,20 +158,20 @@ function onSelectVariant(variantId: string) {
 function onDeleteVariant(variantId: string, e: MouseEvent) {
   e.stopPropagation()
   if (!editor || !parentComponentSet.value) return
-  
+
   const prevSelection = Array.from(editor.state.selectedIds)
   editor.select([variantId])
   editor.deleteSelected()
-  
+
   if (prevSelection.includes(variantId)) {
-    const remaining = parentComponentSet.value.childIds.filter(id => id !== variantId)
+    const remaining = parentComponentSet.value.childIds.filter((id) => id !== variantId)
     if (remaining.length > 0) {
       editor.select([remaining[0]])
     } else {
       editor.select([parentComponentSet.value.id])
     }
   } else {
-    editor.select(prevSelection.filter(id => id !== variantId))
+    editor.select(prevSelection.filter((id) => id !== variantId))
   }
 }
 
@@ -180,12 +185,17 @@ function onUpdateVariantValue(propName: string, value: string) {
 
   editor.updateNodeWithUndo(
     node.value.id,
-    { 
+    {
       componentPropertyValues: current,
       name: newName
     },
     'Change variant property'
   )
+}
+
+function currentVariantValue(propName: string): string {
+  const value = currentPropValues.value[propName]
+  return typeof value === 'string' ? value : ''
 }
 
 function onCombineAsVariants() {
@@ -252,7 +262,10 @@ function onCombineAsVariants() {
         </div>
 
         <!-- Add Property Form -->
-        <div v-if="isAddingProp" class="flex flex-col gap-2 p-2 rounded bg-muted/10 border border-border/80">
+        <div
+          v-if="isAddingProp"
+          class="flex flex-col gap-2 p-2 rounded bg-muted/10 border border-border/80"
+        >
           <input
             type="text"
             v-model="newPropName"
@@ -305,9 +318,12 @@ function onCombineAsVariants() {
                 </button>
               </div>
             </div>
-            
+
             <!-- Global Value tags inside Component Set view -->
-            <div v-if="def.type === 'VARIANT'" class="flex flex-wrap items-center gap-1 mt-1 pt-1 border-t border-border/40">
+            <div
+              v-if="def.type === 'VARIANT'"
+              class="flex flex-wrap items-center gap-1 mt-1 pt-1 border-t border-border/40"
+            >
               <span class="text-[9px] text-muted mr-1">Values:</span>
               <div
                 v-for="val in uniqueValuesForProperty(def.name)"
@@ -359,7 +375,10 @@ function onCombineAsVariants() {
       </div>
 
       <!-- Variants List Section -->
-      <div v-if="parentComponentSet" class="flex flex-col gap-1.5 border-b border-border/50 pb-3 mb-3">
+      <div
+        v-if="parentComponentSet"
+        class="flex flex-col gap-1.5 border-b border-border/50 pb-3 mb-3"
+      >
         <span class="text-[9px] font-semibold uppercase tracking-wider text-muted">Variants</span>
         <div class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
           <div
@@ -388,9 +407,7 @@ function onCombineAsVariants() {
 
       <!-- Variant property values editor -->
       <div v-if="parentComponentSet" class="flex flex-col gap-1.5">
-        <span class="text-[9px] font-semibold uppercase tracking-wider text-muted"
-          >Properties</span
-        >
+        <span class="text-[9px] font-semibold uppercase tracking-wider text-muted">Properties</span>
         <div
           v-for="def in parentComponentSet.componentPropertyDefinitions ?? []"
           :key="def.id"
@@ -399,14 +416,14 @@ function onCombineAsVariants() {
           <label class="text-[10px] text-muted">{{ def.name }}</label>
           <div class="flex items-center gap-1.5">
             <AppSelect
-              :model-value="currentPropValues[def.name] ?? ''"
-              :options="uniqueValuesForProperty(def.name).map(v => ({ value: v, label: v }))"
+              :model-value="currentVariantValue(def.name)"
+              :options="uniqueValuesForProperty(def.name).map((v) => ({ value: v, label: v }))"
               @update:model-value="onUpdateVariantValue(def.name, $event)"
               class="flex-1 text-xs"
             />
             <input
               type="text"
-              :value="currentPropValues[def.name] ?? ''"
+              :value="currentVariantValue(def.name)"
               placeholder="Or type new..."
               class="w-24 rounded border border-border bg-input px-2 py-1 text-xs text-surface outline-none focus:border-component"
               @change="onUpdateVariantValue(def.name, ($event.target as HTMLInputElement).value)"

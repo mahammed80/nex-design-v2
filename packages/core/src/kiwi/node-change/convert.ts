@@ -39,8 +39,13 @@ import type {
   ArcData,
   VectorNetwork,
   ComponentPropertyDefinition,
+  ComponentPropertyReference,
   ComponentPropertyType,
-  CanvasGuide
+  ComponentPropertyValue,
+  CanvasGuide,
+  PrototypeDevice,
+  PrototypeScrollBehavior,
+  PrototypeScrollDirection
 } from '#core/scene-graph'
 import type { GUID } from '#core/types'
 
@@ -445,22 +450,90 @@ export function nodeChangeToProps(
     clipsContent: nc.frameMaskDisabled === false && nc.resizeToFit !== true,
     componentId: extractSymbolId(nc),
     componentPropertyDefinitions: extractComponentPropertyDefs(nc),
-    componentPropertyValues: extractComponentPropertyValues(nc)
+    componentPropertyValues: extractComponentPropertyValues(nc),
+    componentPropertyReferences: extractComponentPropertyReferences(nc),
+    prototypeDevice: extractPrototypeDevice(nc),
+    scrollDirection: extractScrollDirection(nc.scrollDirection),
+    scrollBehavior: extractScrollBehavior(nc.scrollBehavior)
   }
+}
+
+function extractPrototypeDevice(nc: NodeChange): PrototypeDevice | null {
+  const device = nc.prototypeDevice as Partial<PrototypeDevice> | undefined
+  if (!device) return null
+  const type =
+    device.type === 'PRESET' || device.type === 'CUSTOM' || device.type === 'PRESENTATION'
+      ? device.type
+      : 'NONE'
+  return {
+    type,
+    size: {
+      x: device.size?.x ?? 0,
+      y: device.size?.y ?? 0
+    },
+    presetIdentifier: device.presetIdentifier ?? '',
+    rotation: device.rotation === 'CCW_90' ? 'CCW_90' : 'NONE'
+  }
+}
+
+function extractScrollDirection(value: unknown): PrototypeScrollDirection {
+  if (value === 'HORIZONTAL' || value === 'VERTICAL' || value === 'BOTH') return value
+  return 'NONE'
+}
+
+function extractScrollBehavior(value: unknown): PrototypeScrollBehavior {
+  return value === 'FIXED_WHEN_CHILD_OF_SCROLLING_FRAME'
+    ? 'FIXED_WHEN_CHILD_OF_SCROLLING_FRAME'
+    : 'SCROLLS'
 }
 
 const COMPONENT_PROP_TYPE_MAP: Record<string, ComponentPropertyType> = {
   VARIANT: 'VARIANT',
   TEXT: 'TEXT',
+  BOOL: 'BOOLEAN',
   BOOLEAN: 'BOOLEAN',
   INSTANCE_SWAP: 'INSTANCE_SWAP'
 }
 
+interface KiwiTextData {
+  characters?: string
+}
+
+interface KiwiComponentPropertyValue {
+  boolValue?: boolean
+  textValue?: string | KiwiTextData
+  guidValue?: GUID
+}
+
+interface KiwiComponentPropertyDefinition {
+  id?: GUID
+  name?: string
+  type?: string
+  initialValue?: KiwiComponentPropertyValue
+  preferredValues?: { stringValues?: string[] }
+}
+
+function componentPropertyText(value: KiwiComponentPropertyValue | undefined): string {
+  const text = value?.textValue
+  if (typeof text === 'string') return text
+  return text?.characters ?? ''
+}
+
+function componentPropertyDefaultValue(
+  type: ComponentPropertyType,
+  value: KiwiComponentPropertyValue | undefined
+): ComponentPropertyValue {
+  if (type === 'BOOLEAN') return value?.boolValue ?? false
+  if (type === 'INSTANCE_SWAP' && value?.guidValue) return guidToString(value.guidValue)
+  return componentPropertyText(value)
+}
+
 function extractComponentPropertyDefs(nc: NodeChange): ComponentPropertyDefinition[] {
-  const defs = nc.componentPropDefs as
-    | Array<{ id?: GUID; name?: string; type?: string; initialValue?: { textValue?: string } }>
-    | undefined
+  const defs = nc.componentPropDefs as KiwiComponentPropertyDefinition[] | undefined
   if (!defs?.length) return []
+  const variantOrders = new Map(
+    (nc.stateGroupPropertyValueOrders ?? []).map((order) => [order.property, order.values])
+  )
   const result: ComponentPropertyDefinition[] = []
   for (const def of defs) {
     if (!def.id || !def.name) continue
@@ -469,8 +542,11 @@ function extractComponentPropertyDefs(nc: NodeChange): ComponentPropertyDefiniti
       id: guidToString(def.id),
       name: def.name,
       type: propType,
-      defaultValue: def.initialValue?.textValue ?? '',
-      variantOptions: propType === 'VARIANT' ? undefined : undefined
+      defaultValue: componentPropertyDefaultValue(propType, def.initialValue),
+      variantOptions:
+        propType === 'VARIANT'
+          ? [...(def.preferredValues?.stringValues ?? variantOrders.get(def.name) ?? [])]
+          : undefined
     })
   }
   return result
@@ -488,7 +564,28 @@ function extractComponentPropertyValues(nc: NodeChange): Record<string, string> 
   return values
 }
 
+interface KiwiComponentPropertyReference {
+  defID?: GUID
+  componentPropNodeField?: string
+}
+
+function extractComponentPropertyReferences(nc: NodeChange): ComponentPropertyReference[] {
+  const refs = nc.componentPropRefs as KiwiComponentPropertyReference[] | undefined
+  if (!refs?.length) return []
+  return refs.flatMap((reference) => {
+    if (!reference.defID) return []
+    const fields: Record<string, ComponentPropertyReference['field']> = {
+      TEXT_DATA: 'TEXT',
+      VISIBLE: 'BOOLEAN',
+      OVERRIDDEN_SYMBOL_ID: 'INSTANCE_SWAP'
+    }
+    const field = fields[reference.componentPropNodeField ?? '']
+    return field ? [{ propertyId: guidToString(reference.defID), field }] : []
+  })
+}
+
 function isComponentSet(nc: NodeChange): boolean {
+  if (nc.isStateGroup === true) return true
   const defs = nc.componentPropDefs as Array<{ type?: string }> | undefined
   if (!defs?.length) return false
   return defs.some((d) => d.type === 'VARIANT')

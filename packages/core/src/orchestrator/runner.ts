@@ -1,9 +1,14 @@
 import type { LanguageModel } from 'ai'
 
 import type { EditorContext } from '#core/editor'
-import type { OrchestratorOptions, OrchestratorPlan, RunSummary } from './types'
+import type { LayoutMode } from '#core/scene-graph'
+import type { Color, Vector } from '#core/types'
+
 import { generatePlan, buildFallbackPlan } from './plan'
 import { runSubtask } from './subtask'
+import type { OrchestratorOptions, OrchestratorPlan, RunSummary } from './types'
+
+const GENERATED_SCREEN_GAP = 120
 
 export async function runOrchestrator(
   ctx: EditorContext,
@@ -45,27 +50,68 @@ export async function runOrchestrator(
   }
 }
 
-function scaffoldRoot(ctx: EditorContext, spec: { id: string; name: string; width: number; height: number; layout?: string; gap?: number; padding?: number; fill?: string }): string {
+function nextScreenPosition(ctx: EditorContext): Vector {
+  const page = ctx.graph.getNode(ctx.state.currentPageId)
+  if (!page) return { x: 0, y: 0 }
+  const siblings = page.childIds
+    .map((id) => ctx.graph.getNode(id))
+    .filter((node): node is NonNullable<typeof node> => node?.type === 'FRAME')
+  if (siblings.length === 0) return { x: 0, y: 0 }
+  return {
+    x: Math.max(...siblings.map((node) => node.x + node.width)) + GENERATED_SCREEN_GAP,
+    y: Math.min(...siblings.map((node) => node.y))
+  }
+}
+
+function scaffoldRoot(
+  ctx: EditorContext,
+  spec: {
+    id: string
+    name: string
+    width: number
+    height: number
+    layout?: string
+    gap?: number
+    padding?: number
+    fill?: string
+  }
+): string {
   const pageId = ctx.state.currentPageId
+  const position = nextScreenPosition(ctx)
+  const layoutMode = resolveLayoutMode(spec.layout)
   const root = ctx.graph.createNode('FRAME', pageId, {
     name: spec.name,
-    x: 0,
-    y: 0,
+    x: position.x,
+    y: position.y,
     width: spec.width,
     height: spec.height,
-    layoutMode: spec.layout === 'horizontal'
-      ? 'HORIZONTAL'
-      : (spec.layout === 'vertical' ? 'VERTICAL' : 'NONE'),
+    layoutMode,
     itemSpacing: spec.gap ?? 24,
     paddingLeft: spec.padding ?? 24,
     paddingRight: spec.padding ?? 24,
     paddingTop: spec.padding ?? 24,
     paddingBottom: spec.padding ?? 24,
-    fills: spec.fill ? [{ type: 'SOLID', color: hexToColor(spec.fill), opacity: 1, visible: true, blendMode: 'NORMAL' }] : []
+    fills: spec.fill
+      ? [
+          {
+            type: 'SOLID',
+            color: hexToColor(spec.fill),
+            opacity: 1,
+            visible: true,
+            blendMode: 'NORMAL'
+          }
+        ]
+      : []
   })
 
   ctx.runLayoutForNode(root.id)
   return root.id
+}
+
+function resolveLayoutMode(layout?: string): LayoutMode {
+  if (layout === 'horizontal') return 'HORIZONTAL'
+  if (layout === 'vertical') return 'VERTICAL'
+  return 'NONE'
 }
 
 function runCleanup(_ctx: EditorContext, _rootId: string): void {
@@ -76,8 +122,6 @@ function runCleanup(_ctx: EditorContext, _rootId: string): void {
 function countNodes(graph: EditorContext['graph'], rootId: string): number {
   return graph.countDescendants(rootId)
 }
-
-import type { Color } from '#core/types'
 
 function hexToColor(hex: string): Color {
   const c = hex.replace('#', '')

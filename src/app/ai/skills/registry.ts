@@ -1,13 +1,9 @@
+import ART_DIRECTION from './instructions/art-direction.md?raw'
 import DESIGN_FOUNDATION from './instructions/design-foundation.md?raw'
 import DESIGN_VALIDATION from './instructions/design-validation.md?raw'
 import ORCHESTRATION from './instructions/orchestration.md?raw'
 import REFERENCE_STUDY from './instructions/reference-study.md?raw'
 import STRUCTURAL_VARIETY from './instructions/structural-variety.md?raw'
-import FRONTEND_DESIGN from './instructions/frontend-design.md?raw'
-import UI_UX_PRO_MAX from './instructions/ui-ux-pro-max.md?raw'
-import SENIOR_FRONTEND from './instructions/senior-frontend.md?raw'
-import WEB_ACCESSIBILITY_AUDIT from './instructions/web-accessibility-audit.md?raw'
-import HALLMARK from './instructions/hallmark.md?raw'
 import type { AgentSkillDefinition } from './types'
 
 export const AGENT_SKILLS: AgentSkillDefinition[] = [
@@ -23,15 +19,23 @@ export const AGENT_SKILLS: AgentSkillDefinition[] = [
     id: 'design-foundation',
     phase: 'planning',
     priority: 100,
-    tokenBudget: 600,
+    tokenBudget: 400,
     instructions: DESIGN_FOUNDATION,
     matches: ({ intent }) => intent === 'create' || intent === 'modify'
+  },
+  {
+    id: 'art-direction',
+    phase: 'planning',
+    priority: 98,
+    tokenBudget: 900,
+    instructions: ART_DIRECTION,
+    matches: ({ intent }) => intent === 'create'
   },
   {
     id: 'structural-variety',
     phase: 'generation',
     priority: 90,
-    tokenBudget: 600,
+    tokenBudget: 700,
     instructions: STRUCTURAL_VARIETY,
     matches: ({ intent }) => intent === 'create'
   },
@@ -50,45 +54,5 @@ export const AGENT_SKILLS: AgentSkillDefinition[] = [
     tokenBudget: 800,
     instructions: REFERENCE_STUDY,
     matches: ({ intent }) => intent === 'reference'
-  },
-  {
-    id: 'frontend-design',
-    phase: 'planning',
-    priority: 100,
-    tokenBudget: 220,
-    instructions: FRONTEND_DESIGN,
-    matches: () => true
-  },
-  {
-    id: 'ui-ux-pro-max',
-    phase: 'planning',
-    priority: 100,
-    tokenBudget: 220,
-    instructions: UI_UX_PRO_MAX,
-    matches: () => true
-  },
-  {
-    id: 'senior-frontend',
-    phase: 'generation',
-    priority: 100,
-    tokenBudget: 220,
-    instructions: SENIOR_FRONTEND,
-    matches: () => true
-  },
-  {
-    id: 'web-accessibility-audit',
-    phase: 'generation',
-    priority: 100,
-    tokenBudget: 220,
-    instructions: WEB_ACCESSIBILITY_AUDIT,
-    matches: () => true
-  },
-  {
-    id: 'hallmark',
-    phase: 'generation',
-    priority: 105,
-    tokenBudget: 240,
-    instructions: HALLMARK,
-    matches: () => true
   }
 ]

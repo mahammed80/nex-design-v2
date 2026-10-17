@@ -56,10 +56,26 @@ describe('agent instructions', () => {
       request: 'Design a landing page'
     })
 
-    expect(instructions).toContain('1. Skeleton:')
-    expect(instructions).toContain('2. Content:')
-    expect(instructions).toContain('4. Validate:')
+    expect(instructions).toContain('1. Direction:')
+    expect(instructions).toContain('2. Build:')
+    expect(instructions).toContain('3. Validate:')
+    expect(instructions).toContain('### Skill: art-direction')
+    expect(instructions).not.toContain('Skeleton')
     expect(instructions).toContain('Task mode: create.')
+  })
+
+  test('makes plan mode explicitly read-only', () => {
+    const graph = new SceneGraph()
+    const page = graph.getPages()[0]
+    const instructions = buildAgentInstructions({
+      store: { graph, state: { currentPageId: page.id, selectedIds: new Set() } },
+      request: 'Design a mobile checkout flow',
+      mode: 'plan'
+    })
+
+    expect(instructions).toContain('Interaction mode: plan.')
+    expect(instructions).toContain('Do not create, edit, delete, or move any design nodes.')
+    expect(instructions).toContain('ask the user to approve or refine the plan')
   })
 })
 

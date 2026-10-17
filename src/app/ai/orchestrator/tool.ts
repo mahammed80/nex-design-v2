@@ -1,16 +1,19 @@
 import { defineTool } from '@nex-design/core/tools'
 
 import { getActiveEditorStore } from '@/app/editor/active-store'
+
 import { runDesignOrchestrator } from './run'
 
 export const runOrchestratorTool = defineTool({
   name: 'run_orchestrator',
   description:
     'Generate a complete multi-section design from a natural language prompt. Uses spatial decomposition to create a root frame with section containers, then populates each section. Use this for full-page or multi-section design requests.',
+  mutates: true,
   params: {
     prompt: {
       type: 'string',
-      description: 'The design request in natural language (e.g. "Create a landing page for a SaaS product with hero, features, and footer")',
+      description:
+        'The design request in natural language (e.g. "Create a landing page for a SaaS product with hero, features, and footer")',
       required: true
     },
     styleGuide: {

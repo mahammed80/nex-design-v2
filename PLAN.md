@@ -630,17 +630,18 @@ Tools are defined once in `packages/core/src/tools/schema.ts` as framework-agnos
 | ----------- | --------------------------------------------- |
 | `eval_code` | Execute code with Figma-compatible plugin API |
 
-### Prototyping (planned)
+### Prototyping (partial)
 
-| Feature       | Description                                                   |
-| ------------- | ------------------------------------------------------------- |
-| Connections   | Link frames with interaction triggers                         |
-| Triggers      | Click, hover, press, mouse enter/leave, after delay, drag     |
-| Actions       | Navigate to, overlay, swap, back, scroll to, open URL         |
-| Transitions   | Instant, dissolve, smart animate, move in/out, push, slide    |
-| Easing        | Linear, ease-in, ease-out, ease-in-out, spring, custom bezier |
-| Preview       | Play prototype in browser                                     |
-| Device frames | iPhone, Android, Desktop, custom sizes                        |
+| Feature                   | Current status                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Connections and reactions | Implemented foundation; authoring and validation need parity polish                                                             |
+| Triggers                  | Common click, hover, press, pointer, keyboard, delay, and drag triggers exist; dispatch edge cases remain                       |
+| Actions                   | Navigation, overlay, back, scroll-to, URL, `CHANGE_TO`, and variables exist; conditionals, expressions, modes, and media remain |
+| Transitions               | Standard transitions and basic Smart Animate exist; matching, custom curves, springs, and interruption need fidelity work       |
+| Preview                   | Browser presentation exists; real nested scrolling, live scene animation, accessibility, and deterministic traces remain        |
+| Device and flows          | Basic presentation exists; persisted device settings, named flows, responsive modes, and shareable starts remain                |
+
+The implementation sequence, acceptance criteria, affected modules, and quality gates live in [Phase 6–7 focused delivery plan](./FIGMA_PARITY_PLAN.md#phase-67-focused-delivery-plan).
 
 ---
 
@@ -1101,7 +1102,7 @@ Tauri v2 desktop app (macOS, Windows, Linux). Web app at app.nexdesign.dev. CLI 
 
 ### What's next
 
-- **Prototyping** — frame transitions, interaction triggers (click, hover, drag), overlay management, fullscreen preview mode
+- **Prototype and component parity** — execute the [focused Phase 6–7 plan](./FIGMA_PARITY_PLAN.md#phase-67-focused-delivery-plan), starting with lossless `.fig` round trips, deterministic traces, real scrolling, expressions/modes, and component-property bindings
 - **Shader effects (SkSL)** — custom visual effects via GPU shaders
 - **Raster tile caching** — instant zoom/pan for complex documents
 - **Component libraries** — publish, share, and consume design systems across files

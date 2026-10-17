@@ -3,16 +3,25 @@ import { expect, test, type Page } from '@playwright/test'
 import { CanvasHelper } from '#tests/helpers/canvas'
 
 const USE_REAL_LLM = process.env.TEST_REAL_LLM === '1'
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY ?? ''
+const MODIFIER = process.platform === 'darwin' ? 'Meta' : 'Control'
 
 let page: Page
 let canvas: CanvasHelper
 
-test.describe.configure({ mode: 'serial' })
+test.describe.configure({ mode: 'serial', timeout: 60_000 })
 
 test.beforeAll(async ({ browser }) => {
+  test.setTimeout(60_000)
   page = await browser.newPage()
   await page.goto('/')
+
+  const guestTrial = page.locator('[data-test-id="start-guest-trial"]')
+  await expect(guestTrial).toBeVisible()
+  await guestTrial.click()
+  const createCanvas = page.getByTitle('Create New Canvas')
+  await expect(createCanvas).toBeVisible()
+  await createCanvas.click()
+
   canvas = new CanvasHelper(page)
   await canvas.waitForInit()
 
@@ -119,36 +128,27 @@ function designTab() {
 }
 
 function chatInput() {
-  return page.locator('input[placeholder="Describe a change…"]')
+  return page.locator('[data-test-id="chat-input"]')
 }
 
-function apiKeyInput() {
-  return page.locator('[data-test-id="api-key-input"]')
-}
-
-test('⌘J switches to AI tab', async () => {
+test('mod+J switches to AI tab', async () => {
   await designTab().waitFor()
-  await page.keyboard.press('Meta+j')
+  await page.keyboard.press(`${MODIFIER}+j`)
   await expect(chatTab()).toHaveAttribute('data-state', 'active')
 })
 
-test('⌘J switches back to Design tab', async () => {
-  await page.keyboard.press('Meta+j')
+test('mod+J switches back to Design tab', async () => {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  await page.keyboard.press(`${MODIFIER}+j`)
   await expect(designTab()).toHaveAttribute('data-state', 'active')
 })
 
-test('clicking AI tab shows provider setup when no key set', async () => {
+test('clicking AI tab shows the fixed Poolside agent', async () => {
   await chatTab().click()
-  await expect(apiKeyInput()).toBeVisible()
-  await expect(page.getByText('Connect an AI provider to start chatting.')).toBeVisible()
-})
-
-test('saving API key shows chat interface', async () => {
-  const key = USE_REAL_LLM ? OPENROUTER_KEY : 'sk-or-test-key-12345'
-  await apiKeyInput().fill(key)
-  await page.locator('button:has-text("Connect")').click()
-
   await expect(chatInput()).toBeVisible()
+  await expect(page.locator('[data-test-id="chat-poolside-model-label"]')).toContainText(
+    'Poolside Laguna S 2.1'
+  )
   await expect(page.getByText('Describe what you want to create or change.')).toBeVisible()
 })
 
@@ -181,16 +181,13 @@ test('assistant responds', async () => {
   }
 })
 
-test('model selector is visible and clickable', async () => {
-  const trigger = page.locator('[data-test-id="chat-model-selector"]')
-  await expect(trigger).toBeVisible()
-  await trigger.click()
-
-  await expect(page.getByRole('option', { name: /Claude Sonnet 4\.6/ })).toBeVisible()
-  await expect(page.getByText('Best for design')).toBeVisible()
-  await expect(page.getByText('Free').first()).toBeVisible()
-
-  await page.keyboard.press('Escape')
+test('supports switching between build and plan modes', async () => {
+  const plan = page.locator('[data-test-id="chat-mode-plan"]')
+  const build = page.locator('[data-test-id="chat-mode-build"]')
+  await plan.click()
+  await expect(plan).toHaveClass(/bg-hover/)
+  await build.click()
+  await expect(build).toHaveClass(/bg-hover/)
 })
 
 test('tool calls render in assistant message', async () => {
@@ -209,10 +206,6 @@ test('tool calls render in assistant message', async () => {
 })
 
 test('switching tabs preserves chat', async () => {
-  const selectedModel = page.getByRole('option', { name: /Claude Sonnet 4\.6/ })
-  if (await selectedModel.isVisible().catch(() => false)) {
-    await selectedModel.click()
-  }
   await designTab().click({ timeout: 10000 })
   await expect(designTab()).toHaveAttribute('data-state', 'active')
 
@@ -231,37 +224,15 @@ test('transport errors show an actionable toast', async () => {
   ).toBeVisible({ timeout: 5000 })
 })
 
-test('"Get API key" link opens external URL via window.open', async () => {
-  await page.evaluate("localStorage.removeItem('nex-design:ai-key:openrouter')")
-  await page.reload()
-  await canvas.waitForInit()
+test('canvas prompt submits through the shared chat queue', async () => {
+  await designTab().click()
+  const floatingInput = page.getByPlaceholder(
+    'Ask NexDesign to generate UI, components, or layouts...'
+  )
+  await floatingInput.fill('Create a compact profile card')
+  await floatingInput.press('Enter')
   await chatTab().click()
-
-  const link = page.locator('[data-test-id="api-key-get-link"]')
-  await expect(link).toBeVisible()
-
-  // Intercept window.open to verify it's called with the right URL
-  const openedUrls: string[] = []
-  await page.exposeFunction('mockWindowOpen', (url: string) => openedUrls.push(url))
-  await page.evaluate(() => {
-    window.nexDesign ??= {}
-    window.nexDesign.test = { ...window.nexDesign.test, savedOpen: window.open }
-    window.open = (url: string | URL) => {
-      window.mockWindowOpen?.(String(url))
-      return null
-    }
-  })
-
-  await link.click()
-
-  await expect(() => {
-    expect(openedUrls.length).toBeGreaterThan(0)
-    expect(openedUrls[0]).toMatch(/^https:\/\//)
-  }).toPass({ timeout: 3000 })
-
-  // Restore
-  await page.evaluate(() => {
-    const savedOpen = window.nexDesign?.test?.savedOpen
-    if (savedOpen) window.open = savedOpen
+  await expect(page.getByText('Create a compact profile card', { exact: true })).toBeVisible({
+    timeout: 5000
   })
 })
