@@ -67,4 +67,37 @@ describe('render', () => {
     expect(result.type).toBe('FRAME')
     expect(result.children.length).toBeGreaterThan(0)
   })
+
+  test('places fragment roots side by side instead of stacking them', async () => {
+    const { figma } = setupToolTest()
+    const tool = getTool('render')
+    const result = (await tool.execute(figma, {
+      jsx: '<><Frame name="Desktop" w={1440} h={900} /><Frame name="Mobile" w={390} h={844} /></>'
+    })) as ToolResult & { x: number; siblings: Array<{ x: number }> }
+    expect(result.x).toBe(0)
+    expect(result.siblings[0].x).toBe(1540)
+  })
+
+  test('moves a new root off an existing top-level frame', async () => {
+    const { figma } = setupToolTest()
+    const tool = getTool('render')
+    await tool.execute(figma, { jsx: '<Frame name="Desktop" w={1440} h={900} />' })
+    const mobile = (await tool.execute(figma, {
+      jsx: '<Frame name="Mobile" w={390} h={844} />'
+    })) as ToolResult & { x: number }
+    expect(mobile.x).toBe(1540)
+  })
+
+  test('keeps an explicit position that does not collide', async () => {
+    const { figma } = setupToolTest()
+    const tool = getTool('render')
+    await tool.execute(figma, { jsx: '<Frame name="Desktop" w={1440} h={900} />' })
+    const mobile = (await tool.execute(figma, {
+      jsx: '<Frame name="Mobile" w={390} h={844} />',
+      x: 0,
+      y: 1200
+    })) as ToolResult & { x: number; y: number }
+    expect(mobile.x).toBe(0)
+    expect(mobile.y).toBe(1200)
+  })
 })

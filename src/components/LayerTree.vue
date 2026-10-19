@@ -53,7 +53,7 @@ function onTreeSelect(e: CustomEvent, select: (additive: boolean) => void) {
   >
     <ContextMenuRoot :modal="false">
       <ContextMenuTrigger as-child @contextmenu="onLayerRightClick">
-        <div v-bind="attrs" class="relative scrollbar-thin flex-1 overflow-y-auto px-1">
+        <div v-bind="attrs" class="relative scrollbar-thin min-h-0 flex-auto overflow-y-auto px-1">
           <TreeRoot
             :key="treeKey"
             v-slot="{ flattenItems }"

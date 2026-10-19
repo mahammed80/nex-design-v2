@@ -3,12 +3,20 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useEventListener, useLocalStorage } from '@vueuse/core'
 
 import type { SceneNode } from '@nex-design/core/scene-graph'
+import { useViewportKind } from '@nex-design/vue'
 
 import { useEditorStore } from '@/app/editor/active-store'
 import { TOOL_TUTORIAL_STEPS, tutorialTargetSelector } from '@/app/tutorial/tools'
 
 const editor = useEditorStore()
 const completed = useLocalStorage<string[]>('nex-design:completed-tool-tutorials', [])
+// Shares PropertiesPanel's key so the launcher sits beside the right panel, not over the chat input
+const propertiesCollapsed = useLocalStorage('nex-design:properties-collapsed', false)
+const { isMobile } = useViewportKind()
+const launcherOffset = computed(() => {
+  if (isMobile.value) return 'right-6'
+  return propertiesCollapsed.value ? 'right-24' : 'right-[20.5rem]'
+})
 const open = ref(false)
 const stepIndex = ref(0)
 const taskComplete = ref(false)
@@ -133,7 +141,8 @@ onBeforeUnmount(() => {
   <button
     v-if="!open"
     data-test-id="tool-tutorial-open"
-    class="fixed right-6 bottom-6 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-full border border-rose-500/30 bg-black/80 backdrop-blur-2xl text-white shadow-[0_8px_32px_rgba(0,0,0,0.7),0_0_20px_rgba(225,29,72,0.25)] transition-all duration-300 hover:scale-105 hover:border-rose-500/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.9),0_0_30px_rgba(225,29,72,0.45)] cursor-pointer group"
+    :class="launcherOffset"
+    class="fixed bottom-6 z-40 flex items-center gap-2.5 px-4 py-2.5 rounded-full border border-rose-500/30 bg-black/80 backdrop-blur-2xl text-white shadow-[0_8px_32px_rgba(0,0,0,0.7),0_0_20px_rgba(225,29,72,0.25)] transition-all duration-300 hover:scale-105 hover:border-rose-500/60 hover:shadow-[0_8px_32px_rgba(0,0,0,0.9),0_0_30px_rgba(225,29,72,0.45)] cursor-pointer group"
     title="Interactive Guide & Missions"
     aria-label="Open tool tutorials"
     @click="openTutorial"

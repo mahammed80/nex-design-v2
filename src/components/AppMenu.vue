@@ -93,6 +93,7 @@ const subMenuCls = useMenuUI({ content: 'min-w-44' })
           <icon-lucide-sidebar class="size-3.5" />
         </button>
       </Tip>
+      <slot name="trailing" />
     </div>
     <div v-if="!IS_TAURI" class="flex items-center px-1 pb-1">
       <MenubarRoot class="scrollbar-none flex items-center gap-0.5 overflow-x-auto">

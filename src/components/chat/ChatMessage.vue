@@ -1,41 +1,19 @@
 <script setup lang="ts">
-import { getToolName, isFileUIPart, isTextUIPart, isToolUIPart } from 'ai'
+import { computed } from 'vue'
+import { isFileUIPart, isTextUIPart } from 'ai'
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
 import { Markdown } from 'vue-stream-markdown'
 import 'vue-stream-markdown/index.css'
 
-import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from 'ai'
+import ChatToolCall from './ChatToolCall.vue'
+import ChatToolStatus from './ChatToolStatus.vue'
+import { groupState, groupSummary, partKey, segmentParts } from './tool-parts'
+
+import type { UIMessage } from 'ai'
 
 const { message } = defineProps<{ message: UIMessage }>()
 
-type ToolPart = Extract<UIMessagePart<UIDataTypes, UITools>, { toolCallId: string }>
-
-function toolDisplayName(part: ToolPart): string {
-  return getToolName(part)
-    .replace(/^mcp__[^_]+__/, '')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function hasErrorOutput(part: ToolPart): boolean {
-  return (
-    part.state === 'output-available' &&
-    typeof part.output === 'object' &&
-    part.output !== null &&
-    'error' in part.output
-  )
-}
-
-function toolState(part: ToolPart): 'pending' | 'done' | 'error' {
-  if (part.state === 'output-error' || hasErrorOutput(part)) return 'error'
-  if (part.state === 'output-available') return 'done'
-  return 'pending'
-}
-
-function partKey(part: UIMessagePart<UIDataTypes, UITools>, index: number): string {
-  if ('toolCallId' in part) return part.toolCallId
-  return `part-${index}`
-}
+const segments = computed(() => segmentParts(message.parts))
 </script>
 
 <template>
@@ -45,67 +23,45 @@ function partKey(part: UIMessagePart<UIDataTypes, UITools>, index: number): stri
   >
     <div class="min-w-0 space-y-1.5" :class="message.role === 'user' ? 'max-w-[85%]' : ''">
       <template v-if="message.role === 'assistant'">
-        <template v-for="(part, i) in message.parts" :key="partKey(part, i)">
-          <!-- Tool call -->
-          <div v-if="isToolUIPart(part)" class="rounded-lg border border-border bg-canvas p-2">
-            <CollapsibleRoot>
+        <template v-for="segment in segments" :key="segment.key">
+          <!-- Tool calls: a single call shows inline, a run of calls collapses into one step -->
+          <div
+            v-if="segment.kind === 'tools'"
+            class="rounded-lg border border-border bg-canvas p-2"
+          >
+            <ChatToolCall v-if="segment.parts.length === 1" :part="segment.parts[0]" />
+            <CollapsibleRoot v-else data-test-id="chat-tool-group">
               <CollapsibleTrigger
-                class="flex w-full items-center gap-2 rounded px-1 py-0.5 hover:bg-hover"
+                class="flex w-full min-w-0 items-center gap-2 rounded px-1 py-0.5 hover:bg-hover"
               >
-                <div
-                  class="flex size-4 items-center justify-center rounded-full"
-                  :class="{
-                    'bg-accent/20 text-accent': toolState(part) === 'pending',
-                    'bg-green-500/20 text-green-400': toolState(part) === 'done',
-                    'bg-red-500/20 text-red-400': toolState(part) === 'error'
-                  }"
-                >
-                  <icon-lucide-loader-circle
-                    v-if="toolState(part) === 'pending'"
-                    class="size-3 animate-spin"
-                  />
-                  <icon-lucide-check v-else-if="toolState(part) === 'done'" class="size-3" />
-                  <icon-lucide-triangle-alert v-else class="size-3" />
-                </div>
-                <span class="text-[11px] text-surface">
-                  {{ toolDisplayName(part) }}
+                <ChatToolStatus :state="groupState(segment.parts)" />
+                <span class="shrink-0 text-[11px] text-surface">
+                  {{ segment.parts.length }} steps
                 </span>
-                <span class="text-[10px] text-muted">
-                  {{
-                    toolState(part) === 'pending'
-                      ? 'Running…'
-                      : toolState(part) === 'done'
-                        ? 'Done'
-                        : 'Error'
-                  }}
+                <span class="min-w-0 truncate text-[10px] text-muted">
+                  {{ groupSummary(segment.parts) }}
                 </span>
                 <icon-lucide-chevron-down
-                  v-if="toolState(part) !== 'pending'"
-                  class="ml-auto size-3 text-muted transition-transform [[data-state=open]>&]:rotate-180"
+                  class="ml-auto size-3 shrink-0 text-muted transition-transform [[data-state=open]>&]:rotate-180"
                 />
               </CollapsibleTrigger>
               <CollapsibleContent
-                v-if="toolState(part) !== 'pending'"
-                class="data-[state=closed]:collapsible-up data-[state=open]:collapsible-down overflow-hidden text-[10px]"
+                class="data-[state=closed]:collapsible-up data-[state=open]:collapsible-down overflow-hidden"
               >
-                <pre class="mt-1 overflow-x-auto rounded bg-input p-2 text-muted">{{
-                  part.state === 'output-error' && part.errorText
-                    ? part.errorText
-                    : hasErrorOutput(part)
-                      ? (part.output as { error: string }).error
-                      : JSON.stringify(part.output, null, 2)
-                }}</pre>
+                <div class="mt-1 space-y-0.5 border-t border-border pt-1">
+                  <ChatToolCall v-for="part in segment.parts" :key="part.toolCallId" :part="part" />
+                </div>
               </CollapsibleContent>
             </CollapsibleRoot>
           </div>
 
           <!-- Text -->
           <div
-            v-else-if="isTextUIPart(part) && part.text"
+            v-else-if="isTextUIPart(segment.part)"
             data-test-id="chat-text-bubble"
             class="rounded-xl rounded-tl-md bg-hover px-3 py-2 text-xs leading-relaxed text-surface"
           >
-            <Markdown :content="part.text" :mermaid="false" class="chat-markdown" />
+            <Markdown :content="segment.part.text" :mermaid="false" class="chat-markdown" />
           </div>
         </template>
       </template>

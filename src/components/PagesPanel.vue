@@ -58,7 +58,7 @@ function onDuplicatePage(pageId: string) {
           </button>
         </Tip>
       </div>
-      <div class="scrollbar-thin overflow-x-hidden overflow-y-auto px-2 pb-1 space-y-1">
+      <div class="scrollbar-thin min-h-0 overflow-x-hidden overflow-y-auto px-2 pb-1 space-y-0.5">
         <div v-for="pg in pages" :key="pg.id">
           <div
             v-if="rename.editingId.value === pg.id"
@@ -84,16 +84,21 @@ function onDuplicatePage(pageId: string) {
           <div v-else class="group relative flex w-full items-center">
             <button
               data-test-id="pages-item"
-              class="flex w-full cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs transition-all duration-200"
+              class="relative flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-left text-xs transition-colors duration-200"
               :class="
                 pg.id === currentPageId
-                  ? 'bg-rose-600 text-white font-bold shadow-[0_4px_14px_rgba(225,29,72,0.35)]'
+                  ? 'bg-white/10 text-white font-semibold'
                   : 'text-zinc-400 hover:bg-white/5 hover:text-white'
               "
+              :aria-current="pg.id === currentPageId ? 'page' : undefined"
               @click="actions.switch(pg.id)"
               @dblclick="handlePageDblClick(pg, actions.rename)"
             >
-              <icon-lucide-file-text class="size-3.5 shrink-0" :class="pg.id === currentPageId ? 'text-white' : 'text-zinc-500'" />
+              <span
+                v-if="pg.id === currentPageId"
+                class="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-rose-500"
+              />
+              <icon-lucide-file-text class="size-3.5 shrink-0" :class="pg.id === currentPageId ? 'text-rose-400' : 'text-zinc-500'" />
               <span class="truncate flex-1">{{ pg.name }}</span>
             </button>
             <Tip label="Duplicate Page">

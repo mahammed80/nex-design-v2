@@ -1,5 +1,40 @@
 import { defineTool } from '#core/tools/schema'
 
+import type { FigmaAPI } from '#core/figma-api'
+import type { Rect } from '#core/types'
+
+const PAGE_ROOT_GAP = 100
+
+function overlaps(a: Rect, b: Rect) {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+}
+
+/**
+ * Keep page-level roots from stacking on each other: fragments like
+ * `<><Desktop/><Mobile/></>` and repeated renders without x/y otherwise all land at
+ * the same origin. Roots that collide with an existing top-level node are moved to
+ * the right of the page's content.
+ */
+function separatePageRoots(figma: FigmaAPI, pageId: string, rootIds: string[]) {
+  const page = figma.graph.getNode(pageId)
+  if (!page || page.type !== 'CANVAS') return
+  const placed: Rect[] = []
+  for (const id of page.childIds) {
+    const node = figma.graph.getNode(id)
+    if (node && node.visible && !rootIds.includes(id)) placed.push(node)
+  }
+  for (const id of rootIds) {
+    const node = figma.graph.getNode(id)
+    if (!node) continue
+    if (placed.some((other) => overlaps(node, other))) {
+      const right = Math.max(...placed.map((other) => other.x + other.width))
+      figma.graph.updateNode(id, { x: right + PAGE_ROOT_GAP })
+    }
+    const updated = figma.graph.getNode(id)
+    if (updated) placed.push(updated)
+  }
+}
+
 export const render = defineTool({
   name: 'render',
   mutates: true,
@@ -48,6 +83,14 @@ export const render = defineTool({
       figma.graph.deleteNode(args.replace_id)
     } else if (args.insert_index !== undefined) {
       figma.graph.reorderChild(result.id, parentId, args.insert_index)
+    }
+
+    if (!args.replace_id) {
+      separatePageRoots(
+        figma,
+        parentId,
+        results.map((res) => res.id)
+      )
     }
 
     const node = figma.graph.getNode(result.id)
