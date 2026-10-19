@@ -5,6 +5,8 @@
 - Upgrade conversational screen generation with Poolside-backed Build and read-only Plan modes, real image and context-file attachments, queued follow-up prompts, working canvas prompt submission, visible run progress, restorable before/result checkpoints, and Figma-style auto-layout buttons with real text-label children.
 - Make URL-to-design available to the built-in AI as a real editable-layer import, including scoped and multi-viewport imports, and add a license-aware finder for free community UI kits, icons, illustrations, and photos.
 - Make Website URL to Design production-safe and consistent with development: proxy images and external CSS, rewrite relative CSS assets, block private-network redirects, sandbox imported markup without scripts, preserve absolute positioning, and derive block spacing from the captured page.
+- Stop AI-generated screens from stacking: new top-level frames that would overlap existing ones are placed to their right. Group consecutive AI tool calls into one collapsible step in the chat.
+- Polish the editor panels: live layer and page counts, a quieter active-page style, a left panel that fits its content, no duplicated document name or fake window controls, and a Guide & Missions launcher that no longer covers the AI chat input.
 
 ### Added
 
